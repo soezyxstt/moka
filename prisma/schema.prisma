@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") // Set this in your .env file
+}
+
+enum Category {
+  JD
+  MD
+  JR
+  MR
+}
+
+model Semifinalist {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  category  Category
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  incomes   Int      @default(0)
+}
+
+model Finalist {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  category  Category
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  incomes   Int      @default(0)
+}
