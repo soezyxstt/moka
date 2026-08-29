@@ -30,7 +30,7 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files
 .env*
 
 # vercel
@@ -40,6 +40,15 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# generated / local utilities
 prisma/seed.ts
-
 generate_hash.js
+
+# raw media should live outside Git; commit optimized web assets only
+/public/**/*-raw.*
+/public/**/*.psd
+/public/**/*.ai
+/public/**/*.tif
+/public/**/*.tiff
+/public/**/*.wav
+/public/**/*.mov
