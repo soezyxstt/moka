@@ -8,14 +8,15 @@ import { newsUrls } from './news';
 export async function fetchAndParseNews(prop: typeof newsUrls[number]): Promise<NewsItem | null> {
 
   if (typeof prop === 'string') {
-    // If prop is an object, handle it accordingly
-    
+    const url = prop.trim();
+
     try {
-      const response = await fetch(prop, { next: { revalidate: 3600 } }); // Revalidate every hour
+      const response = await fetch(url, {
+        next: { revalidate: 3600 },
+        signal: AbortSignal.timeout(8000),
+      });
       if (!response.ok) {
-        console.error(
-          `Failed to fetch ${prop}: ${response.status} ${response.statusText}`
-        );
+        console.warn(`News source returned ${response.status} ${response.statusText}: ${url}`);
         return null;
       }
       const html = await response.text();
@@ -26,7 +27,7 @@ export async function fetchAndParseNews(prop: typeof newsUrls[number]): Promise<
         $('meta[name="twitter:title"]').attr('content') ||
         $('title').text().trim() ||
         $('h1').first().text().trim() ||
-        'Untitled News Article';
+        'Berita tanpa judul';
   
       const thumbnail =
         $('meta[property="og:image"]').attr('content') ||
@@ -42,7 +43,7 @@ export async function fetchAndParseNews(prop: typeof newsUrls[number]): Promise<
         $('meta[name="description"]').attr('content') ||
         $('p.article-summary').first().text().trim() ||
         $('article p').first().text().trim() ||
-        'No summary available.';
+        'Ringkasan berita belum tersedia.';
   
       const dateString =
         $('meta[property="article:published_time"]').attr('content') ||
@@ -70,7 +71,7 @@ export async function fetchAndParseNews(prop: typeof newsUrls[number]): Promise<
       }
   
       return {
-        link: prop,
+        link: url,
         title: title,
         imageUrl: thumbnail,
         date: new Date(formattedDate),
@@ -78,7 +79,7 @@ export async function fetchAndParseNews(prop: typeof newsUrls[number]): Promise<
           summary.substring(0, 180).trim() + (summary.length > 180 ? '...' : ''),
       };
     } catch (error) {
-      console.error(`Error processing ${prop}:`, error);
+      console.warn(`Unable to process news source: ${url}`, error);
       return null;
     }
   }

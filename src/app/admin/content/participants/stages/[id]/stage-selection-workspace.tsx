@@ -46,7 +46,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import type { SelectionStageRow } from "@/server/db/schema";
+import { categoryValues, type Category, type SelectionStageRow, type StageCategoryTargets } from "@/server/db/schema";
 import {
   closeSelectionStageAction,
   openSelectionStageAction,
@@ -77,6 +77,7 @@ type StageSummary = {
   name: string;
   displayOrder: number;
   targetParticipantCount: number;
+  categoryTargets: StageCategoryTargets | null;
   lifecycle: string;
   finalStage: boolean;
 };
@@ -139,6 +140,39 @@ export function StageSelectionWorkspace({
   const pendingCount = entries.filter((e) => e.decision === "pending").length;
   const advancedCount = entries.filter((e) => e.decision === "advanced").length;
   const eliminatedCount = entries.filter((e) => e.decision === "eliminated").length;
+  const advancedByCategory = entries.reduce<StageCategoryTargets>((counts, entry) => {
+    if (entry.decision === "advanced" && categoryValues.includes(entry.categoryCode as Category)) {
+      counts[entry.categoryCode as Category] += 1;
+    }
+    return counts;
+  }, { JD: 0, MD: 0, JR: 0, MR: 0 });
+
+  const stageTargets = [stage.targetJDCount, stage.targetMDCount, stage.targetJRCount, stage.targetMRCount];
+  const legacyStageTargets = stageTargets.every((value) => value === null);
+  if (!legacyStageTargets && stageTargets.some((value) => value === null)) throw new Error("Target kategori tahap tidak lengkap");
+  const categoryTargets = legacyStageTargets
+    ? null
+    : Object.fromEntries(categoryValues.map((code, index) => [code, stageTargets[index]!])) as StageCategoryTargets;
+
+  const compareQuota = (target: StageSummary) => {
+    if (!target.categoryTargets) {
+      return {
+        over: advancedCount > target.targetParticipantCount,
+        under: advancedCount < target.targetParticipantCount,
+        overText: `Jumlah peserta lolos ${advancedCount}/${target.targetParticipantCount}`,
+        underText: `Jumlah peserta lolos ${advancedCount}/${target.targetParticipantCount}`,
+      };
+    }
+    const over = categoryValues.filter((code) => advancedByCategory[code] > target.categoryTargets![code]);
+    const under = categoryValues.filter((code) => advancedByCategory[code] < target.categoryTargets![code]);
+    return {
+      over: over.length > 0,
+      under: under.length > 0,
+      overText: over.map((code) => `${code} ${advancedByCategory[code]}/${target.categoryTargets![code]}`).join(", "),
+      underText: under.map((code) => `${code} ${advancedByCategory[code]}/${target.categoryTargets![code]}`).join(", "),
+    };
+  };
+  const nextStageDifference = nextStage ? compareQuota(nextStage) : null;
 
   const filteredEntries = useMemo(() => {
     const needle = search.trim().toLowerCase();
@@ -194,7 +228,21 @@ export function StageSelectionWorkspace({
       const selectedEntries = entries.filter((e) => selectedIds.has(e.id));
       const alreadyAdvanced = selectedEntries.filter((e) => e.decision === "advanced").length;
       const proposedAdvanced = advancedCount - alreadyAdvanced + selectedEntries.length;
-      if (proposedAdvanced > nextStage.targetParticipantCount) {
+      const proposedByCategory = { ...advancedByCategory };
+      for (const entry of selectedEntries) {
+        if (categoryValues.includes(entry.categoryCode as Category)) {
+          if (entry.decision === "advanced") proposedByCategory[entry.categoryCode as Category] -= 1;
+          proposedByCategory[entry.categoryCode as Category] += 1;
+        }
+      }
+      const exceeded = nextStage.categoryTargets
+        ? categoryValues.filter((code) => proposedByCategory[code] > nextStage.categoryTargets![code])
+        : [];
+      if (nextStage.categoryTargets && exceeded.length > 0) {
+        toast.error(`Target terlampaui: ${exceeded.map((code) => `${code} ${proposedByCategory[code]}/${nextStage.categoryTargets![code]}`).join(", ")}`);
+        return;
+      }
+      if (!nextStage.categoryTargets && proposedAdvanced > nextStage.targetParticipantCount) {
         toast.error(
           `Jumlah peserta lolos (${proposedAdvanced}) melebihi target tahap berikutnya (${nextStage.targetParticipantCount})`
         );
@@ -287,7 +335,8 @@ export function StageSelectionWorkspace({
   }
 
   function handleCloseStage() {
-    if (nextStage && advancedCount < nextStage.targetParticipantCount) {
+    const difference = nextStage ? compareQuota(nextStage) : null;
+    if (difference?.under) {
       if (!closeAllowUnderTarget || closeReason.trim().length < 5) {
         toast.error("Konfirmasi dan alasan minimal 5 karakter diperlukan");
         return;
@@ -357,9 +406,8 @@ export function StageSelectionWorkspace({
 
   return (
     <AdminPage
-      eyebrow="Seleksi / workspace keputusan"
+      eyebrow="Seleksi"
       title={stage.name}
-      description={`Workspace penetapan status seleksi peserta tahap ${stage.name}.`}
       action={
         <div className="flex flex-wrap items-center gap-2">
           <AdminLinkButton href="/admin/content/participants/stages" variant="secondary">
@@ -423,7 +471,9 @@ export function StageSelectionWorkspace({
           ) : null}
           {nextStage ? (
             <span className="text-xs text-muted-foreground">
-              Tahap berikutnya: {nextStage.name} (target: {nextStage.targetParticipantCount})
+              Tahap berikutnya: {nextStage.name} ({nextStage.categoryTargets
+                ? categoryValues.map((code) => `${code} ${nextStage.categoryTargets![code]}`).join(", ")
+                : `${nextStage.targetParticipantCount} total`})
             </span>
           ) : previousStage ? (
             <span className="text-xs text-muted-foreground">
@@ -435,9 +485,11 @@ export function StageSelectionWorkspace({
         {/* Statistics Banner */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
           <div className="rounded-xl border border-dgb-100 bg-card p-4">
-            <p className="text-xs font-medium text-muted-foreground">Target tahap</p>
-            <p className="mt-1 font-montserrat text-2xl font-semibold text-dgb-900">
-              {stage.targetParticipantCount}
+            <p className="text-xs font-medium text-muted-foreground">Target kategori</p>
+            <p className="mt-1 text-sm font-semibold text-dgb-900">
+              {categoryTargets
+                ? categoryValues.map((code) => `${code} ${categoryTargets[code]}`).join(" · ")
+                : `${stage.targetParticipantCount} total; kuota kategori belum diatur`}
             </p>
           </div>
           <div className="rounded-xl border border-dgb-100 bg-card p-4">
@@ -752,18 +804,16 @@ export function StageSelectionWorkspace({
               </p>
             ) : null}
 
-            {nextStage && advancedCount > nextStage.targetParticipantCount ? (
+            {nextStageDifference?.over ? (
               <p className="rounded-md border border-red-200 bg-red-50 p-2.5 text-xs text-red-700">
-                Jumlah peserta lolos ({advancedCount}) melebihi target tahap berikutnya (
-                {nextStage.targetParticipantCount}). Kurangi peserta lolos sebelum menutup tahap.
+                Peserta lolos melebihi target tahap berikutnya: {nextStageDifference.overText}. Kurangi peserta lolos sebelum menutup tahap.
               </p>
             ) : null}
 
-            {nextStage && advancedCount < nextStage.targetParticipantCount ? (
+            {nextStageDifference?.under ? (
               <div className="space-y-3 rounded-md border border-amber-200 bg-amber-50/70 p-3">
                 <p className="text-xs text-amber-800">
-                  Jumlah lolos ({advancedCount}) kurang dari target tahap berikutnya (
-                  {nextStage.targetParticipantCount}). Konfirmasi dan alasan tertulis diperlukan.
+                  Peserta lolos belum memenuhi target tahap berikutnya: {nextStageDifference.underText}. Konfirmasi dan alasan tertulis diperlukan.
                 </p>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <Checkbox
@@ -791,10 +841,9 @@ export function StageSelectionWorkspace({
               disabled={
                 pending ||
                 pendingCount > 0 ||
-                Boolean(nextStage && advancedCount > nextStage.targetParticipantCount) ||
+                Boolean(nextStageDifference?.over) ||
                 Boolean(
-                  nextStage &&
-                    advancedCount < nextStage.targetParticipantCount &&
+                  nextStageDifference?.under &&
                     (!closeAllowUnderTarget || closeReason.trim().length < 5)
                 )
               }

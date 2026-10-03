@@ -139,7 +139,7 @@ export function AdminSelect({
       </Select>
       {shouldRenderBridge ? (
         <Input
-          className="sr-only"
+          className="sr-only !h-px !w-px !min-w-0 !border-0 !p-0"
           type="text"
           name={name}
           value={selectedValue}

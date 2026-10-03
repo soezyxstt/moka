@@ -1,22 +1,14 @@
-// export const metadata = {
-//   title: "Hasil Voting",
-//   description: "Hasil STAR Voting untuk Pasanggiri Mojang Jajaka Kabupaten Garut 2025",
-// }
-
-import { categories } from '@/lib/data';
+import { getPublicVotingResults } from '@/server/cms/public-readers';
 
 export async function generateMetadata({ params }: Readonly<{ params: Promise<{ category: string }> }>) {
-  const { category: catt } = await params;
-  const category = categories.find(cat => cat.slug === catt);
-  if (!category) {
-    return {
-      title: "Kategori Tidak Ditemukan",
-      description: "Kategori yang Anda cari tidak ditemukan.",
-    };
-  }
+  const { category: slug } = await params;
+  const results = await getPublicVotingResults(slug);
+  if (!results) return { title: "Hasil voting" };
   return {
-    title: `Hasil Voting - ${category.name} 2025`,
-    description: `Hasil Voting Mojang Jajaka Kameumeut Pasanggiri Mojang Jajaka Kabupaten Garut 2025 pada kategori ${category.name}.`,
+    title: `Hasil voting ${results.categoryName} ${results.editionYear}`,
+    description: results.visible
+      ? `Hasil voting kategori ${results.categoryName} untuk edisi ${results.editionYear}.`
+      : `Informasi hasil voting kategori ${results.categoryName} untuk edisi ${results.editionYear}.`,
   };
 }
 

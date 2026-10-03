@@ -1,82 +1,48 @@
-"use client";
-
-import Image from 'next/image';
-import { use, useEffect, useState } from 'react';
-import Autoplay from "embla-carousel-autoplay"
-import {
-  Carousel,
-  CarouselApi,
-  CarouselContent,
-  CarouselItem,
-} from "@/components/ui/carousel"
-import { rangkaianKegiatan, logoNames } from '@/lib/data';
+import EventCarousel from './event-carousel';
+import { getPublicEventBySlug, getPublicSponsors } from '@/server/cms/public-readers';
 import SponsorItem from './sponsor';
 import BG from '@/components/next-image-bg';
+import { notFound } from 'next/navigation';
 
-export default function Page({
+export default async function Page({
   params,
 }: Readonly<{
   params: Promise<{ event: string }>;
 }>) {
-  const { event } = use(params);
-  const [api, setApi] = useState<CarouselApi>();
-  const [current, setCurrent] = useState(0)
-  useEffect(() => {
-    if (!api) {
-      return
-    }
-    const handleSelect = () => {
-      setCurrent(api.selectedScrollSnap())
-    }
-    api.on("select", handleSelect)
-    return () => {
-      api.off("select", handleSelect)
-    }
-  }, [api])
+  const { event } = await params;
+  const cmsEvent = await getPublicEventBySlug(event);
+  if (!cmsEvent) notFound();
 
-  const kegiatan = rangkaianKegiatan.find(k => k.label.toLowerCase().replace(" ", "-") === event);
+  const sponsors = await getPublicSponsors();
+  const images = cmsEvent.images.length
+    ? cmsEvent.images
+    : cmsEvent.heroImageUrl
+      ? [cmsEvent.heroImageUrl]
+      : [];
+  const backgroundImage = cmsEvent.heroImageUrl ?? images[0];
 
   return (
     <main className="relative text-white max-sm:overflow-x-hidden">
-      <BG src='/finalis/hero.webp' />
+      {backgroundImage ? <BG src={backgroundImage} /> : null}
       <div className='w-full h-[100lvh] fixed pointer-events-none z-0 bg-radial-[at_50%_50%] from-transparent to-90% to-dgb-800 backdrop-blur-sm' />
       <section className='relative h-[90vh] text-white font-montserrat'>
-        <Carousel setApi={setApi} opts={{
-          loop: true,
-        }} plugins={[
-          Autoplay({ delay: 3000, stopOnInteraction: false }),
-        ]}>
-          <CarouselContent className="relative w-screen h-[90vh] ml-0 cursor-grab active:cursor-grabbing">
-            {Array.from({ length: kegiatan?.isNew ? 10 : 6 }, (_, i) => (
-              <CarouselItem key={"rk-" + event + "-" + i} className="relative w-screen h-full pl-0">
-                <Image src={'/rangkaian-kegiatan/' + event + "/" + (i + 1) + ".webp"} alt='image' width={1000} height={1000} className='w-screen h-full object-cover' priority />
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-        </Carousel>
-        <div className="absolute z-1 w-full pointer-events-none h-full bg-linear-to-r from-black/65 via-black/65 max-sm:via-100% to-transparent top-0 left-0"></div>
-        <div className="absolute md:max-w-sm md:left-20 left-8 top-1/2 w-full max-w-[calc(100vw-4rem)] z-10 h-fit -translate-y-1/2 pointer-events-none space-y-4 animate-fade-in">
-          <h2 className="font-montserrat text-5xl font-semibold text-white capitalize">
-            {kegiatan?.label}
-          </h2>
-          <p className="">
-            {kegiatan?.desc}
-          </p>
-        </div>
-
-        <div className="absolute z-10 md:left-20 left-8 bottom-20 flex gap-2 h-2">
-          {Array.from({ length: kegiatan?.isNew ? 10 : 6 }, (_, i) => (
-            <button key={i} onClick={() => api?.scrollTo(i)} className={`h-2 rounded-full transition-all ${current === i ? 'bg-white w-12' : 'bg-white/40 w-6'}`}></button>
-          ))}
-        </div>
+        {images.length ? (
+          <EventCarousel event={event} title={cmsEvent.label} description={cmsEvent.desc} images={images} />
+        ) : (
+          <div className="mx-auto flex h-full max-w-3xl flex-col justify-center gap-4 px-8 md:px-20">
+            <h1 className="text-5xl font-semibold capitalize">{cmsEvent.label}</h1>
+            {cmsEvent.desc ? <p>{cmsEvent.desc}</p> : null}
+            <p>Foto kegiatan belum tersedia.</p>
+          </div>
+        )}
       </section>
 
       <section className="md:px-20 md:py-20 px-6 py-8 isolate">
         <h2 className="uppercase font-semibold text-3xl md:text-6xl font-montserrat mb-8 md:mb-16 md:place-self-center">Sponsor Kami</h2>
         <div className="w-full flex flex-wrap gap-6 md:gap-12 justify-center">
-          {logoNames.map((sponsor, index) => (
-            <SponsorItem key={index + sponsor} title={sponsor} src={'/sponsors/' + sponsor} size='lg' />
-          ))}
+          {sponsors.length ? sponsors.map((sponsor) => (
+            <SponsorItem key={sponsor.name} title={sponsor.name} src={sponsor.src} size='lg' />
+          )) : <p>Sponsor belum tersedia.</p>}
         </div>
       </section>
     </main>

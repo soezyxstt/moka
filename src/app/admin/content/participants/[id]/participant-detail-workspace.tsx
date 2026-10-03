@@ -16,6 +16,7 @@ import {
   Share2,
   Trash2,
   User,
+  Video,
   X,
 } from "lucide-react";
 import Image from "next/image";
@@ -120,6 +121,7 @@ const MEDIA_ROLES: { value: ParticipantMediaRole; label: string; description: st
   { value: "detail", label: "Detail Busana", description: "Detail ornamen batik, bordir, atau aksesoris" },
   { value: "karantina", label: "Karantina", description: "Dokumentasi kegiatan dan pembekalan karantina" },
   { value: "other", label: "Lainnya", description: "Foto pendukung dan kegiatan lainnya" },
+  { value: "profile_video", label: "Video profil", description: "Video untuk profil finalis" },
 ];
 
 export function ParticipantDetailWorkspace({
@@ -380,8 +382,8 @@ export function ParticipantDetailWorkspace({
 
     // If target role is closeup, deactivate other closeup items
     let updatedMedia = [...mediaItems];
-    if (targetRoleForNewMedia === "closeup") {
-      updatedMedia = updatedMedia.map((m) => (m.role === "closeup" ? { ...m, active: false } : m));
+    if (targetRoleForNewMedia === "closeup" || targetRoleForNewMedia === "profile_video") {
+      updatedMedia = updatedMedia.map((m) => (m.role === targetRoleForNewMedia ? { ...m, active: false } : m));
     }
 
     updatedMedia.push({
@@ -396,7 +398,7 @@ export function ParticipantDetailWorkspace({
 
     setMediaItems(updatedMedia);
     setMediaPickerOpen(false);
-    toast.success(`Foto ${asset.filename} ditambahkan ke kategori ${targetRoleForNewMedia}`);
+    toast.success(`Media ${asset.filename} ditambahkan`);
   };
 
   // Delete Media Row
@@ -410,10 +412,16 @@ export function ParticipantDetailWorkspace({
       prev.map((m, idx) => {
         if (idx !== index) return m;
         // If enabling a closeup, ensure other closeups become inactive
-        if (!m.active && m.role === "closeup") {
-          // Handled below
+        if (!m.active && (m.role === "closeup" || m.role === "profile_video")) {
+          return { ...m, active: true };
         }
         return { ...m, active: !m.active };
+      }).map((m) => {
+        const changed = prev[index];
+        if (m.active && changed?.id !== m.id && m.role === changed?.role && (m.role === "closeup" || m.role === "profile_video")) {
+          return { ...m, active: false };
+        }
+        return m;
       })
     );
   };
@@ -454,7 +462,7 @@ export function ParticipantDetailWorkspace({
         }));
 
         setMediaReason("");
-        toast.success("Galeri foto peserta berhasil diperbarui");
+        toast.success("Media peserta berhasil diperbarui");
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Gagal menyimpan foto peserta");
       }
@@ -610,11 +618,10 @@ export function ParticipantDetailWorkspace({
 
           {/* TAB 1: IDENTITAS */}
           {activeTab === "identity" ? (
-            <AdminCard className="p-6 sm:p-6">
+            <AdminCard className="p-4 sm:p-5">
               <AdminCardHeader
-                eyebrow="Identitas Peserta"
+                eyebrow="Identitas"
                 title="Informasi Dasar & Biodata"
-                description="Perbarui identitas, kategori, nomor urut, dan biografi ringkas peserta."
               />
               <form onSubmit={handleSaveIdentity} className="space-y-4 pt-2">
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -713,11 +720,10 @@ export function ParticipantDetailWorkspace({
 
           {/* TAB 2: PRESTASI */}
           {activeTab === "achievements" ? (
-            <AdminCard className="p-6 sm:p-6">
+            <AdminCard className="p-4 sm:p-5">
               <AdminCardHeader
                 eyebrow="Prestasi & Penghargaan"
                 title={`Daftar Prestasi (${achievements.length})`}
-                description="Kelola pencapaian, penghargaan, dan rekam jejak prestasi peserta."
               />
               <form onSubmit={handleSaveAchievements} className="space-y-4 pt-2">
                 {/* Add Achievement Input */}
@@ -831,11 +837,10 @@ export function ParticipantDetailWorkspace({
 
           {/* TAB 3: SOSIAL MEDIA */}
           {activeTab === "social" ? (
-            <AdminCard className="p-6 sm:p-6">
+            <AdminCard className="p-4 sm:p-5">
               <AdminCardHeader
-                eyebrow="Tautan Sosial Media"
+                eyebrow="Media sosial"
                 title={`Akun Sosial Media (${socialLinks.length})`}
-                description="Tautkan akun Instagram, TikTok, LinkedIn, dan kanal digital peserta."
               />
               <form onSubmit={handleSaveSocialLinks} className="space-y-4 pt-2">
                 <div className="flex justify-between items-center">
@@ -971,17 +976,16 @@ export function ParticipantDetailWorkspace({
 
           {/* TAB 4: GALERI MEDIA PESERTA */}
           {activeTab === "media" ? (
-            <AdminCard className="p-6 sm:p-6">
+            <AdminCard className="p-4 sm:p-5">
               <AdminCardHeader
-                eyebrow="Galeri Media"
-                title={`Foto & Dokumentasi (${mediaItems.length})`}
-                description="Kelola foto per peran (Closeup, Full Body, Detail Busana, Karantina, Lainnya). Foto Closeup otomatis menjadi foto utama peserta."
+                eyebrow="Galeri"
+                title={`Media Peserta (${mediaItems.length})`}
               />
               <form onSubmit={handleSaveMedia} className="space-y-4 pt-2">
                 {/* Actions & Role Picker */}
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dgb-100 bg-dgb-50/30 p-3">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-dgb-900">Pilih role:</span>
+                    <span className="text-xs font-semibold text-dgb-900">Jenis media:</span>
                     <AdminSelect
                       value={targetRoleForNewMedia}
                       onValueChange={(nextRole) => setTargetRoleForNewMedia(nextRole as ParticipantMediaRole)}
@@ -995,20 +999,26 @@ export function ParticipantDetailWorkspace({
                     onClick={() => setMediaPickerOpen(true)}
                     className="h-8 bg-dgb text-xs font-semibold text-white hover:bg-dgb/90"
                   >
-                    <Plus size={14} className="mr-1" /> Tambah foto ke {targetRoleForNewMedia}
+                    <Plus size={14} className="mr-1" /> Tambah {targetRoleForNewMedia === "profile_video" ? "video profil" : "foto"}
                   </Button>
                 </div>
 
                 {/* Media Items List */}
                 {mediaItems.length === 0 ? (
                   <div className="py-8 text-center text-xs text-muted-foreground">
-                    Belum ada foto yang ditambahkan. Pilih role lalu klik &apos;Tambah foto&apos;.
+                    Belum ada media peserta. Pilih jenis media lalu tambahkan aset dari pustaka.
                   </div>
                 ) : (
                   <div className="space-y-3">
                     {mediaItems.map((item, index) => {
                       const asset = item.asset;
                       const isCloseup = item.role === "closeup";
+                      const isVideo = item.role === "profile_video";
+                      const roleOptions = MEDIA_ROLES.filter((role) =>
+                        role.value === item.role || (role.value === "profile_video"
+                          ? asset?.mimeType.startsWith("video/")
+                          : asset?.mimeType.startsWith("image/"))
+                      );
 
                       return (
                         <div
@@ -1020,7 +1030,7 @@ export function ParticipantDetailWorkspace({
                           {/* Image Thumbnail & Details */}
                           <div className="flex items-center gap-3 min-w-0">
                             <div className="relative size-16 shrink-0 overflow-hidden rounded-md border border-border bg-muted">
-                              {asset?.url ? (
+                              {asset?.url && asset.mimeType.startsWith("image/") ? (
                                 <Image
                                   src={asset.url}
                                   alt={asset.alt ?? asset.filename}
@@ -1028,6 +1038,10 @@ export function ParticipantDetailWorkspace({
                                   sizes="64px"
                                   className="object-cover"
                                 />
+                              ) : isVideo && asset?.mimeType.startsWith("video/") ? (
+                                <div className="grid size-full place-items-center bg-fb-50 text-fb-700">
+                                  <Video size={22} />
+                                </div>
                               ) : (
                                 <div className="grid size-full place-items-center bg-muted text-muted-foreground">
                                   <Camera size={20} />
@@ -1046,12 +1060,15 @@ export function ParticipantDetailWorkspace({
                                   value={item.role}
                                   onValueChange={(nextRole) => {
                                     const role = nextRole as ParticipantMediaRole;
-                                    setMediaItems((prev) =>
-                                      prev.map((m, i) => (i === index ? { ...m, role } : m))
-                                    );
+                                    setMediaItems((prev) => prev.map((m, i) => {
+                                      if (i === index) return { ...m, role };
+                                      return m.role === role && (role === "closeup" || role === "profile_video")
+                                        ? { ...m, active: false }
+                                        : m;
+                                    }));
                                   }}
                                   className="h-7 text-[11px] font-semibold w-32"
-                                  options={MEDIA_ROLES.map((r) => ({ value: r.value, label: r.label }))}
+                                  options={roleOptions.map((r) => ({ value: r.value, label: r.label }))}
                                 />
 
                                 <span className="truncate text-xs font-semibold text-dgb-900 max-w-44" title={asset?.filename}>
@@ -1060,7 +1077,7 @@ export function ParticipantDetailWorkspace({
                               </div>
 
                               <AdminInput
-                                placeholder="Keterangan foto (opsional)..."
+                                placeholder="Keterangan media (opsional)..."
                                 value={item.caption ?? ""}
                                 onChange={(e) => {
                                   const caption = e.target.value;
@@ -1129,7 +1146,7 @@ export function ParticipantDetailWorkspace({
 
           {/* TAB 5: QRIS */}
           {activeTab === "qris" ? (
-            <AdminCard className="p-6 sm:p-6">
+            <AdminCard className="p-4 sm:p-5">
               <AdminCardHeader
                 eyebrow="Voting"
                 title="Gambar QRIS"
@@ -1380,11 +1397,12 @@ export function ParticipantDetailWorkspace({
 
       {/* Media Picker Modal */}
       <AdminMediaPicker
+        key={targetRoleForNewMedia}
         open={mediaPickerOpen}
         onOpenChange={setMediaPickerOpen}
         onSelect={handleMediaSelected}
-        acceptType="image"
-        title={`Pilih foto untuk role '${targetRoleForNewMedia}'`}
+        acceptType={targetRoleForNewMedia === "profile_video" ? "video" : "image"}
+        title={targetRoleForNewMedia === "profile_video" ? "Pilih video profil" : `Pilih foto untuk ${targetRoleForNewMedia}`}
         canManageMedia={canManageMedia}
         activeEditionId={edition.id}
       />

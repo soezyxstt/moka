@@ -1,6 +1,6 @@
-import { asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, or } from "drizzle-orm";
 
-import { AdminBadge, AdminCard, AdminEmptyState, AdminPage } from "@/components/admin/primitives";
+import { AdminBadge, AdminButton, AdminCard, AdminEmptyState, AdminPage } from "@/components/admin/primitives";
 import { requirePermission } from "@/server/auth/authorization";
 import { getAdminEditionContext } from "@/server/cms/context";
 import { database } from "@/server/db/client";
@@ -10,11 +10,13 @@ import {
   participantAchievements,
   participantMedia,
   participantSocialLinks,
+  participantStageEntries,
   participantTitleAssignments,
   participants,
   selectionStages,
 } from "@/server/db/schema";
 import { ParticipantDirectory, type DirectoryParticipant } from "./participant-directory";
+import { repair2025StageNumbersAction } from "./selection-actions";
 
 export const metadata = { title: "Mojang Jajaka" };
 
@@ -27,16 +29,15 @@ export default async function ParticipantsPage() {
   if (!currentEdition) {
     return (
       <AdminPage
-        eyebrow="Konten / peserta"
+        eyebrow="Peserta"
         title="Mojang Jajaka"
-        description="Kelola peserta, kategori, dan tahap seleksi Pasanggiri Mojang Jajaka Garut."
       >
         <AdminCard padding="none">
           <div className="p-8">
             <AdminEmptyState
               icon="users"
               title="Belum ada edisi dipilih"
-              description="Silakan buat atau pilih edisi pada selector di header untuk mengelola peserta."
+              description="Pilih edisi di bagian atas untuk melihat peserta."
             />
           </div>
         </AdminCard>
@@ -60,6 +61,17 @@ export default async function ParticipantsPage() {
     .from(selectionStages)
     .where(eq(selectionStages.editionId, currentEdition.id))
     .orderBy(asc(selectionStages.displayOrder));
+
+  const incompleteStageNumbers = currentEdition.year === 2025 && canEdit
+    ? await database.select({ id: participantStageEntries.id })
+      .from(participantStageEntries)
+      .innerJoin(participants, eq(participantStageEntries.participantId, participants.id))
+      .where(and(
+        eq(participants.editionId, currentEdition.id),
+        or(isNull(participantStageEntries.number), isNull(participantStageEntries.displayOrder)),
+      ))
+      .limit(1)
+    : [];
 
   // Fetch participants with joined category and selectionStages
   const participantRows = await database
@@ -172,11 +184,18 @@ export default async function ParticipantsPage() {
 
   return (
     <AdminPage
-      eyebrow="Konten / peserta"
+      eyebrow="Peserta"
       title="Mojang Jajaka"
-      description="Kelola pendaftar, tahap seleksi, dan profil peserta."
       action={<AdminBadge value={currentEdition.lifecycle} />}
     >
+      {incompleteStageNumbers.length ? (
+        <AdminCard className="flex flex-wrap items-center justify-between gap-4">
+          <p className="text-sm text-muted-foreground">Nomor dan urutan semifinalis belum lengkap.</p>
+          <form action={repair2025StageNumbersAction}>
+            <AdminButton type="submit" variant="secondary">Perbaiki nomor tahap 2025</AdminButton>
+          </form>
+        </AdminCard>
+      ) : null}
       <ParticipantDirectory
         key={`${currentEdition.id}:${initialParticipants.map((participant) => `${participant.id}:${participant.version}`).join(",")}`}
         categories={categoryRows}

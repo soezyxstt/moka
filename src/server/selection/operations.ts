@@ -4,16 +4,20 @@ import { appendAuditLog } from "@/server/auth/audit";
 import type { Database } from "@/server/db/queries";
 import {
   categories,
+  categoryValues,
   participantStageEntries,
   participantTitleAssignments,
   participants,
+  parseCategory,
   selectionStages,
   votingCampaignParticipants,
   votingCampaigns,
+  type StageCategoryTargets,
   type StageDecision,
 } from "@/server/db/schema";
 
 type AuditActor = { userId: string; label: string };
+type SelectionTransaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
 
 function slugify(value: string) {
   return value
@@ -29,7 +33,74 @@ function requirePositiveInteger(value: number, label: string) {
   if (!Number.isInteger(value) || value < 1) throw new Error(`${label} harus berupa bilangan bulat positif`);
 }
 
-async function getStage(tx: Parameters<Parameters<Database["transaction"]>[0]>[0], editionId: string, stageId: string) {
+function validateCategoryTargets(targets: StageCategoryTargets) {
+  if (!targets || typeof targets !== "object" || Object.keys(targets).length !== categoryValues.length) {
+    throw new Error("Target kategori harus mencakup JD, MD, JR, dan MR");
+  }
+  let total = 0;
+  for (const code of categoryValues) {
+    const value = targets[code];
+    if (!Number.isInteger(value) || value < 0) throw new Error(`Target ${code} harus berupa bilangan bulat nol atau lebih`);
+    total += value;
+  }
+  if (!Number.isSafeInteger(total)) throw new Error("Jumlah target tahap terlalu besar");
+  if (total < 1) throw new Error("Jumlah target tahap minimal satu peserta");
+  return total;
+}
+
+function getCategoryTargets(stage: typeof selectionStages.$inferSelect): StageCategoryTargets | null {
+  const values = [stage.targetJDCount, stage.targetMDCount, stage.targetJRCount, stage.targetMRCount];
+  if (values.every((value) => value === null)) return null;
+  if (values.some((value) => value === null || !Number.isInteger(value) || value < 0)) {
+    throw new Error("Target kategori tahap tidak lengkap");
+  }
+  return {
+    JD: stage.targetJDCount!,
+    MD: stage.targetMDCount!,
+    JR: stage.targetJRCount!,
+    MR: stage.targetMRCount!,
+  };
+}
+
+type CategoryCountRows = Array<{ categoryCode: string }>;
+
+function countByCategory(rows: CategoryCountRows) {
+  const counts: StageCategoryTargets = { JD: 0, MD: 0, JR: 0, MR: 0 };
+  for (const row of rows) counts[parseCategory(row.categoryCode)] += 1;
+  return counts;
+}
+
+function quotaDifferences(counts: StageCategoryTargets, total: number, targets: StageCategoryTargets | null, targetParticipantCount: number) {
+  if (!targets) {
+    return {
+      over: total > targetParticipantCount,
+      under: total < targetParticipantCount,
+      message: "Jumlah peserta lolos",
+    };
+  }
+  const over = categoryValues.filter((code) => counts[code] > targets[code]);
+  const under = categoryValues.filter((code) => counts[code] < targets[code]);
+  return {
+    over: over.length > 0,
+    under: under.length > 0,
+    message: over.length ? `Kategori ${over.join(", ")}` : `Kategori ${under.join(", ")}`,
+  };
+}
+
+function stageQuotaDifferences(counts: StageCategoryTargets, total: number, stage: typeof selectionStages.$inferSelect) {
+  return quotaDifferences(counts, total, getCategoryTargets(stage), stage.targetParticipantCount);
+}
+
+async function getAdvancedCategoryRows(tx: SelectionTransaction, stageId: string) {
+  return tx
+    .select({ categoryCode: categories.code })
+    .from(participantStageEntries)
+    .innerJoin(participants, eq(participants.id, participantStageEntries.participantId))
+    .innerJoin(categories, eq(categories.id, participants.categoryId))
+    .where(and(eq(participantStageEntries.stageId, stageId), eq(participantStageEntries.decision, "advanced")));
+}
+
+async function getStage(tx: SelectionTransaction, editionId: string, stageId: string) {
   const [stage] = await tx
     .select()
     .from(selectionStages)
@@ -132,14 +203,18 @@ export async function createApplicant(
 export async function createSelectionStage(
   db: Database,
   editionId: string,
-  input: { name: string; targetParticipantCount: number; finalStage: boolean },
+  input: { name: string; targetParticipantCount?: number; categoryTargets?: StageCategoryTargets; finalStage: boolean },
   actor: AuditActor,
   now: Date,
 ) {
   const name = input.name.trim();
   const slug = slugify(name);
   if (!name) throw new Error("Nama tahap wajib diisi");
-  requirePositiveInteger(input.targetParticipantCount, "Target peserta");
+  const targetParticipantCount = input.categoryTargets
+    ? validateCategoryTargets(input.categoryTargets)
+    : input.targetParticipantCount;
+  if (targetParticipantCount === undefined) throw new Error("Target peserta wajib diisi");
+  if (!input.categoryTargets) requirePositiveInteger(targetParticipantCount, "Target peserta");
 
   return db.transaction(async (tx) => {
     const [sameSlug] = await tx
@@ -158,11 +233,21 @@ export async function createSelectionStage(
     }
 
     const [lastStage] = await tx
-      .select({ displayOrder: selectionStages.displayOrder })
+      .select({ id: selectionStages.id, displayOrder: selectionStages.displayOrder })
       .from(selectionStages)
       .where(eq(selectionStages.editionId, editionId))
       .orderBy(desc(selectionStages.displayOrder))
       .limit(1);
+    if (lastStage) {
+      const previousAdvanced = await getAdvancedCategoryRows(tx, lastStage.id);
+      const differences = quotaDifferences(
+        countByCategory(previousAdvanced),
+        previousAdvanced.length,
+        input.categoryTargets ?? null,
+        targetParticipantCount,
+      );
+      if (differences.over) throw new Error(`${differences.message} melebihi target tahap baru`);
+    }
     const id = crypto.randomUUID();
     const displayOrder = (lastStage?.displayOrder ?? -1) + 1;
     await tx.insert(selectionStages).values({
@@ -171,7 +256,11 @@ export async function createSelectionStage(
       name,
       slug,
       displayOrder,
-      targetParticipantCount: input.targetParticipantCount,
+      targetParticipantCount,
+      targetJDCount: input.categoryTargets?.JD ?? null,
+      targetMDCount: input.categoryTargets?.MD ?? null,
+      targetJRCount: input.categoryTargets?.JR ?? null,
+      targetMRCount: input.categoryTargets?.MR ?? null,
       lifecycle: "draft",
       finalStage: input.finalStage,
       version: 1,
@@ -185,8 +274,8 @@ export async function createSelectionStage(
       resourceType: "selectionStage",
       resourceId: id,
       resourceLabel: name,
-      after: { editionId, name, slug, displayOrder, targetParticipantCount: input.targetParticipantCount, finalStage: input.finalStage },
-      changedFields: ["editionId", "name", "slug", "displayOrder", "targetParticipantCount", "finalStage"],
+      after: { editionId, name, slug, displayOrder, targetParticipantCount, categoryTargets: input.categoryTargets ?? null, finalStage: input.finalStage },
+      changedFields: ["editionId", "name", "slug", "displayOrder", "targetParticipantCount", "categoryTargets", "finalStage"],
       source: "admin-selection",
     });
     return { id };
@@ -196,23 +285,51 @@ export async function createSelectionStage(
 export async function updateSelectionStage(
   db: Database,
   editionId: string,
-  input: { stageId: string; expectedVersion: number; name: string; targetParticipantCount: number; finalStage: boolean },
+  input: { stageId: string; expectedVersion: number; name: string; targetParticipantCount?: number; categoryTargets?: StageCategoryTargets; finalStage: boolean },
   actor: AuditActor,
   now: Date,
 ) {
   const name = input.name.trim();
   if (!name) throw new Error("Nama tahap wajib diisi");
-  requirePositiveInteger(input.targetParticipantCount, "Target peserta");
+  const targetParticipantCount = input.categoryTargets
+    ? validateCategoryTargets(input.categoryTargets)
+    : input.targetParticipantCount;
+  if (targetParticipantCount === undefined) throw new Error("Target peserta wajib diisi");
+  if (!input.categoryTargets) requirePositiveInteger(targetParticipantCount, "Target peserta");
 
   return db.transaction(async (tx) => {
     const before = await getStage(tx, editionId, input.stageId);
     if (before.version !== input.expectedVersion) throw new Error("Tahap telah diubah. Muat ulang halaman.");
 
     const entries = await tx
-      .select({ id: participantStageEntries.id })
+      .select({ categoryCode: categories.code })
       .from(participantStageEntries)
+      .innerJoin(participants, eq(participants.id, participantStageEntries.participantId))
+      .innerJoin(categories, eq(categories.id, participants.categoryId))
       .where(eq(participantStageEntries.stageId, before.id));
-    if (input.targetParticipantCount < entries.length) throw new Error("Target tidak boleh kurang dari peserta yang sudah masuk");
+    const [previousStage] = await tx
+      .select({ id: selectionStages.id })
+      .from(selectionStages)
+      .where(and(eq(selectionStages.editionId, editionId), lt(selectionStages.displayOrder, before.displayOrder)))
+      .orderBy(desc(selectionStages.displayOrder))
+      .limit(1);
+    if (previousStage) {
+      const previousAdvanced = await getAdvancedCategoryRows(tx, previousStage.id);
+      const differences = quotaDifferences(
+        countByCategory(previousAdvanced),
+        previousAdvanced.length,
+        input.categoryTargets ?? null,
+        targetParticipantCount,
+      );
+      if (differences.over) throw new Error(`${differences.message} melebihi target kategori yang sudah diloloskan`);
+    }
+    if (input.categoryTargets) {
+      const entriesByCategory = countByCategory(entries);
+      const underfilled = categoryValues.filter((code) => targetParticipantCount !== undefined && input.categoryTargets![code] < entriesByCategory[code]);
+      if (underfilled.length) throw new Error(`Target kategori ${underfilled.join(", ")} tidak boleh kurang dari peserta yang sudah masuk`);
+    } else if (targetParticipantCount < entries.length) {
+      throw new Error("Target tidak boleh kurang dari peserta yang sudah masuk");
+    }
     if (input.finalStage && !before.finalStage) {
       const [existingFinal] = await tx
         .select({ id: selectionStages.id })
@@ -247,7 +364,17 @@ export async function updateSelectionStage(
 
     const updated = await tx
       .update(selectionStages)
-      .set({ name, targetParticipantCount: input.targetParticipantCount, finalStage: input.finalStage, version: before.version + 1, updatedAt: now })
+      .set({
+        name,
+        targetParticipantCount,
+        targetJDCount: input.categoryTargets?.JD ?? null,
+        targetMDCount: input.categoryTargets?.MD ?? null,
+        targetJRCount: input.categoryTargets?.JR ?? null,
+        targetMRCount: input.categoryTargets?.MR ?? null,
+        finalStage: input.finalStage,
+        version: before.version + 1,
+        updatedAt: now,
+      })
       .where(and(eq(selectionStages.id, before.id), eq(selectionStages.version, input.expectedVersion)))
       .returning({ id: selectionStages.id });
     if (updated.length !== 1) throw new Error("Tahap telah diubah. Muat ulang halaman.");
@@ -259,8 +386,8 @@ export async function updateSelectionStage(
       resourceId: before.id,
       resourceLabel: name,
       before,
-      after: { ...before, name, targetParticipantCount: input.targetParticipantCount, finalStage: input.finalStage, version: before.version + 1 },
-      changedFields: ["name", "targetParticipantCount", "finalStage", "version"],
+      after: { ...before, name, targetParticipantCount, categoryTargets: input.categoryTargets ?? null, finalStage: input.finalStage, version: before.version + 1 },
+      changedFields: ["name", "targetParticipantCount", "categoryTargets", "finalStage", "version"],
       source: "admin-selection",
     });
     return { version: before.version + 1 };
@@ -368,9 +495,10 @@ export async function setStageDecisions(
     const stage = await getStage(tx, editionId, input.stageId);
     if (stage.lifecycle !== "active") throw new Error("Keputusan hanya dapat dibuat pada tahap aktif");
     const rows = await tx
-      .select({ entry: participantStageEntries, participantEditionId: participants.editionId })
+      .select({ entry: participantStageEntries, participantEditionId: participants.editionId, categoryCode: categories.code })
       .from(participantStageEntries)
       .innerJoin(participants, eq(participants.id, participantStageEntries.participantId))
+      .innerJoin(categories, eq(categories.id, participants.categoryId))
       .where(inArray(participantStageEntries.id, input.entries.map((entry) => entry.id)));
     if (rows.length !== input.entries.length || rows.some((row) => row.entry.stageId !== stage.id || row.participantEditionId !== editionId)) throw new Error("Peserta harus berasal dari tahap dan edisi aktif");
     for (const row of rows) {
@@ -386,12 +514,20 @@ export async function setStageDecisions(
       .limit(1);
     if (input.decision === "advanced" && nextStage) {
       const currentAdvanced = await tx
-        .select({ id: participantStageEntries.id })
+        .select({ categoryCode: categories.code })
         .from(participantStageEntries)
+        .innerJoin(participants, eq(participants.id, participantStageEntries.participantId))
+        .innerJoin(categories, eq(categories.id, participants.categoryId))
         .where(and(eq(participantStageEntries.stageId, stage.id), eq(participantStageEntries.decision, "advanced")));
-      const selectedAdvanced = rows.filter((row) => row.entry.decision === "advanced").length;
-      const proposedAdvanced = currentAdvanced.length - selectedAdvanced + rows.length;
-      if (proposedAdvanced > nextStage.targetParticipantCount) throw new Error("Jumlah peserta lolos melebihi target tahap berikutnya");
+      const proposedCounts = countByCategory(currentAdvanced);
+      const selectedAdvanced = rows.filter((row) => row.entry.decision === "advanced");
+      const selectedAdvancedCounts = countByCategory(selectedAdvanced);
+      const newlyAdvancedCounts = countByCategory(rows);
+      for (const code of categoryValues) {
+        proposedCounts[code] = proposedCounts[code] - selectedAdvancedCounts[code] + newlyAdvancedCounts[code];
+      }
+      const differences = stageQuotaDifferences(proposedCounts, currentAdvanced.length - selectedAdvanced.length + rows.length, nextStage);
+      if (differences.over) throw new Error(`${differences.message} melebihi target tahap berikutnya`);
     }
 
     for (const row of rows) {
@@ -498,9 +634,14 @@ export async function closeSelectionStage(
     const stage = await getStage(tx, editionId, input.stageId);
     if (stage.version !== input.expectedVersion) throw new Error("Tahap telah diubah. Muat ulang halaman.");
     if (stage.lifecycle !== "active") throw new Error("Hanya tahap aktif yang dapat ditutup");
-    const entries = await tx.select().from(participantStageEntries).where(eq(participantStageEntries.stageId, stage.id));
-    if (entries.some((entry) => entry.decision === "pending")) throw new Error("Selesaikan seluruh keputusan peserta sebelum menutup tahap");
-    const advanced = entries.filter((entry) => entry.decision === "advanced");
+    const entries = await tx
+      .select({ entry: participantStageEntries, categoryCode: categories.code })
+      .from(participantStageEntries)
+      .innerJoin(participants, eq(participants.id, participantStageEntries.participantId))
+      .innerJoin(categories, eq(categories.id, participants.categoryId))
+      .where(eq(participantStageEntries.stageId, stage.id));
+    if (entries.some(({ entry }) => entry.decision === "pending")) throw new Error("Selesaikan seluruh keputusan peserta sebelum menutup tahap");
+    const advanced = entries.filter(({ entry }) => entry.decision === "advanced");
     const [nextStage] = await tx
       .select()
       .from(selectionStages)
@@ -509,9 +650,14 @@ export async function closeSelectionStage(
       .limit(1);
     if (!stage.finalStage && !nextStage) throw new Error("Buat tahap berikutnya atau tandai tahap ini sebagai final");
     if (nextStage) {
-      if (advanced.length > nextStage.targetParticipantCount) throw new Error("Jumlah peserta lolos melebihi target tahap berikutnya");
-      if (advanced.length < nextStage.targetParticipantCount && (!input.allowUnderTarget || (input.reason?.trim().length ?? 0) < 5)) {
-        throw new Error("Konfirmasi dan alasan diperlukan untuk menutup di bawah target");
+      const differences = stageQuotaDifferences(
+        countByCategory(advanced),
+        advanced.length,
+        nextStage,
+      );
+      if (differences.over) throw new Error(`${differences.message} melebihi target tahap berikutnya`);
+      if (differences.under && (!input.allowUnderTarget || (input.reason?.trim().length ?? 0) < 5)) {
+        throw new Error("Konfirmasi dan alasan diperlukan untuk menutup di bawah target kategori");
       }
     }
 
@@ -522,7 +668,7 @@ export async function closeSelectionStage(
       .returning({ id: selectionStages.id });
     if (stageUpdate.length !== 1) throw new Error("Tahap telah diubah. Muat ulang halaman.");
 
-    const advancedParticipantIds = advanced.map((entry) => entry.participantId);
+    const advancedParticipantIds = advanced.map(({ entry }) => entry.participantId);
     if (stage.finalStage) {
       if (advancedParticipantIds.length) {
         await tx.update(participants).set({ selectionStatus: "completed", updatedAt: now }).where(and(eq(participants.editionId, editionId), inArray(participants.id, advancedParticipantIds)));
@@ -538,7 +684,7 @@ export async function closeSelectionStage(
         if (nextStageUpdate.length !== 1) throw new Error("Tahap berikutnya telah diubah. Muat ulang halaman.");
       }
       if (advanced.length) {
-        await tx.insert(participantStageEntries).values(advanced.map((entry) => ({
+        await tx.insert(participantStageEntries).values(advanced.map(({ entry }) => ({
           id: crypto.randomUUID(),
           participantId: entry.participantId,
           stageId: nextStage.id,

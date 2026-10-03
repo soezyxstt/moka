@@ -14,7 +14,7 @@ export type TipTapNode = {
 };
 
 export type TipTapRendererProps = {
-  content?: TipTapNode | Record<string, unknown> | null;
+  content?: TipTapNode | Record<string, unknown> | string | null;
   fallbackText?: string | null;
   className?: string;
 };

@@ -24,6 +24,12 @@ import {
 
 const PERIOD_LIFECYCLES = ["draft", "active", "archived"] as const;
 
+function assertPeriodCanChange(lifecycle: PeriodLifecycle) {
+  if (lifecycle === "archived") {
+    throw new Error("Periode arsip hanya dapat dilihat");
+  }
+}
+
 function validateHttpsUrl(urlStr: string): string {
   const trimmed = urlStr.trim();
   if (!trimmed) {
@@ -322,6 +328,8 @@ export async function updatePeriodAction(formData: FormData) {
       throw new Error("Periode kepengurusan tidak ditemukan");
     }
 
+    assertPeriodCanChange(current.lifecycle);
+
     if (current.version !== version) {
       throw new Error("Versi data telah diperbarui oleh pengguna lain. Silakan muat ulang halaman.");
     }
@@ -404,6 +412,7 @@ export async function setPeriodEditionsAction(formData: FormData) {
     if (!period) {
       throw new Error("Periode kepengurusan tidak ditemukan");
     }
+    assertPeriodCanChange(period.lifecycle);
     if (period.version !== periodVersion) {
       throw new Error("Versi data telah diperbarui oleh pengguna lain. Silakan muat ulang halaman.");
     }
@@ -510,6 +519,10 @@ export async function deletePeriodAction(formData: FormData) {
       throw new Error("Versi data telah diperbarui oleh pengguna lain. Silakan muat ulang halaman.");
     }
 
+    if (current.lifecycle !== "draft") {
+      throw new Error("Periode aktif atau arsip tidak dapat dihapus");
+    }
+
     // Unlink any editions tied to this period
     await tx
       .update(editions)
@@ -574,6 +587,8 @@ export async function createUnitAction(formData: FormData) {
     if (!period) {
       throw new Error("Periode kepengurusan tidak ditemukan");
     }
+
+    assertPeriodCanChange(period.lifecycle);
 
     const existingUnits = await tx
       .select()
@@ -660,6 +675,13 @@ export async function updateUnitAction(formData: FormData) {
     }
 
     periodId = current.periodId;
+    const [period] = await tx
+      .select({ lifecycle: organizationPeriods.lifecycle })
+      .from(organizationPeriods)
+      .where(eq(organizationPeriods.id, periodId))
+      .limit(1);
+    if (!period) throw new Error("Periode kepengurusan tidak ditemukan");
+    assertPeriodCanChange(period.lifecycle);
 
     const existingUnits = await tx
       .select()
@@ -742,6 +764,13 @@ export async function deleteUnitAction(formData: FormData) {
     }
 
     periodId = current.periodId;
+    const [period] = await tx
+      .select({ lifecycle: organizationPeriods.lifecycle })
+      .from(organizationPeriods)
+      .where(eq(organizationPeriods.id, periodId))
+      .limit(1);
+    if (!period) throw new Error("Periode kepengurusan tidak ditemukan");
+    assertPeriodCanChange(period.lifecycle);
 
     await tx.delete(organizationUnits).where(eq(organizationUnits.id, id));
 
@@ -810,6 +839,14 @@ export async function reorderUnitsAction(items: { id: string; displayOrder: numb
     }
 
     periodId = targetUnits[0]!.periodId;
+    const [period] = await tx
+      .select({ lifecycle: organizationPeriods.lifecycle })
+      .from(organizationPeriods)
+      .where(eq(organizationPeriods.id, periodId))
+      .limit(1);
+    if (!period) throw new Error("Periode kepengurusan tidak ditemukan");
+    assertPeriodCanChange(period.lifecycle);
+
     const allPeriodUnits = await tx
       .select()
       .from(organizationUnits)
@@ -873,6 +910,14 @@ export async function assignMemberAction(formData: FormData) {
   const now = new Date();
 
   await database.transaction(async (tx) => {
+    const [period] = await tx
+      .select({ lifecycle: organizationPeriods.lifecycle })
+      .from(organizationPeriods)
+      .where(eq(organizationPeriods.id, periodId))
+      .limit(1);
+    if (!period) throw new Error("Periode kepengurusan tidak ditemukan");
+    assertPeriodCanChange(period.lifecycle);
+
     const [unit] = await tx
       .select()
       .from(organizationUnits)
@@ -967,6 +1012,14 @@ export async function updateMembershipAction(formData: FormData) {
     if (!current) {
       throw new Error("Penugasan pengurus tidak ditemukan");
     }
+
+    const [period] = await tx
+      .select({ lifecycle: organizationPeriods.lifecycle })
+      .from(organizationPeriods)
+      .where(eq(organizationPeriods.id, current.periodId))
+      .limit(1);
+    if (!period) throw new Error("Periode kepengurusan tidak ditemukan");
+    assertPeriodCanChange(period.lifecycle);
 
     if (current.version !== version) {
       throw new Error("Versi data telah diperbarui oleh pengguna lain. Silakan muat ulang halaman.");
@@ -1068,6 +1121,13 @@ export async function removeMembershipAction(formData: FormData) {
     }
 
     periodId = current.periodId;
+    const [period] = await tx
+      .select({ lifecycle: organizationPeriods.lifecycle })
+      .from(organizationPeriods)
+      .where(eq(organizationPeriods.id, periodId))
+      .limit(1);
+    if (!period) throw new Error("Periode kepengurusan tidak ditemukan");
+    assertPeriodCanChange(period.lifecycle);
 
     await tx.delete(organizationMemberships).where(eq(organizationMemberships.id, id));
 
@@ -1239,6 +1299,16 @@ export async function savePersonAction(formData: FormData) {
         throw new Error("Profil orang tidak ditemukan");
       }
 
+      const [archivedMembership] = await tx
+        .select({ id: organizationMemberships.id })
+        .from(organizationMemberships)
+        .innerJoin(organizationPeriods, eq(organizationMemberships.periodId, organizationPeriods.id))
+        .where(and(eq(organizationMemberships.personId, personId), eq(organizationPeriods.lifecycle, "archived")))
+        .limit(1);
+      if (archivedMembership) {
+        throw new Error("Profil yang tercatat pada periode arsip tidak dapat diubah");
+      }
+
       if (current.version !== version) {
         throw new Error("Versi data telah diperbarui oleh pengguna lain. Silakan muat ulang halaman.");
       }
@@ -1324,6 +1394,16 @@ export async function deletePersonAction(formData: FormData) {
       throw new Error("Profil orang tidak ditemukan");
     }
 
+    const [archivedMembership] = await tx
+      .select({ id: organizationMemberships.id })
+      .from(organizationMemberships)
+      .innerJoin(organizationPeriods, eq(organizationMemberships.periodId, organizationPeriods.id))
+      .where(and(eq(organizationMemberships.personId, id), eq(organizationPeriods.lifecycle, "archived")))
+      .limit(1);
+    if (archivedMembership) {
+      throw new Error("Profil yang tercatat pada periode arsip tidak dapat dihapus");
+    }
+
     if (current.version !== version) {
       throw new Error("Versi data telah diperbarui oleh pengguna lain. Silakan muat ulang halaman.");
     }
@@ -1370,6 +1450,14 @@ export async function mapLegacyAssignmentAction(formData: FormData) {
   const now = new Date();
 
   await database.transaction(async (tx) => {
+    const [period] = await tx
+      .select({ lifecycle: organizationPeriods.lifecycle })
+      .from(organizationPeriods)
+      .where(eq(organizationPeriods.id, periodId))
+      .limit(1);
+    if (!period) throw new Error("Periode kepengurusan tidak ditemukan");
+    assertPeriodCanChange(period.lifecycle);
+
     const [legacy] = await tx
       .select()
       .from(organizationAssignments)

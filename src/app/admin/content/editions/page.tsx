@@ -15,7 +15,7 @@ export default async function EditionsPage() {
   ]);
 
   return (
-    <AdminPage eyebrow="Studio / taxonomy" title="Edisi & kategori" description="Atur periode penyelenggaraan dan kategori yang menjadi dasar seluruh konten publik.">
+    <AdminPage eyebrow="Edisi" title="Edisi & kategori">
       <div className="grid gap-6 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
         <div className="space-y-6">
           <AdminCard>
@@ -29,7 +29,7 @@ export default async function EditionsPage() {
             </form>
           </AdminCard>
           <AdminCard>
-            <AdminCardHeader eyebrow="Kategori peserta" title="Tambah kategori" description="Kode digunakan untuk navigasi dan pengelompokan peserta." />
+            <AdminCardHeader eyebrow="Kategori peserta" title="Tambah kategori" />
             <form action={createCategoryAction} className="grid gap-4 sm:grid-cols-2">
               <AdminField label="Edisi"><AdminSelect name="editionId" required options={[{ value: "", label: "Pilih edisi" }, ...rows.map((edition) => ({ value: edition.id, label: edition.name }))]} /></AdminField>
               <AdminField label="Kode"><AdminInput name="code" placeholder="JD" required /></AdminField>

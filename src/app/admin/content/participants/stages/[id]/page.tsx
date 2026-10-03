@@ -6,9 +6,11 @@ import { getAdminEditionContext } from "@/server/cms/context";
 import { database } from "@/server/db/client";
 import {
   categories,
+  categoryValues,
   participantStageEntries,
   participants,
   selectionStages,
+  type StageCategoryTargets,
 } from "@/server/db/schema";
 import { StageSelectionWorkspace } from "./stage-selection-workspace";
 
@@ -51,6 +53,10 @@ export default async function StageWorkspacePage({
       name: selectionStages.name,
       displayOrder: selectionStages.displayOrder,
       targetParticipantCount: selectionStages.targetParticipantCount,
+      targetJDCount: selectionStages.targetJDCount,
+      targetMDCount: selectionStages.targetMDCount,
+      targetJRCount: selectionStages.targetJRCount,
+      targetMRCount: selectionStages.targetMRCount,
       lifecycle: selectionStages.lifecycle,
       finalStage: selectionStages.finalStage,
     })
@@ -58,7 +64,15 @@ export default async function StageWorkspacePage({
     .where(eq(selectionStages.editionId, currentEdition.id))
     .orderBy(asc(selectionStages.displayOrder), asc(selectionStages.id));
 
-  const nextStage = allStages.find((s) => s.displayOrder > stage.displayOrder) ?? null;
+  const stageTargets = (row: typeof allStages[number]): StageCategoryTargets | null => {
+    const values = [row.targetJDCount, row.targetMDCount, row.targetJRCount, row.targetMRCount];
+    if (values.every((value) => value === null)) return null;
+    if (values.some((value) => value === null)) throw new Error("Target kategori tahap tidak lengkap");
+    return Object.fromEntries(categoryValues.map((code, index) => [code, values[index]!])) as StageCategoryTargets;
+  };
+
+  const nextStageRow = allStages.find((s) => s.displayOrder > stage.displayOrder) ?? null;
+  const nextStage = nextStageRow ? { ...nextStageRow, categoryTargets: stageTargets(nextStageRow) } : null;
   const previousStage =
     [...allStages].reverse().find((s) => s.displayOrder < stage.displayOrder) ?? null;
 

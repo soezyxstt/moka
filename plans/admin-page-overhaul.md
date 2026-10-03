@@ -426,7 +426,7 @@ Acceptance:
 - Semua keputusan, rollback, buka, tutup, dan perubahan target memakai permission, optimistic version, transaksi, serta audit.
 - Tidak ada perhitungan nilai atau ranking.
 
-Verifikasi source: typecheck, lint delapan file route, scan aturan desain, dan 11 focused tests peserta serta seleksi lulus. Runtime visual belum diverifikasi dengan sesi admin terautentikasi. Migrasi dan backfill CP8A belum diterapkan ke database operator.
+Verifikasi source: typecheck, lint delapan file route, scan aturan desain, dan 11 focused tests peserta serta seleksi lulus. Migrasi dan backfill CP8A diterapkan ke database prod operator pada 2026-09-14 dengan hasil 1 edisi, 2 stage, 104 peserta, dan 104 entry pending. Runtime visual belum diverifikasi dengan sesi admin terautentikasi.
 
 ### Checkpoint 8C: Profil peserta, media, QRIS, dan gelar
 
@@ -466,7 +466,7 @@ Acceptance:
 - Kesiapan penyematan belum lengkap selama ada peserta tahap final tanpa gelar.
 - Semua mutation memakai optimistic version dan audit.
 
-Verifikasi source: typecheck, lint file perubahan, scan aturan desain, dan 14 focused tests peserta, seleksi, serta gelar lulus. Runtime visual belum diverifikasi dengan sesi admin terautentikasi. Migrasi dan backfill CP8A belum diterapkan ke database operator.
+Verifikasi source: typecheck, lint file perubahan, scan aturan desain, dan 14 focused tests peserta, seleksi, serta gelar lulus. Migrasi dan backfill CP8A diterapkan ke database prod operator pada 2026-09-14. Runtime visual belum diverifikasi dengan sesi admin terautentikasi.
 
 ### Checkpoint 9: Acara dan dedicated gallery workspace
 
@@ -508,7 +508,7 @@ Acceptance:
 
 Implementasi source menyediakan direktori acara per edisi, halaman buat dan detail acara, relasi album tanpa editor tertanam, direktori album, form album yang dapat dipraisi dari acara, serta workspace item foto dan YouTube. Semua mutation memakai permission server, transaksi dan audit, isolasi edisi aktif, serta optimistic version. Perubahan item diserialisasi per album agar caption, urutan, dan hapus tidak saling menimpa. Constraint `gallery_item_exactly_one_source` memastikan setiap item memiliki tepat satu sumber.
 
-Verifikasi source: `db:check`, typecheck, lint file CP9 tanpa error, dan 6 focused tests acara, galeri, sumber item, YouTube, serta reorder lulus. Review kritis ditindaklanjuti untuk duplicate reorder, state lintas edisi, mode hanya-baca, konflik mutation, kelengkapan audit, dan race relasi acara-album. Migrasi `0014_burly_sprite.sql` belum diterapkan ke database operator. Runtime visual desktop dan 380 px belum diverifikasi dengan sesi admin terautentikasi.
+Verifikasi source: `db:check`, typecheck, lint file CP9 tanpa error, dan 6 focused tests acara, galeri, sumber item, YouTube, serta reorder lulus. Review kritis ditindaklanjuti untuk duplicate reorder, state lintas edisi, mode hanya-baca, konflik mutation, kelengkapan audit, dan race relasi acara-album. Migrasi `0014_burly_sprite.sql` diterapkan ke database prod operator pada 2026-09-14. Runtime visual desktop dan 380 px belum diverifikasi dengan sesi admin terautentikasi.
 
 ### Checkpoint 10: Voting dan dashboard edition-scoped
 
@@ -587,7 +587,7 @@ Plan admin dinyatakan selesai hanya jika:
 - Voting memakai snapshot stage dan lifecycle mulai atau tutup manual.
 - Sponsor memiliki logo, tier, website, urutan, dan status.
 - Galeri memiliki dedicated authoring workspace.
-- Public routes, import aset hardcoded, dan production cutover tetap belum dilakukan.
+- Public route CMS-only dan import aset 2025 berada di luar Plan 012 dan ditangani oleh Plan 014 serta Plan 010. Import lokal sudah diotorisasi dan sedang berlangsung; production cutover tetap menunggu otorisasi target.
 
 ## Asumsi yang dikunci
 

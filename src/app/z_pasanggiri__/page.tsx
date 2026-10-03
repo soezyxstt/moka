@@ -1,7 +1,5 @@
-import { getPublicLegacyPageData } from '@/server/cms/public-readers';
-import LegacyPasanggiriClient from './client';
+import { redirect } from 'next/navigation';
 
-export default async function Pasanggiri() {
-  const data = await getPublicLegacyPageData();
-  return <LegacyPasanggiriClient {...data} />;
+export default function LegacyPasanggiriPage(): never {
+  redirect('/');
 }

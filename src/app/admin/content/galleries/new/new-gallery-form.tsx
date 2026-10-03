@@ -104,7 +104,7 @@ export function NewGalleryForm({
 
   return (
     <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
-      <AdminCard className="space-y-4 p-6 sm:p-6">
+      <AdminCard className="space-y-4 p-4 sm:p-5">
         <div className="flex items-center justify-between border-b border-border pb-3">
           <Link
             href="/admin/content/galleries"

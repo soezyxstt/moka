@@ -240,9 +240,8 @@ export default async function ParticipantDetailPage(props: Props) {
 
   return (
     <AdminPage
-      eyebrow="Konten / peserta / editor"
+      eyebrow="Peserta"
       title={`Profil Peserta #${String(participantDetail.number).padStart(2, "0")}`}
-      description="Kelola biodata, prestasi, media, dan QRIS peserta."
       action={<AdminBadge value={editionRow.lifecycle} />}
     >
       <ParticipantDetailWorkspace

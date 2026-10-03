@@ -66,6 +66,8 @@ Menu **Aset Situs Tetap** (`/admin/content/site-assets`) mengelola penempatan me
 
 ---
 
+Editor **Teks halaman** (`/admin/content/pages`) menyediakan slot tetap untuk beranda dan Tentang: hero, program, berita, ajakan, visi, misi, legalitas, dan organisasi. Simpan perubahan sebagai draf, lalu terbitkan dengan izin penerbitan. Riwayat revisi dan audit dicatat per edisi. Tulis satu misi per baris. Pada slot **home/ajakan**, isi opsional **Label tombol** dan **Tautan tombol**. Tautan harus berupa path situs seperti `/pendaftaran` atau URL penuh `http(s)`; jika tautan diisi, label tombol wajib diisi. Tombol hanya tampil setelah draf diterbitkan. Halaman publik lokal `localhost:3001` membaca konten CMS terbit pada edisi aktif; bagian tanpa konten akan dikosongkan. Produksi tetap menunggu otorisasi cutover Plan 010.
+
 ## 6. Sponsor & Mitra
 
 Menu **Sponsor** (`/admin/content/sponsors`) mengelola partner pendukung acara:
@@ -99,6 +101,7 @@ Menu **Kepengurusan** (`/admin/organization`) mengelola struktur kepengurusan PA
 4. **Direktori Orang Bersama**: Profil orang (nama, bio, media sosial, foto) dapat digunakan kembali untuk kepengurusan berbagai periode maupun kepanitiaan edisi.
 5. **Edisi Terhubung**: Buka detail periode lalu pilih **Atur** pada bagian Edisi terhubung. Satu periode dapat memiliki beberapa edisi. Jika edisi masih terhubung ke periode lain, centang konfirmasi pemindahan sebelum menyimpan.
 6. **Visi dan Misi**: Buka **Edit metadata periode** untuk memperbarui visi serta menambah, menghapus, atau mengurutkan poin misi.
+7. **Riwayat Periode**: Periode arsip hanya dapat dilihat. Periode aktif dan arsip tidak dapat dihapus. Profil orang, unit, dan penugasan yang terhubung ke periode arsip tidak dapat diubah atau dihapus.
 
 ---
 
@@ -119,15 +122,16 @@ Menu **Mojang Jajaka** (`/admin/content/participants`) mengelola peserta Pasangg
 3. **Workspace Seleksi**: Buka satu tahap untuk menetapkan `Lolos` atau `Tidak lolos`. Semua peserta harus memiliki keputusan sebelum tahap ditutup.
 4. **Pemulihan**: Keputusan dapat di-rollback dengan alasan. Tahap tertutup dapat dibuka kembali hanya jika tahap berikutnya belum diproses.
 5. **Kategori Standar**: Peserta memakai kategori baku `JD`, `MD`, `JR`, atau `MR`.
-6. **Tahap Dinamis**: Target berlaku untuk seluruh kategori. Sistem tidak menyimpan nilai tes atau ranking.
+6. **Kuota Tahap**: Atur target untuk tiap kategori `JD`, `MD`, `JR`, dan `MR`; jumlah total dihitung otomatis. Tahap lama tanpa kuota per kategori tetap memakai target total. Jika jumlah peserta yang lolos di bawah kuota, konfirmasi dan alasan diperlukan.
 7. **Tahap Final dan Gelar**: Buka `/admin/content/participants/titles` untuk membuat gelar, mengatur jumlah slot, dan menyematkannya kepada peserta tahap final. Satu peserta dapat menerima beberapa gelar.
 8. **Penghapusan Tahap**: Tahap yang masih dipakai peserta atau voting tidak dapat dihapus.
 9. **Editor Detail Peserta** (`/admin/content/participants/[id]`):
    - **Identitas & Kategori**: Nomor urut, nama lengkap, slug profil, dan bio ringkas.
    - **Prestasi**: Daftar capaian dan prestasi dengan tombol pengurut naik/turun.
    - **Sosial Media**: Tautan akun Instagram, TikTok, YouTube, LinkedIn, dll.
-   - **Galeri Multi-Role**: Foto dikelompokkan berdasarkan peran (`Closeup`, `Full Body`, `Detail Busana`, `Karantina`, `Lainnya`). Foto Closeup otomatis tersinkronisasi ke foto profil utama.
+   - **Media Profil**: Foto dikelompokkan berdasarkan peran (`Closeup`, `Full Body`, `Detail Busana`, `Karantina`, `Lainnya`). Foto Closeup otomatis tersinkronisasi ke foto utama. Profil dapat memiliki satu video aktif berformat MP4 atau WebM.
    - **QRIS dan Voting**: QRIS dibuat di luar sistem, lalu gambarnya diunggah atau dipilih dari Pustaka Media.
+   - **Halaman profil publik**: Foto, bio, prestasi, QR, dan video yang siap tampil dibaca dari peserta yang mencapai tahap semifinal atau final pada edisi aktif.
 10. **Live Preview**: Pratinjau kartu peserta secara langsung saat mengedit.
 
 ---
@@ -142,6 +146,8 @@ Menu **Galeri** (`/admin/content/galleries`) menyediakan dua tipe album:
 2. **Terkait acara**: album hanya dapat memilih acara dari edisi aktif.
 
 Di dalam album, admin dapat memilih beberapa foto dari Pustaka Media, menambahkan video YouTube, mengubah keterangan, dan mengatur urutan. Setiap item hanya memiliki satu sumber. Pratinjau menampilkan indeks album dan susunan medianya.
+
+Album terbit ditampilkan pada `/galeri`. Bagian Galeri di `/tentang` menampilkan maksimal tiga preview. Item album acara menjadi carousel pada detail kegiatan. Runtime lokal memakai konten bawaan sebagai fallback jika belum ada konten CMS terbit; produksi belum dialihkan.
 
 ---
 
@@ -172,3 +178,18 @@ Menu **Audit** (`/admin/audit`):
 1. Setiap operasi penambahan, perubahan, penghapusan, dan pengunggahan dicatat secara otomatis dalam transaksi database yang sama.
 2. Mencatat waktu WIB (`Asia/Jakarta`), identitas operator, jenis sumber daya, aksi, serta rincian sebelum (*before*) dan sesudah (*after*) perubahan.
 3. Menjamin transparansi dan akuntabilitas penuh pada seluruh data CMS dan operasional voting.
+
+---
+
+## 15. Import data edisi 2025 di lingkungan lokal
+
+Import satu kali ini hanya tersedia saat aplikasi memakai `NODE_ENV` nonproduction dan `TURSO_DATABASE_URL=file:local.db`.
+
+1. Buka **Pustaka Media** (`/admin/media`) dan jalankan **Import media 2025**. Proses mengunggah aset ke akun UploadThing yang dikonfigurasi dan menyimpan referensinya ke database lokal.
+2. Tunggu sampai status **Import selesai**. Jika UploadThing masih memproses file, gunakan **Periksa status lagi**. Jika koneksi terputus, lanjutkan dari batch yang belum selesai.
+3. Setelah media selesai, buka **Konten** (`/admin/content`) dan jalankan **Import konten 2025**. Transaksi mengaktifkan edisi 2025 dan memindahkan edisi aktif yang lebih baru ke draf tanpa menghapus datanya.
+4. Import konten menolak edisi 2025 yang sudah ada agar perubahan CMS tidak tertimpa. Kelola perubahan berikutnya melalui halaman CMS terkait.
+
+Prosedur ini tidak menulis database Turso remote, tidak melakukan production cutover, dan tidak men-deploy aplikasi.
+
+**Hasil lokal 1 Oktober 2026:** import selesai pada `local.db` dengan 340 aset siap. Edisi 2025 aktif dan edisi 2026 menjadi draf. Browser sudah memuat data beranda, Tentang, Galeri, carousel acara, daftar semifinalis, dan profil finalis dari CMS. Sumber tidak menyediakan jadwal dan harga kampanye voting, tally terverifikasi, tier sponsor, atau video profil individu. Belum ada campaign voting 2025; buat melalui **Voting** setelah jadwal dan harga dipastikan. Seluruh 68 sponsor saat ini bertier `pendukung` dan perlu dipetakan sebelum digunakan sebagai klasifikasi final.

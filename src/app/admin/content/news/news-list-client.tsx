@@ -4,7 +4,6 @@ import {
   Calendar,
   FileEdit,
   Newspaper,
-  Plus,
   Search,
   Trash2,
 } from "lucide-react";
@@ -54,7 +53,7 @@ export type NewsListClientProps = {
 function newsStatusLabel(status: string): string {
   if (status === "published") return "Terbit";
   if (status === "archived") return "Arsip";
-  return "Draft";
+  return "Draf";
 }
 
 export function NewsListClient({
@@ -148,14 +147,6 @@ export function NewsListClient({
           ))}
         </div>
 
-        {/* Create Button */}
-        {canEdit && (
-          <Link href="/admin/content/news/new">
-            <Button size="sm" className="h-8 gap-1.5 bg-dgb text-xs font-semibold text-white hover:bg-dgb-600">
-              <Plus size={14} /> Tulis berita baru
-            </Button>
-          </Link>
-        )}
       </div>
 
       {/* Article List Grid / Cards */}
@@ -170,15 +161,6 @@ export function NewsListClient({
                 : "Coba ubah kata kunci pencarian atau filter status yang dipilih."
             }
           />
-          {canEdit && articles.length === 0 && (
-            <div className="flex justify-center pb-8 pt-2">
-              <Link href="/admin/content/news/new">
-                <Button size="sm" className="bg-dgb text-xs font-semibold text-white hover:bg-dgb-600">
-                  <Plus size={14} className="mr-1.5" /> Tulis berita baru
-                </Button>
-              </Link>
-            </div>
-          )}
         </AdminCard>
       ) : (
         <div className="space-y-3">

@@ -1,54 +1,28 @@
 // components/HeroVideo.tsx
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface HeroVideoProps {
   children: React.ReactNode;
-  fallbackImageSrc: string; // Add prop for dynamic fallback image
-  videoWebMSrc: string;    // Add prop for video source paths
-  videoMp4Src: string;
+  fallbackImageSrc: string | null;
+  videoWebMSrc: string | null;
+  videoMp4Src: string | null;
 }
 
-const HeroVideo: React.FC<HeroVideoProps> = ({ children, fallbackImageSrc, videoWebMSrc }) => {
+const HeroVideo: React.FC<HeroVideoProps> = ({ children, fallbackImageSrc, videoWebMSrc, videoMp4Src }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [videoReady, setVideoReady] = useState<boolean>(false);
-  const [showFallback, setShowFallback] = useState<boolean>(true);
-
-  useEffect(() => {
-    const videoElement = videoRef.current;
-
-    const handleCanPlayThrough = () => {
-      // console.log('Video canplaythrough event fired. Setting videoReady to true.');
-      setVideoReady(true);
-      setTimeout(() => {
-        setShowFallback(false);
-      }, 300); // Give a slight delay for smooth visual transition
-    };
-
-    if (videoElement) {
-      if (videoElement.readyState >= 4) { // HAVE_ENOUGH_DATA
-        // console.log('Video already ready on mount.');
-        handleCanPlayThrough();
-      } else {
-        videoElement.addEventListener('canplaythrough', handleCanPlayThrough);
-      }
-    }
-
-    return () => {
-      if (videoElement) {
-        videoElement.removeEventListener('canplaythrough', handleCanPlayThrough);
-      }
-    };
-  }, []);
+  const [readyVideoSource, setReadyVideoSource] = useState<string | null>(null);
+  const videoSource = videoWebMSrc ?? videoMp4Src;
+  const videoReady = videoSource !== null && readyVideoSource === videoSource;
+  const showFallback = !videoSource || !videoReady;
 
   return (
-    <div className="relative w-full h-[90lvh] overflow-hidden"> {/* Adjusted height to match your layout */}
-      {/* Framer Motion AnimatePresence for smooth unmounting of the fallback image */}
+    <div className="relative h-[90lvh] w-full overflow-hidden bg-dgb-900">
       <AnimatePresence>
-        {showFallback && (
+        {showFallback && fallbackImageSrc && (
           <motion.div
             key="fallback-image"
             initial={{ opacity: 1 }}
@@ -57,8 +31,8 @@ const HeroVideo: React.FC<HeroVideoProps> = ({ children, fallbackImageSrc, video
             className="absolute inset-0 z-0"
           >
             <Image
-              src={fallbackImageSrc} // Use prop for dynamic image source
-              alt="Background image fallback"
+              src={fallbackImageSrc}
+              alt="Latar kategori"
               fill
               priority
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 100vw"
@@ -68,32 +42,30 @@ const HeroVideo: React.FC<HeroVideoProps> = ({ children, fallbackImageSrc, video
         )}
       </AnimatePresence>
 
-      {/* The Video Element with Framer Motion */}
-      <motion.video
-        ref={videoRef}
-        autoPlay
-        loop
-        muted
-        playsInline
-        preload="auto"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: videoReady ? 1 : 0 }}
-        transition={{ duration: 1.0, ease: "easeIn" }}
-        className="absolute inset-0 w-full h-full object-cover z-0"
-        // onLoadedData={() => console.log('Video metadata loaded (video onLoadedData)')}
-        // onPlay={() => console.log('Video started playing (video onPlay)')}
-        // onError={(e) => console.error('Video error:', e)}
-      >
-        <source src={videoWebMSrc} type="video/webm" /> {/* Use prop */}
-        {/* <source src={videoMp4Src} type="video/mp4" />   Use prop */}
-        Your browser does not support the video tag. Please update your browser.
-      </motion.video>
+      {(videoWebMSrc || videoMp4Src) && (
+        <motion.video
+          ref={videoRef}
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="auto"
+          aria-hidden="true"
+          onCanPlayThrough={() => {
+            if (videoSource) setReadyVideoSource(videoSource);
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: videoReady ? 1 : 0 }}
+          transition={{ duration: 1.0, ease: "easeIn" }}
+          className="absolute inset-0 z-0 h-full w-full object-cover"
+        >
+          {videoWebMSrc && <source src={videoWebMSrc} type="video/webm" />}
+          {videoMp4Src && <source src={videoMp4Src} type="video/mp4" />}
+        </motion.video>
+      )}
 
-      {/* Overlay to improve text readability - Matches your existing shadow-[inset_0_0_0_50vw_rgba(0,0,0,0.5)] */}
-      {/* We'll use a direct bg-black opacity-50 for simplicity and consistent layering */}
       <div className="absolute inset-0 bg-black opacity-50 z-10"></div>
 
-      {/* Content over the video */}
       <div className="absolute inset-0 flex justify-center flex-col text-white md:px-20 px-8 text-sm z-20">
         {children}
       </div>

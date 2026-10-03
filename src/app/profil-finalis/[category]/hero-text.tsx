@@ -10,7 +10,7 @@ export default function HeroTextWrapper({ children }: { children: React.ReactNod
       initial={{ opacity: 0 }} // Initial state: invisible
       animate={{ opacity: 1 }} // Target state: fully visible
       transition={{
-        delay: 5,        // 5 seconds delay before the animation starts
+        delay: 0.15,
         duration: 1,     // 1 second duration for the fade-in animation
         ease: "easeOut"  // Easing function for a smooth fade
       }}

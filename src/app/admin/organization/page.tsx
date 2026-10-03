@@ -193,9 +193,8 @@ export default async function OrganizationPage() {
 
   return (
     <AdminPage
-      eyebrow="Umum / organisasi"
+      eyebrow="Kepengurusan"
       title="Kepengurusan"
-      description="Kelola periode, struktur, dan profil organisasi."
     >
       <OrganizationWorkspace
         periods={periods}

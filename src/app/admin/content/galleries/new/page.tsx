@@ -31,9 +31,8 @@ export default async function NewGalleryPage({
 
   return (
     <AdminPage
-      eyebrow="Studio / gallery"
-      title="Buat Album Baru"
-      description={`Buat album galeri dokumentasi foto dan video untuk ${currentEdition.name} (${currentEdition.year}).`}
+      eyebrow="Galeri"
+      title="Buat album"
     >
       <NewGalleryForm
         editionName={currentEdition.name}

@@ -1,7 +1,12 @@
+import { eq } from "drizzle-orm";
+
 import { requirePermission } from "@/server/auth/authorization";
 import { AdminIcon, type AdminIconName } from "@/components/admin/icons";
-import { AdminBadge, AdminLinkButton, AdminListRow, AdminPage } from "@/components/admin/primitives";
+import { AdminBadge, AdminCard, AdminCardHeader, AdminLinkButton, AdminListRow, AdminPage } from "@/components/admin/primitives";
 import { getAdminEditionContext } from "@/server/cms/context";
+import { database } from "@/server/db/client";
+import { editions } from "@/server/db/schema";
+import { Import2025Button } from "./import-2025-button";
 
 export const metadata = { title: "Ikhtisar konten" };
 
@@ -18,14 +23,17 @@ const modules: { slug: string; label: string; description: string; icon: AdminIc
 ];
 
 export default async function ContentPage() {
-  await requirePermission("content.view");
+  const actor = await requirePermission("content.view");
   const currentEdition = await getAdminEditionContext();
+  const canImport2025 = actor.effectivePermissions.has("settings.manage") && process.env.NODE_ENV !== "production" && process.env.TURSO_DATABASE_URL === "file:local.db";
+  const existing2025 = canImport2025
+    ? await database.select({ id: editions.id }).from(editions).where(eq(editions.year, 2025)).limit(1)
+    : [];
 
   return (
     <AdminPage
-      eyebrow="Studio konten"
+      eyebrow="Konten"
       title="Kelola konten"
-      description="Pilih modul untuk edisi aktif."
       action={currentEdition ? <AdminBadge value={currentEdition.lifecycle} /> : null}
     >
       <div className="divide-y divide-dgb-100 border-y border-dgb-100">
@@ -49,6 +57,20 @@ export default async function ContentPage() {
           />
         ))}
       </div>
+      {canImport2025 ? (
+        <AdminCard className="mt-6">
+          <AdminCardHeader
+            eyebrow="Database lokal"
+            title="Import konten 2025"
+            description="Menyalin konten sumber 2025 ke file:local.db. Import hanya berjalan sekali agar perubahan CMS tidak tertimpa."
+          />
+          {existing2025.length ? (
+            <p className="text-sm text-muted-foreground">Edisi 2025 sudah tersedia. Gunakan editor CMS untuk perubahan berikutnya.</p>
+          ) : (
+            <Import2025Button />
+          )}
+        </AdminCard>
+      ) : null}
     </AdminPage>
   );
 }

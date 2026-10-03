@@ -4,11 +4,13 @@ import { requirePermission } from "@/server/auth/authorization";
 import { database } from "@/server/db/client";
 import { editions, mediaAssets, mediaFolders } from "@/server/db/schema";
 import { getAdminEditionContext } from "@/server/cms/context";
+import { Import2025MediaPanel } from "./import-2025-media";
 import { MediaExplorer, type MediaAssetRecord, type MediaFolderRecord } from "./uploader";
 
 export default async function MediaPage() {
   const { effectivePermissions } = await requirePermission("media.view");
   const canManage = effectivePermissions.has("media.manage");
+  const canImport2025Media = canManage && process.env.NODE_ENV !== "production" && process.env.TURSO_DATABASE_URL === "file:local.db";
   const currentEdition = await getAdminEditionContext();
 
   const [assets, folders, editionRows] = await Promise.all([
@@ -22,10 +24,10 @@ export default async function MediaPage() {
 
   return (
     <AdminPage
-      eyebrow="Studio / pustaka"
+      eyebrow="Pustaka"
       title="Pustaka media"
-      description="Jelajahi aset berdasarkan folder dan edisi, cari file dengan cepat, dan sesuaikan metadata sebelum digunakan di konten publik."
     >
+      {canImport2025Media ? <Import2025MediaPanel /> : null}
       <MediaExplorer
         assets={serializedAssets}
         folders={serializedFolders}

@@ -10,7 +10,7 @@ import {
 import { requirePermission } from "@/server/auth/authorization";
 import { getAdminEditionContext } from "@/server/cms/context";
 import { database } from "@/server/db/client";
-import { participantStageEntries, selectionStages } from "@/server/db/schema";
+import { categories, participantStageEntries, participants, selectionStages, categoryValues, parseCategory, type StageCategoryTargets } from "@/server/db/schema";
 import { StagesListClient, type StageListItem } from "./stages-list-client";
 
 export const metadata = { title: "Tahap Seleksi | Mojang Jajaka" };
@@ -23,9 +23,8 @@ export default async function SelectionStagesPage() {
   if (!currentEdition) {
     return (
       <AdminPage
-        eyebrow="Peserta / alur seleksi"
+        eyebrow="Peserta"
         title="Tahap seleksi"
-        description="Kelola alur linear tahapan seleksi peserta Pasanggiri."
       >
         <AdminCard padding="none">
           <div className="p-8">
@@ -52,24 +51,51 @@ export default async function SelectionStagesPage() {
     .select({
       stageId: participantStageEntries.stageId,
       decision: participantStageEntries.decision,
+      categoryCode: categories.code,
     })
     .from(participantStageEntries)
     .innerJoin(selectionStages, eq(selectionStages.id, participantStageEntries.stageId))
+    .innerJoin(participants, eq(participants.id, participantStageEntries.participantId))
+    .innerJoin(categories, eq(categories.id, participants.categoryId))
     .where(eq(selectionStages.editionId, currentEdition.id));
 
   // Aggregate stats per stageId
-  const statsMap = new Map<string, { total: number; pending: number; advanced: number; eliminated: number }>();
+  const statsMap = new Map<string, { total: number; pending: number; advanced: number; eliminated: number; advancedByCategory: StageCategoryTargets; totalByCategory: StageCategoryTargets }>();
   for (const entry of stageEntries) {
-    const stat = statsMap.get(entry.stageId) ?? { total: 0, pending: 0, advanced: 0, eliminated: 0 };
+    const stat = statsMap.get(entry.stageId) ?? {
+      total: 0,
+      pending: 0,
+      advanced: 0,
+      eliminated: 0,
+      advancedByCategory: { JD: 0, MD: 0, JR: 0, MR: 0 },
+      totalByCategory: { JD: 0, MD: 0, JR: 0, MR: 0 },
+    };
     stat.total += 1;
+    stat.totalByCategory[parseCategory(entry.categoryCode)] += 1;
     if (entry.decision === "pending") stat.pending += 1;
-    else if (entry.decision === "advanced") stat.advanced += 1;
+    else if (entry.decision === "advanced") {
+      stat.advanced += 1;
+      stat.advancedByCategory[parseCategory(entry.categoryCode)] += 1;
+    }
     else if (entry.decision === "eliminated") stat.eliminated += 1;
     statsMap.set(entry.stageId, stat);
   }
 
   const stageItems: StageListItem[] = stages.map((stage) => {
-    const stat = statsMap.get(stage.id) ?? { total: 0, pending: 0, advanced: 0, eliminated: 0 };
+    const stat = statsMap.get(stage.id) ?? {
+      total: 0,
+      pending: 0,
+      advanced: 0,
+      eliminated: 0,
+      advancedByCategory: { JD: 0, MD: 0, JR: 0, MR: 0 },
+      totalByCategory: { JD: 0, MD: 0, JR: 0, MR: 0 },
+    };
+    const targetValues = [stage.targetJDCount, stage.targetMDCount, stage.targetJRCount, stage.targetMRCount];
+    const legacyTargets = targetValues.every((value) => value === null);
+    if (!legacyTargets && targetValues.some((value) => value === null)) throw new Error("Target kategori tahap tidak lengkap");
+    const categoryTargets = legacyTargets
+      ? null
+      : Object.fromEntries(categoryValues.map((code, index) => [code, targetValues[index]!])) as StageCategoryTargets;
     return {
       id: stage.id,
       editionId: stage.editionId,
@@ -77,6 +103,7 @@ export default async function SelectionStagesPage() {
       slug: stage.slug,
       displayOrder: stage.displayOrder,
       targetParticipantCount: stage.targetParticipantCount,
+      categoryTargets,
       lifecycle: stage.lifecycle,
       finalStage: stage.finalStage,
       version: stage.version,
@@ -87,9 +114,8 @@ export default async function SelectionStagesPage() {
 
   return (
     <AdminPage
-      eyebrow="Peserta / alur seleksi"
+      eyebrow="Peserta"
       title="Tahap seleksi"
-      description="Alur linear seleksi Pasanggiri. Setiap tahap memiliki target peserta dan keputusan berurutan."
       action={
         <AdminLinkButton href="/admin/content/participants" variant="secondary">
           <ArrowLeft className="size-4" />

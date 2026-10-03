@@ -23,7 +23,7 @@ export default async function ParticipantTitlesPage() {
 
   if (!currentEdition) {
     return (
-      <AdminPage eyebrow="Peserta / gelar" title="Gelar Pasanggiri" description="Kelola gelar peserta tahap final.">
+      <AdminPage eyebrow="Peserta" title="Gelar Pasanggiri">
         <AdminCard padding="none">
           <AdminEmptyState icon="award" title="Belum ada edisi dipilih" description="Pilih edisi pada header." />
         </AdminCard>
@@ -72,9 +72,8 @@ export default async function ParticipantTitlesPage() {
 
   return (
     <AdminPage
-      eyebrow="Peserta / gelar"
+      eyebrow="Peserta"
       title="Gelar Pasanggiri"
-      description="Atur slot dan penyematan gelar peserta tahap final."
       action={<AdminLinkButton href="/admin/content/participants" variant="secondary"><ArrowLeft className="size-4" />Kembali ke peserta</AdminLinkButton>}
     >
       <TitleWorkspace

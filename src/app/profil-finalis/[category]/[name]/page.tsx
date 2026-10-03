@@ -1,30 +1,27 @@
 import BG from '@/components/next-image-bg';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { categories } from '@/lib/data';
 import ImageMaskFade from './image-mask';
-// import Link from 'next/link';
+import Image from 'next/image';
+import { getPublicParticipantBySlug } from '@/server/cms/public-participant-readers';
+import { notFound } from 'next/navigation';
 
 export async function generateMetadata({
   params,
 }: Readonly<{ params: Promise<{ name: string, category: string }> }>) {
   const { name: name_, category: catt } = await params;
-  const category = categories.find(cat => cat.slug === catt);
-  const name = name_.split("-").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
-
-  if (!category) {
+  const participant = await getPublicParticipantBySlug(catt, name_, 'finalis');
+  if (!participant) {
     return {
-      title: "Kategori Tidak Ditemukan",
-      description: "Kategori yang Anda cari tidak ditemukan.",
+      title: "Profil Finalis Tidak Ditemukan",
+      description: "Profil finalis yang Anda cari tidak ditemukan pada edisi aktif.",
     };
   }
 
   return {
-    title: `Profil ${name} - ${category.name} 2025`,
-    openGraph: {
-      images: [`/peserta/${category.abrev}/${name_.split(" ").join("_")}/default.png`],
-    },
-    description: `Profil finalis ${name} pada kategori ${category.name} di Pasanggiri Mojang Jajaka Kabupaten Garut 2025.`,
+    title: `Profil ${participant.name} - ${participant.categoryName} ${participant.editionYear}`,
+    ...(participant.imageUrl ? { openGraph: { images: [participant.imageUrl] } } : {}),
+    description: `Profil finalis ${participant.name} pada kategori ${participant.categoryName} di Pasanggiri Mojang Jajaka Kabupaten Garut ${participant.editionYear}.`,
   };
 }
 
@@ -35,19 +32,14 @@ export default async function DetailProfilPage({
 }>) {
 
   const { name, category: catt } = await params;
-  const category = categories.find(cat => cat.slug === catt);
+  const cmsParticipant = await getPublicParticipantBySlug(catt, name, 'finalis');
+  if (!cmsParticipant) notFound();
 
-  if (!category) {
-    return <main className="bg-cover min-h-screen bg-center bg-[url(/gf-1.png)] grid place-items-center md:px-20 py-16 px-8 font-montserrat">Kategori tidak ditemukan</main>;
-  }
-
-  const finalist = category.finalist.find(f => f.name.split(" ").join("-").toLowerCase() === name);
-
-  if (!finalist) {
-    return <main className="bg-cover min-h-screen bg-center bg-[url(/gf-1.png)] grid place-items-center md:px-20 py-16 px-8 font-montserrat">Peserta tidak ditemukan</main>;
-  }
-
-  // const qrPath = `/qr/${category.abrev}/${finalist.name.split(" ").join("_")}.jpg`;
+  const categoryName = cmsParticipant.categoryName;
+  const participantName = cmsParticipant.name;
+  const portraitUrl = cmsParticipant.imageUrl;
+  const bio = cmsParticipant.bio;
+  const achievements = cmsParticipant.achievements;
 
   return (
     <main className="h-screen max-sm:h-auto min-h-screen overflow-hidden relative">
@@ -56,40 +48,48 @@ export default async function DetailProfilPage({
       <div className="relative z-1 bg-white/50 backdrop-blur-[2px] md:h-3/4 min-h-[80vh] mx-6 rounded-3xl top-28 md:top-28 md:mx-20 md:rounded-[64px] overflow-hidden mb-36">
         <div className="absolute top-0 -z-1 bg-linear-120 from-black/50 via-black/50 to-fb-300/40 via-60% w-full h-full"></div>
         <div className="md:flex md:flex-row-reverse justify-end md:pl-20 lg:pl-24 max-h-full max-sm:space-y-4 max-sm:pb-8">
-          {/* <Image src={`/peserta/${category?.abrev}/${finalist.name.split(" ").join("_")}/default.png`} alt='' width={400} height={1000} blurDataURL={`/peserta/${category?.abrev}/${finalist.name.split(" ").join("_")}/default_blur.webp`} className='object-top object-cover md:max-h-full max-h-84 max-sm:max-w-64 mx-auto' /> */}
-          <ImageMaskFade src={`/finalis/${category?.abrev}/${category?.abrev}${finalist.no}.webp`} alt='' width={400} height={1000} className='object-top md:h-max max-sm:max-h-84 md:mx-auto' />
+          {portraitUrl
+            ? <ImageMaskFade src={portraitUrl} alt={`Finalis ${participantName}, ${categoryName}`} width={400} height={1000} className='object-top md:h-max max-sm:max-h-84 md:mx-auto' />
+            : <div role="img" aria-label={`Foto ${participantName} belum tersedia`} className="relative z-0 flex h-[min(70vh,40rem)] w-full max-w-[25rem] items-center justify-center bg-dgb-50 text-5xl font-semibold text-dgb-900 md:mx-auto">
+              {participantName.split(' ').map((part) => part[0]).slice(0, 2).join('')}
+            </div>}
           <div className="text-white md:max-w-lg lg:max-w-xl space-y-2 md:space-y-4 mt-auto md:pb-20 max-sm:px-6 max-sm:text-sm relative z-1">
             <div className="flex gap-6 items-center">
               <div className="flex flex-col justify-center gap-1.5">
                 <div className="">
-                  <p className="font-montserrat text-[#DCDCDC] capitalize">{category.name}</p>
-                  <h2 className="capitalize md:text-5xl text-xl font-semibold mb-1.5">{name.split("-").join(" ")}</h2>
+                  <p className="font-montserrat text-[#DCDCDC] capitalize">{categoryName}</p>
+                  <h1 className="capitalize md:text-5xl text-xl font-semibold mb-1.5">{participantName}</h1>
                   <Separator className='bg-white'/>
                 </div>
-                {/* <p className="text-center mt-1.5 md:hidden">Pindai QR untuk Vote</p>
-                <p className="text-center text-xs md:hidden">----- atau -----</p>
-                <Link className='w-full bg-fb font-medium px-6 text-center py-1.5 rounded-md md:hidden' href={qrPath} download={`qr-${finalist.name}`}>Unduh QR</Link> */}
               </div>
-              {/* <div className="">
-                <Image height={200} width={200} alt='qr-code' src={qrPath} className='bg-white rounded-2xl w-32 h-32 border border-dgb md:hidden' />
-                <p className="w-full text-center md:hidden">1 poin: Rp2000,-</p>
-                <p className="w-full text-center md:hidden">(berlaku kelipatan)</p>
-              </div> */}
             </div>
             <div className="flex max-sm:flex-col w-full justify-between gap-8 items-center md:mt-8 mt-6">
               <ScrollArea className="space-y-4 md:h-[35vh] h-[30vh]">
-                <p className="font-montserrat text-sm">{finalist.description}</p>
+                <p className="font-montserrat text-sm">{bio}</p>
                 <ul className='list-decimal list-inside font-montserrat mb-8 mt-4'>
-                  {finalist.achievements.map((achievement, index) => (
+                  {achievements.map((achievement, index) => (
                     <li key={index} className='text-sm text-justify'>{" " + achievement}</li>
                   ))}
                 </ul>
               </ScrollArea>
-              {/* <div className="min-w-40 flex flex-col items-center justify-center gap-2 max-sm:hidden">
-                <p className="">Pindai QR untuk Vote</p>
-                <Image height={200} width={200} alt='qr-code' src={qrPath} className='bg-white rounded-2xl w-40 h-40 border border-dgb' />
-                <Link className='w-full bg-fb font-medium px-6 text-center py-1.5 rounded-md mt-2' href={qrPath} download={`qr-${finalist.name}`}>Unduh</Link>
-              </div> */}
+              {cmsParticipant && (cmsParticipant.profileVideoUrl || cmsParticipant.qrImageUrl) && (
+                <aside className="flex w-full flex-col items-center justify-center gap-4 md:min-w-40 md:w-auto">
+                  {cmsParticipant.profileVideoUrl && (
+                    <div className="w-56 max-w-full space-y-2">
+                      <p className="font-montserrat text-sm">Video profil</p>
+                      <video controls playsInline preload="metadata" className="aspect-video w-full rounded-lg bg-black">
+                        <source src={cmsParticipant.profileVideoUrl} type={cmsParticipant.profileVideoMimeType ?? undefined} />
+                      </video>
+                    </div>
+                  )}
+                  {cmsParticipant.qrImageUrl && (
+                    <figure className="flex flex-col items-center gap-2">
+                      <Image src={cmsParticipant.qrImageUrl} alt={`QR voting ${participantName}`} width={160} height={160} className="size-40 rounded-lg bg-white object-contain p-2" />
+                      <figcaption className="text-center font-montserrat text-sm">Pindai QR untuk voting</figcaption>
+                    </figure>
+                  )}
+                </aside>
+              )}
             </div>
           </div>
         </div>

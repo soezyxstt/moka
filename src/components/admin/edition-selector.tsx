@@ -83,7 +83,7 @@ export function AdminEditionSelector({
               </span>
               {currentEdition ? (
                 <span className="block text-[10px] text-muted-foreground sm:hidden">
-                  {currentEdition.year} · {currentEdition.lifecycle === "active" ? "Aktif" : currentEdition.lifecycle === "draft" ? "Draft" : "Arsip"}
+                  {currentEdition.year} · {currentEdition.lifecycle === "active" ? "Aktif" : currentEdition.lifecycle === "draft" ? "Draf" : "Arsip"}
                 </span>
               ) : null}
             </span>

@@ -22,9 +22,8 @@ export default async function NewParticipantPage() {
   if (!currentEdition) {
     return (
       <AdminPage
-        eyebrow="Peserta / pendaftaran"
+        eyebrow="Peserta"
         title="Tambah pendaftar"
-        description="Pendaftaran peserta baru dari Google Form."
       >
         <AdminCard padding="none">
           <div className="p-8">
@@ -65,9 +64,8 @@ export default async function NewParticipantPage() {
 
   return (
     <AdminPage
-      eyebrow="Peserta / pendaftaran"
+      eyebrow="Peserta"
       title="Tambah pendaftar"
-      description="Input manual hasil pendaftaran Google Form ke tahap pertama seleksi."
       action={
         <AdminLinkButton href="/admin/content/participants" variant="secondary">
           <ArrowLeft className="size-4" />

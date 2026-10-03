@@ -18,9 +18,8 @@ export default async function SiteAssetsPage() {
   if (!editionContext) {
     return (
       <AdminPage
-        eyebrow="Konten / media situs"
+        eyebrow="Konten"
         title="Aset situs"
-        description="Pasang media pada slot yang sudah ditentukan aplikasi."
       >
         <AdminCard>
           <AdminEmptyState
@@ -79,9 +78,8 @@ export default async function SiteAssetsPage() {
 
   return (
     <AdminPage
-      eyebrow="Konten / media situs"
+      eyebrow="Konten"
       title="Aset situs"
-      description="Pasang media pada slot yang sudah ditentukan aplikasi."
     >
       <SiteAssetsClient
         key={editionContext.id}

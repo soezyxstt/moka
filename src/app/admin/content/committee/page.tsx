@@ -1,6 +1,6 @@
 import { asc, eq } from "drizzle-orm";
 
-import { AdminCard, AdminCardHeader, AdminEmptyState, AdminPage } from "@/components/admin/primitives";
+import { AdminCard, AdminEmptyState, AdminPage } from "@/components/admin/primitives";
 import { requirePermission } from "@/server/auth/authorization";
 import { getAdminEditionContext } from "@/server/cms/context";
 import { database } from "@/server/db/client";
@@ -27,20 +27,14 @@ export default async function CommitteePage() {
   if (!edition) {
     return (
       <AdminPage
-        eyebrow="Konten / struktur"
+        eyebrow="Konten"
         title="Panitia"
-        description="Pilih edisi untuk mengelola panitia."
       >
-        <AdminCard>
-          <AdminCardHeader
-            eyebrow="Konteks edisi"
-            title="Belum ada edisi aktif"
-            description="Pilih edisi dari header."
-          />
+        <AdminCard padding="none">
           <AdminEmptyState
             icon="clipboard"
-            title="Tidak ada edisi terpilih"
-            description="Belum ada edisi terpilih."
+            title="Pilih edisi"
+            description="Gunakan pemilih edisi di bagian atas."
           />
         </AdminCard>
       </AdminPage>
@@ -125,9 +119,8 @@ export default async function CommitteePage() {
 
   return (
     <AdminPage
-      eyebrow="Konten / struktur"
+      eyebrow="Konten"
       title="Panitia"
-      description="Struktur dan penugasan untuk edisi terpilih."
     >
       <CommitteeWorkspaceClient
         edition={edition}

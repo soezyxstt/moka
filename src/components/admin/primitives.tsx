@@ -30,8 +30,8 @@ export function AdminPage({
 }) {
   return (
     <main className="min-h-[calc(100vh-4rem)] bg-background px-4 py-5 sm:px-6 sm:py-7 lg:px-8">
-      <div className="mx-auto w-full max-w-[1440px]">
-        <header className="mb-6 border-b border-border/70 pb-4 sm:mb-7 sm:pb-5">
+      <div className="mx-auto w-full min-w-0 max-w-[1440px]">
+        <header className="mb-5 border-b border-border/70 pb-3 sm:mb-6 sm:pb-4">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="min-w-0 max-w-3xl">
               {eyebrow ? (
@@ -40,7 +40,7 @@ export function AdminPage({
                   {eyebrow}
                 </p>
               ) : null}
-              <h1 className="font-montserrat !text-2xl font-semibold leading-tight tracking-[-0.03em] text-dgb-900 sm:!text-3xl">{title}</h1>
+              <h1 className="break-words font-montserrat !text-2xl font-semibold leading-tight tracking-[-0.03em] text-dgb-900 sm:!text-3xl">{title}</h1>
               {description ? <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{description}</p> : null}
             </div>
             {action ? <div className="shrink-0">{action}</div> : null}
@@ -70,12 +70,12 @@ export function AdminCardHeader({
 }) {
   return (
     <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-      <div className="max-w-2xl">
+      <div className="min-w-0 max-w-2xl">
         {eyebrow ? <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-fb-600">{eyebrow}</p> : null}
         <h2 className="font-montserrat text-lg font-semibold leading-snug text-dgb-900">{title}</h2>
         {description ? <p className="mt-1 text-sm leading-5 text-muted-foreground">{description}</p> : null}
       </div>
-      {action ? <div className="shrink-0">{action}</div> : null}
+      {action ? <div className="w-full shrink-0 sm:w-auto">{action}</div> : null}
     </div>
   );
 }
@@ -137,19 +137,38 @@ export function AdminLinkButton({ href, children, variant = "primary", className
 
 const badgeStyles: Record<string, string> = {
   active: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  approved: "border-emerald-200 bg-emerald-50 text-emerald-700",
   ready: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  published: "border-emerald-200 bg-emerald-50 text-emerald-700",
   draft: "border-amber-200 bg-amber-50 text-amber-800",
   open: "border-amber-200 bg-amber-50 text-amber-800",
   pending: "border-amber-200 bg-amber-50 text-amber-800",
+  closed: "border-border bg-muted text-muted-foreground",
+  inactive: "border-border bg-muted text-muted-foreground",
   archived: "border-border bg-muted text-muted-foreground",
   rejected: "border-red-200 bg-red-50 text-red-700",
   suspended: "border-red-200 bg-red-50 text-red-700",
 };
 
+const badgeLabels: Record<string, string> = {
+  active: "Aktif",
+  approved: "Disetujui",
+  archived: "Arsip",
+  closed: "Ditutup",
+  draft: "Draf",
+  inactive: "Nonaktif",
+  open: "Terbuka",
+  pending: "Menunggu",
+  published: "Terbit",
+  ready: "Siap",
+  rejected: "Ditolak",
+  suspended: "Ditangguhkan",
+};
+
 export function AdminBadge({ value, className }: { value: string; className?: string }) {
   return (
     <Badge variant="outline" className={cn("rounded-sm border-l-2 px-2 py-0.5 text-[11px] font-semibold capitalize", badgeStyles[value.toLowerCase()] ?? "border-dgb-200 bg-dgb-50 text-dgb-700", className)}>
-      {value.replaceAll("_", " ")}
+      {badgeLabels[value.toLowerCase()] ?? value.replaceAll("_", " ")}
     </Badge>
   );
 }
@@ -184,14 +203,14 @@ export function AdminStatCard({
   );
 }
 
-export function AdminEmptyState({ icon = "folder", title, description }: { icon?: AdminIconName; title: string; description: string }) {
+export function AdminEmptyState({ icon = "folder", title, description }: { icon?: AdminIconName; title: string; description?: string }) {
   return (
-    <div className="border-y border-dashed border-dgb-200 bg-dgb-50/30 px-6 py-12 text-center">
+    <div className="border-y border-dashed border-dgb-200 bg-dgb-50/30 px-5 py-8 text-center">
       <span className="mx-auto grid size-11 place-items-center rounded-md border border-dgb-100 bg-white text-dgb">
         <AdminIcon name={icon} size={19} />
       </span>
       <h3 className="mt-4 font-montserrat text-base font-semibold text-dgb-900">{title}</h3>
-      <p className="mx-auto mt-1 max-w-md text-sm leading-6 text-muted-foreground">{description}</p>
+      {description ? <p className="mx-auto mt-1 max-w-md text-sm leading-6 text-muted-foreground">{description}</p> : null}
     </div>
   );
 }

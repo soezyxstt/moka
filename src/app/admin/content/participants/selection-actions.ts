@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { requirePermission } from "@/server/auth/authorization";
 import { getAdminEditionContext } from "@/server/cms/context";
+import { repair2025StageNumbers } from "@/server/cms/import-2025";
 import { database } from "@/server/db/client";
 import {
   closeSelectionStage,
@@ -17,6 +18,7 @@ import {
   setStageDecisions,
   updateSelectionStage,
 } from "@/server/selection/operations";
+import { categoryValues, type StageCategoryTargets } from "@/server/db/schema";
 
 async function getSelectionContext() {
   const actor = await requirePermission("participants.manage");
@@ -36,6 +38,16 @@ function integerFrom(value: FormDataEntryValue | null, label: string) {
 
 function booleanFrom(value: FormDataEntryValue | null) {
   return value === "true" || value === "1" || value === "on";
+}
+
+function categoryTargetsFrom(formData: FormData): StageCategoryTargets {
+  return Object.fromEntries(categoryValues.map((code) => {
+    const raw = formData.get(`target${code}`);
+    if (typeof raw !== "string" || !/^\d+$/.test(raw)) throw new Error(`Target ${code} harus berupa bilangan bulat nol atau lebih`);
+    const value = Number(raw);
+    if (!Number.isSafeInteger(value)) throw new Error(`Target ${code} tidak valid`);
+    return [code, value];
+  })) as StageCategoryTargets;
 }
 
 function revalidateSelection(stageId?: string) {
@@ -62,7 +74,7 @@ export async function createSelectionStageAction(formData: FormData) {
   const { actor, edition } = await getSelectionContext();
   const result = await createSelectionStage(database, edition.id, {
     name: String(formData.get("name") ?? "").trim(),
-    targetParticipantCount: integerFrom(formData.get("targetParticipantCount"), "Target peserta"),
+    categoryTargets: categoryTargetsFrom(formData),
     finalStage: booleanFrom(formData.get("finalStage")),
   }, actor, new Date());
   revalidateSelection(result.id);
@@ -76,7 +88,7 @@ export async function updateSelectionStageAction(formData: FormData) {
     stageId,
     expectedVersion: integerFrom(formData.get("expectedVersion"), "Versi tahap"),
     name: String(formData.get("name") ?? "").trim(),
-    targetParticipantCount: integerFrom(formData.get("targetParticipantCount"), "Target peserta"),
+    categoryTargets: categoryTargetsFrom(formData),
     finalStage: booleanFrom(formData.get("finalStage")),
   }, actor, new Date());
   revalidateSelection(stageId);
@@ -124,6 +136,17 @@ export async function rollbackStageDecisionAction(formData: FormData) {
   }, actor, new Date());
   revalidateSelection(stageId);
   return result;
+}
+
+export async function repair2025StageNumbersAction(): Promise<void> {
+  const { actor, edition } = await getSelectionContext();
+  if (process.env.NODE_ENV === "production" || process.env.TURSO_DATABASE_URL !== "file:local.db" || edition.year !== 2025 || edition.slug !== "2025") {
+    throw new Error("Perbaikan ini hanya tersedia untuk edisi 2025 pada database lokal");
+  }
+  await database.transaction((tx) => repair2025StageNumbers(tx, actor));
+  revalidateSelection();
+  revalidatePath("/profil-finalis/[category]", "page");
+  revalidatePath("/profil-semifinalis/[category]", "page");
 }
 
 export async function closeSelectionStageAction(formData: FormData) {

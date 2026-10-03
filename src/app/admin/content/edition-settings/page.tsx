@@ -17,9 +17,8 @@ export default async function EditionSettingsPage() {
   if (!editionContext) {
     return (
       <AdminPage
-        eyebrow="Konten / identitas"
+        eyebrow="Konten"
         title="Identitas edisi"
-        description="Logo, slogan, dan program unggulan."
       >
         <AdminCard>
           <AdminEmptyState
@@ -41,9 +40,8 @@ export default async function EditionSettingsPage() {
   if (!editionRow) {
     return (
       <AdminPage
-        eyebrow="Konten / identitas"
+        eyebrow="Konten"
         title="Identitas edisi"
-        description="Logo, slogan, dan program unggulan."
       >
         <AdminCard>
           <AdminEmptyState
@@ -87,9 +85,8 @@ export default async function EditionSettingsPage() {
 
   return (
     <AdminPage
-      eyebrow="Konten / identitas"
+      eyebrow="Konten"
       title="Identitas edisi"
-      description="Logo, slogan, dan program unggulan."
     >
       <EditionSettingsClient
         key={`${editionRow.id}:${editionRow.version}:${programs.map((program) => `${program.id}:${program.updatedAt.getTime()}`).join(",")}`}

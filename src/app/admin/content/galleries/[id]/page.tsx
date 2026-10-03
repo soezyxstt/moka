@@ -165,9 +165,8 @@ export default async function GalleryDetailPage(props: GalleryDetailPageProps) {
 
   return (
     <AdminPage
-      eyebrow="Studio / gallery"
+      eyebrow="Galeri"
       title="Studio Album Galeri"
-      description={`Kelola koleksi foto dan video untuk album "${galleryDetail.title}" pada ${currentEdition.name}.`}
     >
       <GalleryWorkspace
         key={`${currentEdition.id}:${galleryDetail.id}:${galleryDetail.version}`}

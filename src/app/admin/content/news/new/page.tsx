@@ -20,9 +20,8 @@ export default async function NewNewsPage() {
 
   return (
     <AdminPage
-      eyebrow="Studio / editorial"
-      title="Tulis Berita Baru"
-      description="Susun berita dengan editor dan pratinjau langsung."
+      eyebrow="Konten"
+      title="Tulis berita"
     >
       <NewsWorkspace
         editionName={currentEdition.name}

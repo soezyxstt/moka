@@ -14,29 +14,31 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { categories as staticCategories, rangkaianKegiatan } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
 type NavbarCategory = { name: string; slug: string };
 type NavbarEvent = { label: string; slug: string };
 type DesktopMenuItem = { href: string; label: string };
+type NavbarEdition = { year: number; logoUrl: string | null; logoAlt: string | null; slogan: string | null };
 
 export function Navbar({
-  categories = staticCategories,
+  categories,
   events,
-  votingActive,
+  resultsVisible,
+  edition,
 }: {
-  categories?: NavbarCategory[];
-  events?: NavbarEvent[];
-  votingActive?: boolean;
+  categories: NavbarCategory[];
+  events: NavbarEvent[];
+  resultsVisible: boolean;
+  edition: NavbarEdition;
 }) {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const votingEndTime = new Date("2025-08-09T23:59:59+07:00");
-  const isVotingActive = votingActive ?? new Date() < votingEndTime;
-  const eventItems = (events ?? rangkaianKegiatan.map((item) => ({ label: item.label, slug: item.label.toLowerCase().replace(/\s+/g, "-") })))
+  const eventItems = events
     .map((item) => ({ href: `/rangkaian-kegiatan/${item.slug}`, label: item.label }));
   const categoryItems = (page: string) => categories.map((category) => ({ href: `/${page}/${category.slug}`, label: category.name }));
+  const finalistItems = categoryItems("profil-finalis");
+  const resultItems = categoryItems("voting/hasil");
 
   const desktopLinks: Array<
     | { href: string; label: string }
@@ -44,11 +46,10 @@ export function Navbar({
   > = [
     { href: "/", label: "Beranda" },
     { href: "/tentang", label: "Tentang" },
-    { label: "Rangkaian Kegiatan", menu: eventItems, match: "/rangkaian-kegiatan" },
-    ...(isVotingActive
-      ? [{ label: "Voting", menu: categoryItems("voting"), match: "/voting" }]
-      : [{ label: "Profil Finalis", menu: categoryItems("profil-finalis"), match: "/profil-finalis" }]),
-    { label: "Hasil Voting", menu: categoryItems("voting/hasil"), match: "/voting/hasil" },
+    ...(eventItems.length ? [{ label: "Rangkaian Kegiatan", menu: eventItems, match: "/rangkaian-kegiatan" }] : []),
+    { href: "/voting", label: "Voting" },
+    ...(finalistItems.length ? [{ label: "Profil Finalis", menu: finalistItems, match: "/profil-finalis" }] : []),
+    ...(resultsVisible && resultItems.length ? [{ label: "Hasil Voting", menu: resultItems, match: "/voting/hasil" }] : []),
   ];
 
   const [isNavbarVisible, setIsNavbarVisible] = useState(true);
@@ -84,8 +85,10 @@ export function Navbar({
         transition={{ duration: 0.4, ease: "easeInOut" }}
         aria-label="Navigasi utama"
       >
-        <Link href="/" className="h-full shrink-0" aria-label="Beranda MOKA Garut">
-          <Image src="/logo-orange.png" alt="MOKA Garut" width={100} height={60} className="h-full w-auto object-contain" priority />
+        <Link href="/" className="h-full shrink-0" aria-label={`Beranda MOKA Garut ${edition.year}`} title={edition.slogan ?? undefined}>
+          {edition.logoUrl
+            ? <Image src={edition.logoUrl} alt={edition.logoAlt || "MOKA Garut"} width={100} height={60} className="h-full w-auto object-contain" priority />
+            : <span className="font-montserrat text-sm font-bold tracking-wide text-fb">MOKA Garut</span>}
         </Link>
         <div className="flex h-full items-center gap-3 font-montserrat lg:gap-5 xl:gap-7">
           {desktopLinks.map((link) => {
@@ -113,8 +116,10 @@ export function Navbar({
 
       <nav className="fixed top-0 z-40 w-full bg-white/20 shadow-md backdrop-blur-md md:hidden" ref={ref} aria-label="Navigasi utama seluler">
         <div className="flex h-16 w-full items-center justify-between px-6">
-          <Link href="/" className="h-9" aria-label="Beranda MOKA Garut">
-            <Image src="/logo-orange.png" alt="MOKA Garut" width={100} height={44} className="h-full w-auto object-contain" priority />
+          <Link href="/" className="h-9" aria-label={`Beranda MOKA Garut ${edition.year}`} title={edition.slogan ?? undefined}>
+            {edition.logoUrl
+              ? <Image src={edition.logoUrl} alt={edition.logoAlt || "MOKA Garut"} width={100} height={44} className="h-full w-auto object-contain" priority />
+              : <span className="font-montserrat text-sm font-bold tracking-wide text-fb">MOKA Garut</span>}
           </Link>
           <button className="relative z-[60] flex size-9 items-center justify-center" onClick={() => setIsMobileMenuOpen((open) => !open)} aria-label={isMobileMenuOpen ? "Tutup menu" : "Buka menu"} aria-expanded={isMobileMenuOpen}>
             <motion.span className="absolute h-0.5 w-6 bg-fb" animate={{ rotate: isMobileMenuOpen ? 45 : 0, y: isMobileMenuOpen ? 0 : -7 }} />
@@ -128,9 +133,10 @@ export function Navbar({
               <div className="flex flex-col pt-3 font-montserrat">
                 <MobileLink href="/" label="Beranda" close={() => setIsMobileMenuOpen(false)} />
                 <MobileLink href="/tentang" label="Tentang" close={() => setIsMobileMenuOpen(false)} />
-                <MobileMenu label="Rangkaian Kegiatan" items={eventItems} close={() => setIsMobileMenuOpen(false)} />
-                {isVotingActive ? <MobileMenu label="Voting" items={categoryItems("voting")} close={() => setIsMobileMenuOpen(false)} /> : <MobileMenu label="Profil Finalis" items={categoryItems("profil-finalis")} close={() => setIsMobileMenuOpen(false)} />}
-                <MobileMenu label="Hasil Voting" items={categoryItems("voting/hasil")} close={() => setIsMobileMenuOpen(false)} />
+                {eventItems.length ? <MobileMenu label="Rangkaian Kegiatan" items={eventItems} close={() => setIsMobileMenuOpen(false)} /> : null}
+                <MobileLink href="/voting" label="Voting" close={() => setIsMobileMenuOpen(false)} />
+                {finalistItems.length ? <MobileMenu label="Profil Finalis" items={finalistItems} close={() => setIsMobileMenuOpen(false)} /> : null}
+                {resultsVisible && resultItems.length ? <MobileMenu label="Hasil Voting" items={resultItems} close={() => setIsMobileMenuOpen(false)} /> : null}
                 <Link
                   href="/admin/login"
                   onClick={() => setIsMobileMenuOpen(false)}

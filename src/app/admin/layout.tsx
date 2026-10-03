@@ -24,6 +24,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     // Konten (Collapsible)
     { href: "/admin/content/edition-settings", label: "Identitas edisi", icon: "award", group: "Konten", exact: false, permission: "content.view" },
     { href: "/admin/content/site-assets", label: "Aset situs", icon: "images", group: "Konten", exact: false, permission: "content.view" },
+    { href: "/admin/content/pages", label: "Teks halaman", icon: "file", group: "Konten", exact: false, permission: "content.view" },
     { href: "/admin/content/news", label: "Berita", icon: "newspaper", group: "Konten", exact: false, permission: "content.view" },
     { href: "/admin/content/sponsors", label: "Sponsor", icon: "handshake", group: "Konten", exact: false, permission: "content.view" },
     { href: "/admin/content/participants", label: "Mojang Jajaka", icon: "users", group: "Konten", exact: false, permission: "content.view" },
@@ -40,7 +41,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     // Operasional
     { href: "/admin/voting", label: "Voting", icon: "bar-chart", group: "Operasional", exact: false, permission: "voting.view" },
     { href: "/admin/users", label: "Pengguna", icon: "shield", group: "Operasional", exact: false, permission: "users.view" },
-    { href: "/admin/audit", label: "Audit log", icon: "clock", group: "Operasional", exact: false, permission: "audit.view" },
+    { href: "/admin/audit", label: "Riwayat audit", icon: "clock", group: "Operasional", exact: false, permission: "audit.view" },
 
     // Akun
     { href: "/admin/profile", label: "Profil", icon: "settings", group: "Akun", exact: true, permission: "admin.view" },

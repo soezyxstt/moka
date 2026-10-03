@@ -193,6 +193,7 @@ export function OrganizationWorkspace({
   };
 
   const openEditPeriod = (period: PeriodItem) => {
+    if (period.lifecycle === "archived") return;
     setEditingPeriod(period);
     setPeriodLabel(period.label);
     setPeriodStartYear(period.startYear);
@@ -248,6 +249,10 @@ export function OrganizationWorkspace({
 
   const handleDeletePeriod = () => {
     if (!deletingPeriod) return;
+    if (deletingPeriod.lifecycle !== "draft") {
+      toast.error("Periode aktif atau arsip tidak dapat dihapus");
+      return;
+    }
     startTransition(async () => {
       try {
         const formData = new FormData();
@@ -547,6 +552,8 @@ export function OrganizationWorkspace({
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {periods.map((p) => {
+                const canEditPeriod = canEdit && p.lifecycle !== "archived";
+                const canDeletePeriod = canEdit && p.lifecycle === "draft";
                 return (
                   <AdminCard
                     key={p.id}
@@ -562,29 +569,36 @@ export function OrganizationWorkspace({
                           <p className="text-xs font-semibold text-fb-700">
                             Tahun {p.startYear} - {p.endYear}
                           </p>
+                          {p.lifecycle === "archived" ? (
+                            <p className="mt-1 text-xs text-muted-foreground">Periode arsip hanya dapat dilihat.</p>
+                          ) : null}
                         </div>
-                        {canEdit ? (
+                        {canEditPeriod || canDeletePeriod ? (
                           <div className="flex items-center gap-1">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => openEditPeriod(p)}
-                              className="size-7 rounded-md p-0 text-muted-foreground hover:bg-dgb-50 hover:text-dgb-900"
-                              title="Edit metadata periode"
-                            >
-                              <Edit2 size={14} />
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setDeletingPeriod(p)}
-                              className="size-7 rounded-md p-0 text-muted-foreground hover:bg-rose-50 hover:text-rose-700"
-                              title="Hapus periode"
-                            >
-                              <Trash2 size={14} />
-                            </Button>
+                            {canEditPeriod ? (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => openEditPeriod(p)}
+                                className="size-7 rounded-md p-0 text-muted-foreground hover:bg-dgb-50 hover:text-dgb-900"
+                                title="Edit metadata periode"
+                              >
+                                <Edit2 size={14} />
+                              </Button>
+                            ) : null}
+                            {canDeletePeriod ? (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setDeletingPeriod(p)}
+                                className="size-7 rounded-md p-0 text-muted-foreground hover:bg-rose-50 hover:text-rose-700"
+                                title="Hapus periode draft"
+                              >
+                                <Trash2 size={14} />
+                              </Button>
+                            ) : null}
                           </div>
                         ) : null}
                       </div>

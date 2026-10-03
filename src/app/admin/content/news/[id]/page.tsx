@@ -100,9 +100,8 @@ export default async function EditNewsPage({ params }: PageProps) {
 
   return (
     <AdminPage
-      eyebrow="Studio / editorial"
+      eyebrow="Konten"
       title={article.title}
-      description="Edit isi dan periksa tampilannya sebelum diterbitkan."
     >
       <NewsWorkspace
         initialArticle={articleData}

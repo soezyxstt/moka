@@ -58,7 +58,7 @@ export const NewsCard: React.FC<NewsCardProps> = ({ news }) => {
 
         {/* Styles for title, description, and link are PRESERVED */}
         <h3 className="font-montserrat font-medium mb-3 text-gray-800 line-clamp-2">
-          <Link href={link} className="hover:text-dgb dark:hover:text-dgb transition-colors duration-200" target='_blank'>
+          <Link href={link} className="hover:text-dgb dark:hover:text-dgb transition-colors duration-200" target='_blank' rel="noopener noreferrer">
             {title}
           </Link>
         </h3>
@@ -69,6 +69,7 @@ export const NewsCard: React.FC<NewsCardProps> = ({ news }) => {
           {type !== 'file' ? (<Link
             href={link}
             target='_blank'
+            rel="noopener noreferrer"
             className="text-sm font-medium text-dgb hover:underline focus:outline-none rounded-sm flex items-center gap-1"
           >
             Selengkapnya <ArrowRight className='w-4 -rotate-45' />
@@ -89,7 +90,9 @@ export const NewsCard: React.FC<NewsCardProps> = ({ news }) => {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Batal</AlertDialogCancel>
-                  <AlertDialogAction className='bg-dgb'>Lanjut</AlertDialogAction>
+                  <AlertDialogAction asChild className='bg-dgb'>
+                    <Link href={link} download>Lanjut</Link>
+                  </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>)}

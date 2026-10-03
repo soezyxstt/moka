@@ -20,9 +20,8 @@ export default async function SponsorsPage() {
   if (!currentEdition) {
     return (
       <AdminPage
-        eyebrow="Konten / sponsor"
+        eyebrow="Konten"
         title="Sponsor"
-        description="Atur partner dan tingkat tampilannya."
       >
         <AdminCard padding="none">
           <div className="p-8">
@@ -94,9 +93,8 @@ export default async function SponsorsPage() {
 
   return (
     <AdminPage
-      eyebrow="Konten / sponsor"
+      eyebrow="Konten"
       title="Sponsor"
-      description="Atur partner dan tingkat tampilannya."
       action={<AdminBadge value={currentEdition.lifecycle} />}
     >
       <SponsorsClient

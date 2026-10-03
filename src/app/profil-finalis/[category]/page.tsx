@@ -1,95 +1,71 @@
 // app/profil/[category]/page.tsx
-import { categories } from '@/lib/data';
 import { typography } from '@/components/custom/typography';
 import Link from 'next/link';
 import Image from 'next/image';
-import BG from '@/components/next-image-bg'; // Assuming this is for your main page background
+import BG from '@/components/next-image-bg';
 import HeroVideo from './hero-video';
 import HeroTextWrapper from './hero-text';
+import { getPublicParticipantCategory } from '@/server/cms/public-participant-readers';
+import { notFound } from 'next/navigation';
 
 // Make sure your FinalisCard component is also properly typed for TSX
 interface FinalisCardProps {
-  src: string;
+  src?: string;
   name: string;
   no: string;
   catt: string;
   href: string;
 }
 
-// Ensure category and finalist types are defined somewhere, e.g., in '@/lib/data'
-interface Category {
-  slug: string;
-  name: string;
-  abrev: string;
-  finalist: Finalist[];
-  videoPath?: { webm: string; mp4: string; fallbackImage: string }; // Add video paths
-}
-
-interface Finalist {
-  no: string;
-  name: string;
-}
-
-
 export async function generateMetadata({ params }: Readonly<{ params: Promise<{ category: string }> }>) {
   const { category: catt } = await params;
-  const category = categories.find(cat => cat.slug === catt);
-  if (!category) {
+  const cmsCategory = await getPublicParticipantCategory(catt, 'finalis');
+  if (!cmsCategory) {
     return {
       title: "Kategori Tidak Ditemukan",
       description: "Kategori yang Anda cari tidak ditemukan.",
     };
   }
   return {
-    title: `Profil Finalis - ${category.name} 2025`,
-    description: `Profil Finalis Pasanggiri Mojang Jajaka Kabupaten Garut 2025 pada kategori ${category.name}.`,
+    title: `Profil Finalis - ${cmsCategory.name} ${cmsCategory.editionYear}`,
+    description: `Profil Finalis Pasanggiri Mojang Jajaka Kabupaten Garut ${cmsCategory.editionYear} pada kategori ${cmsCategory.name}.`,
   };
 }
 
 export default async function ProfilFinalisPage({ params }: Readonly<{ params: Promise<{ category: string }> }>) {
   const { category: catt } = await params;
-
-  // Type guard for categories array if not already typed
-  const typedCategories: Category[] = categories as Category[];
-
-  if (typedCategories.every(cat => cat.slug !== catt)) {
-    return (
-      <main className="bg-cover min-h-screen bg-center bg-[url(/gf-1.png)] grid place-items-center md:px-20 py-16 px-8 font-montserrat">
-        Kategori tidak ditemukan
-      </main>
-    );
-  }
-
-  const category = typedCategories.find(cat => cat.slug === catt);
-  const finalists = category?.finalist || [];
-
-  const videoData = {
-    webm: '/finalis/hero.webm', // Provide your default video path
-    mp4: '/videos/default-background.mp4',   // Provide your default video path
-    fallbackImage: '/finalis/hero.webp', // Use your existing fallback image
-  };
+  const cmsCategory = await getPublicParticipantCategory(catt, 'finalis');
+  if (!cmsCategory) notFound();
 
   return (
     <main className="min-h-screen overflow-hidden relative">
-      <BG /> {/* Your existing global background component */}
+      <BG />
       <div className='w-full h-[100lvh] fixed pointer-events-none z-0 bg-radial-[at_50%_50%] from-transparent to-90% to-dgb-800 backdrop-blur-sm' />
-      {/* Replace the old div with HeroVideo component */}
       <HeroVideo
-        fallbackImageSrc={videoData.fallbackImage}
-        videoWebMSrc={videoData.webm}
-        videoMp4Src={videoData.mp4}
+        fallbackImageSrc={cmsCategory.posterUrl}
+        videoWebMSrc={cmsCategory.videoMimeType === 'video/webm' ? cmsCategory.videoUrl : null}
+        videoMp4Src={cmsCategory.videoMimeType === 'video/mp4' ? cmsCategory.videoUrl : null}
       >
         <HeroTextWrapper>
-          <typography.h1 className='capitalize max-w-xl text-3xl md:text-5xl'>Profil Finalis {category?.name} 2025</typography.h1>
+          <h1 className='text-4xl font-semibold font-montserrat capitalize max-w-xl text-3xl md:text-5xl'>Profil Finalis {cmsCategory.name} {cmsCategory.editionYear}</h1>
         </HeroTextWrapper>
       </HeroVideo>
 
       <section className="md:px-20 md:py-20 relative px-8 py-8">
-        <typography.h1 className='text-center md:mb-12 mb-8 text-white text-3xl md:text-5xl'>Pasanggiri Mojang Jajaka 2025 Mempersembahkan</typography.h1>
+        <typography.h1 className='text-center md:mb-12 mb-8 text-white text-3xl md:text-5xl'>Pasanggiri Mojang Jajaka {cmsCategory.editionYear} Mempersembahkan</typography.h1>
         <div className="grid md:gap-6 gap-3 grid-cols-1 md:grid-cols-3">
-          {finalists.map((finalist) => (
-            <FinalisCard key={finalist.no + finalist.name + "-card"} name={finalist.name} catt={category?.abrev ?? ""} no={finalist.no} href={category?.slug + "/" + finalist.name.split(" ").join("-").toLowerCase()} src={`/finalis/${category?.abrev}/${category?.abrev}${finalist.no}.webp`} />
-          ))}
+          {cmsCategory.participants.length
+            ? cmsCategory.participants.map((participant) => (
+              <FinalisCard
+                key={participant.id}
+                name={participant.name}
+                catt={cmsCategory.code}
+                no={String(participant.number)}
+                href={`/profil-finalis/${cmsCategory.slug}/${participant.slug}`}
+                src={participant.imageUrl ?? undefined}
+              />
+            ))
+            : <p className="col-span-full rounded-xl border border-white/20 bg-white/10 px-6 py-12 text-center font-inter text-white/80">Belum ada finalis untuk edisi {cmsCategory.editionYear}.</p>}
         </div>
       </section>
     </main>
@@ -99,7 +75,11 @@ export default async function ProfilFinalisPage({ params }: Readonly<{ params: P
 function FinalisCard({ src, name, catt, no, href }: FinalisCardProps) { // Use the defined interface
   return (
     <Link href={href} className="aspect-[3/3] relative rounded-md overflow-hidden group">
-      <Image src={src} alt={name} className='object-cover w-full h-full object-center transition-all group-hover:scale-102 duration-500' width={300} height={400} priority blurDataURL={src.replace(".jpg", "_blur.webp")} />
+      {src
+        ? <Image src={src} alt={name} className='object-cover w-full h-full object-center transition-all group-hover:scale-102 duration-500' width={300} height={400} sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw" />
+        : <div role="img" aria-label={`Foto ${name} belum tersedia`} className="flex h-full w-full items-center justify-center bg-linear-to-br from-dgb-700 to-dgb-900 text-white">
+          <span aria-hidden="true" className="font-montserrat text-5xl font-semibold">{name.split(' ').map((part) => part[0]).slice(0, 2).join('')}</span>
+        </div>}
       <div className="absolute bottom-0 w-full text-white transition-all duration-500 group-hover:opacity-0">
         <div className="leading-tight p-6 bg-gradient-to-t from-black/90 to-transparent z-0">
           <div className="flex justify-between font-bold text-2xl">

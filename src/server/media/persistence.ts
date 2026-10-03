@@ -15,6 +15,8 @@ export type PersistUploadedMediaAssetInput = {
   ownerUserId: string;
   actorLabel: string;
   kind: "image" | "video" | "pdf";
+  alt?: string | null;
+  decorative?: boolean;
 };
 
 export type PersistedMediaAssetIdentity = {
@@ -54,6 +56,8 @@ export async function persistUploadedMediaAsset(
       filename: input.filename,
       mimeType: input.mimeType,
       bytes: input.bytes,
+      alt: input.alt ?? null,
+      decorative: input.decorative ?? false,
       lifecycle: "ready",
       folderId: input.folderId,
       ownerUserId: input.ownerUserId,
@@ -72,10 +76,12 @@ export async function persistUploadedMediaAsset(
         url: input.url,
         bytes: input.bytes,
         mimeType: input.mimeType,
+        alt: input.alt ?? null,
+        decorative: input.decorative ?? false,
         lifecycle: "ready",
         folderId: input.folderId,
       },
-      changedFields: ["provider", "providerKey", "url", "lifecycle", "folderId"],
+      changedFields: ["provider", "providerKey", "url", "mimeType", "bytes", "alt", "decorative", "lifecycle", "folderId"],
       source: "uploadthing-callback",
     });
     return {

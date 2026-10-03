@@ -16,9 +16,8 @@ export default async function EventsPage() {
   if (!currentEdition) {
     return (
       <AdminPage
-        eyebrow="Studio / events"
+        eyebrow="Acara"
         title="Acara & Rangkaian Kegiatan"
-        description="Silakan pilih edisi aktif terlebih dahulu untuk mengelola acara."
       >
         <div className="p-8 text-center text-muted-foreground text-sm">
           Tidak ada edisi yang aktif.
@@ -88,9 +87,8 @@ export default async function EventsPage() {
 
   return (
     <AdminPage
-      eyebrow="Studio / events"
+      eyebrow="Acara"
       title="Rangkaian acara"
-      description="Kelola acara dan album dokumentasi edisi aktif."
     >
       <EventsDirectory
         key={`${currentEdition.id}:${initialEvents.map((event) => `${event.id}:${event.version}`).join(",")}`}

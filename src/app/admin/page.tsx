@@ -334,15 +334,14 @@ export default async function AdminDashboard() {
     ? currentEdition.lifecycle === "active"
       ? "Aktif"
       : currentEdition.lifecycle === "draft"
-        ? "Draft"
+        ? "Draf"
         : "Arsip"
     : "Belum dipilih";
 
   return (
     <AdminPage
-      eyebrow="Studio / dashboard"
+      eyebrow="Ringkasan"
       title={`Selamat Datang, ${session.user.name.split(" ")[0]}`}
-      description="Kelola konten dan operasional CMS."
       action={
         <AdminLinkButton href="/" variant="secondary">
           Lihat Situs Publik <ArrowUpRight size={15} />
@@ -402,7 +401,7 @@ export default async function AdminDashboard() {
       {/* Edition Readiness Checklist Panel */}
       {currentEdition && (
         <div className="mt-6">
-          <AdminCard className="space-y-5 p-6 sm:p-6">
+          <AdminCard className="space-y-4 p-4 sm:p-5">
             <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
               <div>
                 <div className="flex items-center gap-2">
@@ -413,9 +412,6 @@ export default async function AdminDashboard() {
                     Kesiapan Konten {currentEdition.name} ({currentEdition.year})
                   </h3>
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Indikator kelengkapan modul CMS sebelum peluncuran atau publikasi publik.
-                </p>
               </div>
 
               <div className="flex items-center gap-3">
@@ -499,12 +495,10 @@ export default async function AdminDashboard() {
       )}
 
       {/* Quick Navigation and Recent Audit Grid */}
-      <div className="mt-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+      <div className="mt-5 grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
         <AdminCard>
           <AdminCardHeader
-            eyebrow="Akses Cepat"
-            title="Navigasi Modul"
-            description="Pintas kerja ke modul yang Anda kelola."
+            title="Pintasan modul"
           />
           <div className="grid border-t border-dgb-100 sm:grid-cols-2">
             {quickActions
@@ -535,9 +529,8 @@ export default async function AdminDashboard() {
         {/* Recent Audit Log Feed */}
         <AdminCard>
           <AdminCardHeader
-            eyebrow="Aktivitas Terbaru"
-            title="Log Audit & Perubahan"
-            description="Riwayat perubahan transaksional admin dalam zona Asia/Jakarta."
+            title="Riwayat audit"
+            description="Waktu dalam WIB."
             action={
               permissions.has("audit.view") ? (
                 <Link

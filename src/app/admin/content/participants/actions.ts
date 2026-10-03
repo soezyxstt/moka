@@ -7,6 +7,7 @@ import { appendAuditLog } from "@/server/auth/audit";
 import { requirePermission } from "@/server/auth/authorization";
 import { getAdminEditionContext } from "@/server/cms/context";
 import { database } from "@/server/db/client";
+import { isAllowedMediaMimeType } from "@/server/media/policy";
 import {
   categories,
   mediaAssets,
@@ -741,6 +742,9 @@ export async function saveParticipantMediaAction(
   if (mediaItems.filter((item) => item.role === "closeup" && item.active !== false).length > 1) {
     throw new Error("Hanya satu foto closeup yang dapat dijadikan foto utama");
   }
+  if (mediaItems.filter((item) => item.role === "profile_video" && item.active !== false).length > 1) {
+    throw new Error("Hanya satu video profil yang dapat aktif");
+  }
 
   const now = new Date();
   let nextVersion = 1;
@@ -758,7 +762,7 @@ export async function saveParticipantMediaAction(
     }
     if (!Number.isInteger(expectedVersion) || participant.version !== expectedVersion) throw new Error("Data peserta telah diubah. Muat ulang halaman.");
 
-    // Verify all media assets are ready images
+    // Verify that each role points to a ready asset of the expected media type.
     for (const item of mediaItems) {
       const [asset] = await tx
         .select()
@@ -766,8 +770,11 @@ export async function saveParticipantMediaAction(
         .where(and(eq(mediaAssets.id, item.mediaId), eq(mediaAssets.lifecycle, "ready")))
         .limit(1);
 
-      if (!asset || !asset.mimeType.startsWith("image/")) {
-        throw new Error("Setiap foto peserta harus merupakan gambar berstatus ready dari pustaka media");
+      const kind = item.role === "profile_video" ? "video" : "image";
+      if (!asset || !isAllowedMediaMimeType(kind, asset.mimeType)) {
+        throw new Error(item.role === "profile_video"
+          ? "Video profil harus berupa MP4 atau WebM berstatus ready dari pustaka media"
+          : "Foto peserta harus berupa gambar JPG, PNG, WebP, atau AVIF berstatus ready dari pustaka media");
       }
     }
 

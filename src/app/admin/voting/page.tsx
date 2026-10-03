@@ -26,15 +26,14 @@ export default async function VotingAdminPage() {
   if (!currentEdition) {
     return (
       <AdminPage
-        eyebrow="Operasional / voting"
+        eyebrow="Operasional"
         title="Voting tahunan"
-        description="Kelola kampanye per edisi, QRIS peserta, dan pembaruan tally manual."
       >
         <AdminCard>
           <AdminEmptyState
             icon="calendar"
             title="Belum ada edisi aktif"
-            description="Pilih edisi dari header selector atau buat edisi baru di menu kelola edisi untuk mengelola voting."
+            description="Pilih edisi di bagian atas untuk mulai."
           />
         </AdminCard>
       </AdminPage>
@@ -124,9 +123,8 @@ export default async function VotingAdminPage() {
 
   return (
     <AdminPage
-      eyebrow="Operasional / voting"
+      eyebrow="Operasional"
       title={`Voting ${currentEdition.name}`}
-      description="Kelola kampanye, QRIS peserta, dan tally untuk edisi aktif."
       action={<AdminBadge value={currentEdition.lifecycle} />}
     >
       <VotingConsole

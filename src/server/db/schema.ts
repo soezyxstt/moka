@@ -3,6 +3,7 @@ import { check, index, integer, primaryKey, sqliteTable, text, uniqueIndex, type
 
 export const categoryValues = ['JD', 'MD', 'JR', 'MR'] as const;
 export type Category = (typeof categoryValues)[number];
+export type StageCategoryTargets = Record<Category, number>;
 
 export function parseCategory(value: string): Category {
   if (!categoryValues.includes(value as Category)) {
@@ -321,6 +322,10 @@ export const selectionStages = sqliteTable('selectionStage', {
   slug: text('slug').notNull(),
   displayOrder: integer('displayOrder').notNull().default(0),
   targetParticipantCount: integer('targetParticipantCount').notNull().default(0),
+  targetJDCount: integer('targetJDCount'),
+  targetMDCount: integer('targetMDCount'),
+  targetJRCount: integer('targetJRCount'),
+  targetMRCount: integer('targetMRCount'),
   lifecycle: text('lifecycle', { enum: selectionStageLifecycles }).notNull().default('draft'),
   finalStage: integer('finalStage', { mode: 'boolean' }).notNull().default(false),
   version: integer('version').notNull().default(1),
@@ -338,6 +343,8 @@ export const participantStageEntries = sqliteTable('participantStageEntry', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   participantId: text('participantId').notNull().references(() => participants.id, { onDelete: 'cascade' }),
   stageId: text('stageId').notNull().references(() => selectionStages.id, { onDelete: 'cascade' }),
+  number: integer('number'),
+  displayOrder: integer('displayOrder'),
   decision: text('decision', { enum: stageDecisions }).notNull().default('pending'),
   decidedAt: integer('decidedAt', { mode: 'timestamp_ms' }),
   decidedByUserId: text('decidedByUserId').references(() => authUsers.id, { onDelete: 'set null' }),
@@ -390,7 +397,7 @@ export const participantSocialLinks = sqliteTable('participantSocialLink', {
   index('participant_social_link_participant_idx').on(t.participantId),
 ]);
 
-export const participantMediaRoles = ['closeup', 'full_body', 'detail', 'karantina', 'other'] as const;
+export const participantMediaRoles = ['closeup', 'full_body', 'detail', 'karantina', 'other', 'profile_video'] as const;
 export type ParticipantMediaRole = (typeof participantMediaRoles)[number];
 
 export const participantMedia = sqliteTable('participantMedia', {

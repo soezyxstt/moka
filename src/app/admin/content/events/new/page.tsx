@@ -11,5 +11,5 @@ export default async function NewEventPage() {
   const actor = await requirePermission("events.manage");
   const edition = await getAdminEditionContext();
   if (!edition) throw new Error("Pilih edisi aktif terlebih dahulu");
-  return <AdminPage eyebrow="Acara / baru" title="Tambah acara" description="Buat rangkaian kegiatan edisi aktif." action={<AdminLinkButton href="/admin/content/events" variant="secondary"><ArrowLeft className="size-4" />Kembali</AdminLinkButton>}><EventForm editionId={edition.id} initialValue={null} canEdit canManageMedia={actor.effectivePermissions.has("media.manage")} /></AdminPage>;
+  return <AdminPage eyebrow="Acara" title="Tambah acara" action={<AdminLinkButton href="/admin/content/events" variant="secondary"><ArrowLeft className="size-4" />Kembali</AdminLinkButton>}><EventForm editionId={edition.id} initialValue={null} canEdit canManageMedia={actor.effectivePermissions.has("media.manage")} /></AdminPage>;
 }

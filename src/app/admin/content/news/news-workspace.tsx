@@ -83,7 +83,7 @@ function legacyBodyToTipTapDocument(body: string | null | undefined): Record<str
 function newsStatusLabel(status: string): string {
   if (status === "published") return "Terbit";
   if (status === "archived") return "Arsip";
-  return "Draft";
+  return "Draf";
 }
 
 export type NewsRevisionItem = {

@@ -1,6 +1,14 @@
-# Runbook cutover CMS (belum diotorisasi)
+# Runbook cutover CMS (production belum diotorisasi)
 
 Dokumen ini adalah checklist; menjalankannya pada staging/production memerlukan persetujuan eksplisit yang menyebut target.
+
+## Seed 2025 lokal
+
+Untuk pemeriksaan lokal yang diotorisasi, gunakan hanya `TURSO_DATABASE_URL=file:local.db` setelah backup lokal lolos `PRAGMA integrity_check`. Jalankan **Import media 2025** di `/admin/media`, tunggu seluruh file menjadi aset siap, lalu jalankan **Import konten 2025** di `/admin/content`. Media diunggah ke akun UploadThing yang dikonfigurasi; data CMS ditulis ke database lokal dengan audit. Import konten mengaktifkan edisi 2025 dan memindahkan edisi aktif yang lebih baru ke draf tanpa menghapusnya. Tindakan ini tidak mengotorisasi database Turso remote, production cutover, atau deployment.
+
+Hasil seed lokal pada 2026-10-01: 340 media siap, 9 page sections, 6 program, 23 binding aset situs, 5 periode kepengurusan dengan 20 membership, 60 peserta termasuk 44 finalis, 6 acara, 7 album dengan 69 item, 1 artikel, dan 68 sponsor. Edisi 2025 aktif, edisi 2026 draf. `PRAGMA integrity_check` menghasilkan `ok` dan `PRAGMA foreign_key_check` tidak menemukan masalah. Backup sebelum seed konten: `local.db-before-content-seed-20261001.db`.
+
+Kampanye dan tally voting tidak diimpor karena sumber tidak menyediakan jadwal, harga, atau nilai tally yang dapat diverifikasi. Buat campaign setelah jadwal dan harga dikonfirmasi. Semua tier sponsor lokal sementara `pendukung`; verifikasi dan petakan ulang tier sebelum production cutover. Video profil individu tidak tersedia pada aset sumber.
 
 ## Yang disiapkan manual
 
@@ -8,7 +16,7 @@ Dokumen ini adalah checklist; menjalankannya pada staging/production memerlukan 
 - `BETTER_AUTH_SECRET`, URL aplikasi publik, URL/token database Turso production.
 - Token UploadThing, domain delivery yang diizinkan, serta konfirmasi quota bucket.
 - Email Google calon super admin yang sudah pernah login; promosi dilakukan manual dengan `bootstrap-super-admin.md`.
-- Mapping setiap sponsor lama ke salah satu tier: utama, pendukung, pendamping, pelengkap.
+- Verifikasi dan mapping ulang 68 sponsor ke tier utama, pendukung, pendamping, atau pelengkap. Seed lokal memakai tier `pendukung` sementara karena sumber tidak menyebutkan tier.
 - Lokasi backup repo/bundle, snapshot Turso, target deployment, maintenance window, dan penanggung jawab rollback.
 
 ## Sebelum migrasi

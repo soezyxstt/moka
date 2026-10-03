@@ -157,9 +157,8 @@ export default async function PeriodDetailPage({ params }: PageProps) {
 
   return (
     <AdminPage
-      eyebrow="Kepengurusan / detail periode"
+      eyebrow="Kepengurusan"
       title={period.label}
-      description="Pohon unit dan penugasan pengurus."
     >
       <PeriodDetailClient
         period={period}

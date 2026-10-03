@@ -54,6 +54,79 @@ import {
   reorderSelectionStagesAction,
   updateSelectionStageAction,
 } from "../selection-actions";
+import { categoryValues, type Category, type StageCategoryTargets } from "@/server/db/schema";
+
+type CategoryTargetInputs = Record<Category, string>;
+
+const EMPTY_TARGET_INPUTS: CategoryTargetInputs = { JD: "", MD: "", JR: "", MR: "" };
+const DEFAULT_TARGET_INPUTS: CategoryTargetInputs = { JD: "5", MD: "5", JR: "5", MR: "5" };
+
+function CategoryTargetFields({
+  value,
+  onChange,
+  minimum = { JD: 0, MD: 0, JR: 0, MR: 0 },
+}: {
+  value: CategoryTargetInputs;
+  onChange: (value: CategoryTargetInputs) => void;
+  minimum?: StageCategoryTargets;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      {categoryValues.map((code) => (
+        <AdminField key={code} label={`Target ${code}`}>
+          <AdminInput
+            type="number"
+            min={minimum[code]}
+            step="1"
+            value={value[code]}
+            placeholder={String(minimum[code])}
+            onChange={(event) => onChange({ ...value, [code]: event.target.value })}
+            required
+          />
+        </AdminField>
+      ))}
+    </div>
+  );
+}
+
+function readCategoryTargets(value: CategoryTargetInputs): StageCategoryTargets {
+  const targets = {} as StageCategoryTargets;
+  for (const code of categoryValues) {
+    if (!/^\d+$/.test(value[code])) throw new Error(`Target ${code} harus berupa bilangan bulat nol atau lebih`);
+    const parsed = Number(value[code]);
+    if (!Number.isSafeInteger(parsed)) throw new Error(`Target ${code} tidak valid`);
+    targets[code] = parsed;
+  }
+  if (categoryValues.every((code) => targets[code] === 0)) throw new Error("Jumlah target tahap minimal satu peserta");
+  return targets;
+}
+
+function totalTargetInput(value: CategoryTargetInputs) {
+  return categoryValues.reduce((total, code) => total + (/^\d+$/.test(value[code]) ? Number(value[code]) : 0), 0);
+}
+
+function setCategoryTargets(formData: FormData, targets: StageCategoryTargets) {
+  for (const code of categoryValues) formData.set(`target${code}`, String(targets[code]));
+}
+
+function getQuotaDifference(advancedCount: number, advancedByCategory: StageCategoryTargets, target: StageListItem) {
+  if (!target.categoryTargets) {
+    return {
+      over: advancedCount > target.targetParticipantCount,
+      under: advancedCount < target.targetParticipantCount,
+      overText: `Jumlah peserta lolos (${advancedCount}) melebihi target total (${target.targetParticipantCount})`,
+      underText: `Jumlah peserta lolos (${advancedCount}) kurang dari target total (${target.targetParticipantCount})`,
+    };
+  }
+  const over = categoryValues.filter((code) => advancedByCategory[code] > target.categoryTargets![code]);
+  const under = categoryValues.filter((code) => advancedByCategory[code] < target.categoryTargets![code]);
+  return {
+    over: over.length > 0,
+    under: under.length > 0,
+    overText: over.map((code) => `${code} ${advancedByCategory[code]}/${target.categoryTargets![code]}`).join(", "),
+    underText: under.map((code) => `${code} ${advancedByCategory[code]}/${target.categoryTargets![code]}`).join(", "),
+  };
+}
 
 export type StageListItem = {
   id: string;
@@ -62,6 +135,7 @@ export type StageListItem = {
   slug: string;
   displayOrder: number;
   targetParticipantCount: number;
+  categoryTargets: StageCategoryTargets | null;
   lifecycle: string;
   finalStage: boolean;
   version: number;
@@ -70,6 +144,8 @@ export type StageListItem = {
     pending: number;
     advanced: number;
     eliminated: number;
+    advancedByCategory: StageCategoryTargets;
+    totalByCategory: StageCategoryTargets;
   };
   hasEntries: boolean;
 };
@@ -88,13 +164,13 @@ export function StagesListClient({
   // Create modal state
   const [createOpen, setCreateOpen] = useState(false);
   const [createName, setCreateName] = useState("");
-  const [createTarget, setCreateTarget] = useState("20");
+  const [createTargets, setCreateTargets] = useState<CategoryTargetInputs>(DEFAULT_TARGET_INPUTS);
   const [createFinal, setCreateFinal] = useState(false);
 
   // Edit modal state
   const [editTarget, setEditTarget] = useState<StageListItem | null>(null);
   const [editName, setEditName] = useState("");
-  const [editTargetCount, setEditTargetCount] = useState("");
+  const [editTargets, setEditTargets] = useState<CategoryTargetInputs>(EMPTY_TARGET_INPUTS);
   const [editFinal, setEditFinal] = useState(false);
 
   // Lifecycle modal states
@@ -112,7 +188,7 @@ export function StagesListClient({
 
   function resetCreateForm() {
     setCreateName("");
-    setCreateTarget("20");
+    setCreateTargets(DEFAULT_TARGET_INPUTS);
     setCreateFinal(false);
     setCreateOpen(false);
   }
@@ -120,20 +196,21 @@ export function StagesListClient({
   function handleCreateStage(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const name = createName.trim();
-    const target = parseInt(createTarget, 10);
-
     if (!name) {
       toast.error("Nama tahap wajib diisi");
       return;
     }
-    if (isNaN(target) || target < 1) {
-      toast.error("Target peserta harus berupa bilangan bulat positif");
+    let categoryTargets: StageCategoryTargets;
+    try {
+      categoryTargets = readCategoryTargets(createTargets);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Target kategori tidak valid");
       return;
     }
 
     const formData = new FormData();
     formData.set("name", name);
-    formData.set("targetParticipantCount", String(target));
+    setCategoryTargets(formData, categoryTargets);
     if (createFinal) formData.set("finalStage", "true");
 
     startTransition(async () => {
@@ -151,7 +228,9 @@ export function StagesListClient({
   function startEdit(stage: StageListItem) {
     setEditTarget(stage);
     setEditName(stage.name);
-    setEditTargetCount(String(stage.targetParticipantCount));
+    setEditTargets(stage.categoryTargets
+      ? Object.fromEntries(categoryValues.map((code) => [code, String(stage.categoryTargets![code])])) as CategoryTargetInputs
+      : EMPTY_TARGET_INPUTS);
     setEditFinal(stage.finalStage);
   }
 
@@ -160,18 +239,20 @@ export function StagesListClient({
     if (!editTarget) return;
 
     const name = editName.trim();
-    const target = parseInt(editTargetCount, 10);
-
     if (!name) {
       toast.error("Nama tahap wajib diisi");
       return;
     }
-    if (isNaN(target) || target < 1) {
-      toast.error("Target peserta harus berupa bilangan bulat positif");
+    let categoryTargets: StageCategoryTargets;
+    try {
+      categoryTargets = readCategoryTargets(editTargets);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Target kategori tidak valid");
       return;
     }
-    if (target < editTarget.stats.total) {
-      toast.error(`Target tidak boleh kurang dari peserta yang sudah masuk (${editTarget.stats.total})`);
+    const underfilled = categoryValues.filter((code) => categoryTargets[code] < editTarget.stats.totalByCategory[code]);
+    if (underfilled.length) {
+      toast.error(`Target ${underfilled.join(", ")} tidak boleh kurang dari peserta yang sudah masuk`);
       return;
     }
 
@@ -179,7 +260,7 @@ export function StagesListClient({
     formData.set("stageId", editTarget.id);
     formData.set("expectedVersion", String(editTarget.version));
     formData.set("name", name);
-    formData.set("targetParticipantCount", String(target));
+    setCategoryTargets(formData, categoryTargets);
     if (editFinal) formData.set("finalStage", "true");
 
     startTransition(async () => {
@@ -241,11 +322,14 @@ export function StagesListClient({
     if (!closeTarget) return;
 
     const nextStage = stages.find((s) => s.displayOrder > closeTarget.displayOrder);
-    if (nextStage && closeTarget.stats.advanced > nextStage.targetParticipantCount) {
-      toast.error("Jumlah peserta lolos melebihi target tahap berikutnya");
+    const difference = nextStage
+      ? getQuotaDifference(closeTarget.stats.advanced, closeTarget.stats.advancedByCategory, nextStage)
+      : null;
+    if (difference?.over) {
+      toast.error(`Peserta lolos melebihi target tahap berikutnya: ${difference.overText}`);
       return;
     }
-    if (nextStage && closeTarget.stats.advanced < nextStage.targetParticipantCount) {
+    if (difference?.under) {
       if (!closeAllowUnderTarget || closeReason.trim().length < 5) {
         toast.error("Konfirmasi dan alasan minimal 5 karakter diperlukan");
         return;
@@ -396,8 +480,14 @@ export function StagesListClient({
                       </div>
 
                       <p className="text-xs text-muted-foreground">
-                        Target: {stage.targetParticipantCount} peserta
-                        {nextStage ? ` (tahap berikutnya: ${nextStage.name}, target: ${nextStage.targetParticipantCount})` : ""}
+                        {stage.categoryTargets
+                          ? `Target kategori: ${categoryValues.map((code) => `${code} ${stage.categoryTargets![code]}`).join(", ")} (total ${stage.targetParticipantCount})`
+                          : `Target total: ${stage.targetParticipantCount} peserta; target kategori belum diatur`}
+                        {nextStage
+                          ? `; ${nextStage.name}: ${nextStage.categoryTargets
+                            ? categoryValues.map((code) => `${code} ${nextStage.categoryTargets![code]}`).join(", ")
+                            : `${nextStage.targetParticipantCount} total`}`
+                          : ""}
                       </p>
                     </div>
                   </div>
@@ -555,16 +645,14 @@ export function StagesListClient({
               />
             </AdminField>
 
-            <AdminField label="Target total peserta" hint="Batas jumlah peserta untuk tahap ini">
-              <AdminInput
-                type="number"
-                min="1"
-                step="1"
-                value={createTarget}
-                onChange={(e) => setCreateTarget(e.target.value)}
-                required
-              />
-            </AdminField>
+            <div className="space-y-2">
+              <div>
+                <p className="text-xs font-semibold text-foreground">Target per kategori</p>
+                <p className="text-xs leading-5 text-muted-foreground">Jumlah peserta yang dapat masuk ke tahap ini.</p>
+              </div>
+              <CategoryTargetFields value={createTargets} onChange={setCreateTargets} />
+              <p className="pt-1 text-xs text-muted-foreground">Total target: {totalTargetInput(createTargets)} peserta</p>
+            </div>
 
             <label className="flex items-center gap-2 cursor-pointer pt-1">
               <Checkbox
@@ -619,23 +707,20 @@ export function StagesListClient({
                 />
               </AdminField>
 
-              <AdminField
-                label="Target total peserta"
-                hint={
-                  editTarget.stats.total > 0
-                    ? `Minimal ${editTarget.stats.total} peserta (sesuai peserta yang sudah masuk)`
-                    : "Jumlah target peserta"
-                }
-              >
-                <AdminInput
-                  type="number"
-                  min={Math.max(1, editTarget.stats.total)}
-                  step="1"
-                  value={editTargetCount}
-                  onChange={(e) => setEditTargetCount(e.target.value)}
-                  required
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-foreground">Target per kategori</p>
+                {editTarget.categoryTargets === null ? (
+                  <p className="mb-2 text-xs text-muted-foreground">Tahap ini memakai target total lama. Isi target untuk setiap kategori.</p>
+                ) : null}
+                <CategoryTargetFields
+                  value={editTargets}
+                  onChange={setEditTargets}
+                  minimum={editTarget.stats.totalByCategory}
                 />
-              </AdminField>
+                <p className="pt-1 text-xs text-muted-foreground">
+                  Total target: {totalTargetInput(editTargets)} peserta
+                </p>
+              </div>
 
               <label className="flex items-center gap-2 cursor-pointer pt-1">
                 <Checkbox
@@ -718,25 +803,21 @@ export function StagesListClient({
               {(() => {
                 const next = stages.find((s) => s.displayOrder > closeTarget.displayOrder);
                 if (!next) return null;
-                const isUnderTarget = closeTarget.stats.advanced < next.targetParticipantCount;
-                const isOverTarget = closeTarget.stats.advanced > next.targetParticipantCount;
+                const difference = getQuotaDifference(closeTarget.stats.advanced, closeTarget.stats.advancedByCategory, next);
 
-                if (isOverTarget) {
+                if (difference.over) {
                   return (
                     <p className="rounded-md border border-red-200 bg-red-50 p-2.5 text-xs text-red-700">
-                      Peserta lolos ({closeTarget.stats.advanced}) melebihi target tahap berikutnya (
-                      {next.targetParticipantCount}). Kurangi jumlah peserta lolos.
+                      Peserta lolos melebihi target tahap berikutnya: {difference.overText}. Kurangi jumlah peserta lolos.
                     </p>
                   );
                 }
 
-                if (isUnderTarget) {
+                if (difference.under) {
                   return (
                     <div className="space-y-3 rounded-md border border-amber-200 bg-amber-50/70 p-3">
                       <p className="text-xs text-amber-800">
-                        Peserta lolos ({closeTarget.stats.advanced}) kurang dari target tahap
-                        berikutnya ({next.targetParticipantCount}). Konfirmasi dan alasan
-                        diperlukan.
+                        Peserta lolos belum memenuhi target tahap berikutnya: {difference.underText}. Konfirmasi dan alasan diperlukan.
                       </p>
                       <label className="flex items-center gap-2 cursor-pointer">
                         <Checkbox
@@ -771,8 +852,11 @@ export function StagesListClient({
                 (() => {
                   if (!closeTarget) return true;
                   const next = stages.find((s) => s.displayOrder > closeTarget.displayOrder);
-                  if (next && closeTarget.stats.advanced > next.targetParticipantCount) return true;
-                  if (next && closeTarget.stats.advanced < next.targetParticipantCount) {
+                  const difference = next
+                    ? getQuotaDifference(closeTarget.stats.advanced, closeTarget.stats.advancedByCategory, next)
+                    : null;
+                  if (difference?.over) return true;
+                  if (difference?.under) {
                     return !closeAllowUnderTarget || closeReason.trim().length < 5;
                   }
                   return false;

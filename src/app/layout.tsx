@@ -9,7 +9,7 @@ import 'react-lite-youtube-embed/dist/LiteYouTubeEmbed.css';
 import { Toaster } from '@/components/ui/sonner';
 import Script from "next/script";
 import { SiteChrome } from '@/components/site-chrome';
-import { categories, rangkaianKegiatan } from '@/lib/data';
+import { getPublicNavigation } from '@/server/cms/public-readers';
 
 export const metadata: Metadata = {
   title: {
@@ -24,6 +24,8 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const navigation = await getPublicNavigation();
+
   return (
     <html lang="id" suppressHydrationWarning>
       {/* Google Analytics Tag */}
@@ -50,14 +52,14 @@ export default async function RootLayout({
         <SiteChrome
           top={
             <>
-              <Navbar categories={categories} events={rangkaianKegiatan.map((item) => ({ label: item.label, slug: item.label.toLowerCase().replace(/\s+/g, '-') }))} />
+              <Navbar categories={navigation.categories} events={navigation.events} resultsVisible={navigation.resultsVisible} edition={navigation.edition} />
               <Lenis />
             </>
           }
           bottom={
             <>
               <ScrollToTopButton />
-              <Footer />
+              <Footer categories={navigation.categories} events={navigation.events} edition={navigation.edition} aboutDescription={navigation.aboutDescription} resultsVisible={navigation.resultsVisible} />
             </>
           }
         >

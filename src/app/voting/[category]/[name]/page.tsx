@@ -1,101 +1,88 @@
-import BG from '@/components/next-image-bg';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { categories } from '@/lib/data';
-import ImageMaskFade from './image-mask';
 import Image from 'next/image';
-import Link from 'next/link';
-// import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { getPublicVotingCategoryBySlug } from '@/server/cms/public-readers';
 
-export async function generateMetadata({
-  params,
-}: Readonly<{ params: Promise<{ name: string, category: string }> }>) {
-  const { name: name_, category: catt } = await params;
-  const category = categories.find(cat => cat.slug === catt);
-  const name = name_.split("-").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
+type PageProps = Readonly<{ params: Promise<{ name: string; category: string }> }>;
 
-  if (!category) {
-    return {
-      title: "Kategori Tidak Ditemukan",
-      description: "Kategori yang Anda cari tidak ditemukan.",
-    };
-  }
+export async function generateMetadata({ params }: PageProps) {
+  const { name, category: categorySlug } = await params;
+  const category = await getPublicVotingCategoryBySlug(categorySlug);
+  const candidate = category?.candidates.find((item) => item.slug === name);
+  if (!category || !candidate) return { title: 'Profil peserta tidak ditemukan' };
 
   return {
-    title: `Profil ${name} - ${category.name} 2025`,
-    openGraph: {
-      images: [`/peserta/${category.abrev}/${name_.split(" ").join("_")}/default.png`],
-    },
-    description: `Profil finalis ${name} pada kategori ${category.name} di Pasanggiri Mojang Jajaka Kabupaten Garut 2025.`,
+    title: 'Profil ' + candidate.name + ' · ' + category.name + ' ' + category.editionYear,
+    description: candidate.bio || 'Profil peserta kategori ' + category.name + ' pada edisi ' + category.editionYear + '.',
+    openGraph: candidate.imageUrl ? { images: [candidate.imageUrl] } : undefined,
   };
 }
 
-export default async function DetailProfilPage({
-  params,
-}: Readonly<{
-  params: Promise<{ name: string, category: string }>;
-}>) {
+export default async function VotingCandidatePage({ params }: PageProps) {
+  const { name, category: categorySlug } = await params;
+  const category = await getPublicVotingCategoryBySlug(categorySlug);
+  const candidate = category?.candidates.find((item) => item.slug === name);
+  if (!category || !category.campaign || !candidate) notFound();
 
-  const { name, category: catt } = await params;
-  const category = categories.find(cat => cat.slug === catt);
-
-  if (!category) {
-    return <main className="bg-cover min-h-screen bg-center bg-[url(/gf-1.png)] grid place-items-center md:px-20 py-16 px-8 font-montserrat">Kategori tidak ditemukan</main>;
-  }
-
-  const finalist = category.finalist.find(f => f.name.split(" ").join("-").toLowerCase() === name);
-
-  if (!finalist) {
-    return <main className="bg-cover min-h-screen bg-center bg-[url(/gf-1.png)] grid place-items-center md:px-20 py-16 px-8 font-montserrat">Peserta tidak ditemukan</main>;
-  }
-
-  const qrPath = `/qr/${category.abrev}/${finalist.name.split(" ").join("_")}.jpg`;
+  const price = category.campaign.pricePerPoint > 0
+    ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(category.campaign.pricePerPoint)
+    : 'Belum ditetapkan';
 
   return (
-    <main className="h-screen max-sm:h-auto min-h-screen overflow-hidden relative">
-      <BG />
-      <div className='w-full h-[100lvh] pointer-events-none z-0 bg-radial-[at_50%_50%] fixed top-0 left-0 from-transparent to-90% to-dgb-800' />
-      <div className="relative z-1 bg-white/50 backdrop-blur-[2px] md:h-3/4 min-h-[80vh] mx-6 rounded-3xl top-28 md:top-28 md:mx-20 md:rounded-[64px] overflow-hidden mb-36">
-        <div className="absolute top-0 -z-1 bg-linear-120 from-black/50 via-black/50 to-fb-300/40 via-60% w-full h-full"></div>
-        <div className="md:flex md:flex-row-reverse justify-end md:pl-20 lg:pl-24 max-h-full max-sm:space-y-4 max-sm:pb-8">
-          {/* <Image src={`/peserta/${category?.abrev}/${finalist.name.split(" ").join("_")}/default.png`} alt='' width={400} height={1000} blurDataURL={`/peserta/${category?.abrev}/${finalist.name.split(" ").join("_")}/default_blur.webp`} className='object-top object-cover md:max-h-full max-h-84 max-sm:max-w-64 mx-auto' /> */}
-          <ImageMaskFade src={`/finalis/${category?.abrev}/${category?.abrev}${finalist.no}.webp`} alt='' width={400} height={1000} className='object-top md:h-max max-sm:max-h-84 md:mx-auto' />
-          <div className="text-white w-full md:max-w-lg lg:max-w-xl space-y-2 md:space-y-4 mt-auto md:pb-20 max-sm:px-6 max-sm:text-sm relative z-1">
-            <div className="flex gap-6 items-center w-full justify-between">
-              <div className="flex flex-col justify-center gap-1.5">
-                <div className="">
-                  <p className="font-montserrat text-[#DCDCDC] capitalize">{category.name}</p>
-                  <h2 className="capitalize md:text-5xl text-xl font-semibold mb-1.5">{name.split("-").slice(0, 2).join(" ")}</h2>
-                  <Separator className='bg-white'/>
-                </div>
-                <p className="text-center mt-1.5 md:hidden">Pindai QR untuk Vote</p>
-                <p className="text-center text-xs md:hidden">----- atau -----</p>
-                <Link className='w-full bg-fb font-medium px-6 text-center py-1.5 rounded-md md:hidden' href={qrPath} download={`qr-${finalist.name}`}>Unduh QR</Link>
-              </div>
-              <div className="">
-                <Image height={200} width={200} alt='qr-code' src={qrPath} className='bg-white rounded-2xl w-32 h-32 border border-dgb md:hidden aspect-square' />
-                <p className="w-full text-center md:hidden">1 poin: Rp2000,-</p>
-                <p className="w-full text-center md:hidden">(berlaku kelipatan)</p>
-              </div>
+    <main className="min-h-screen bg-dgb-900 px-5 pb-16 pt-24 text-white md:px-10 md:pt-28">
+      <article className="mx-auto grid w-full max-w-6xl overflow-hidden rounded-xl border border-white/15 bg-white/8 md:grid-cols-[minmax(0,1fr)_minmax(20rem,0.8fr)]">
+        <div className="relative min-h-[50vh] bg-dgb-800 md:min-h-[78vh]">
+          {candidate.imageUrl ? (
+            <Image src={candidate.imageUrl} alt={candidate.name} fill priority sizes="(max-width: 768px) 100vw, 55vw" className="object-cover object-top" />
+          ) : (
+            <div role="img" aria-label={'Foto ' + candidate.name + ' belum tersedia'} className="grid size-full min-h-[50vh] place-items-center bg-linear-to-br from-dgb-700 to-dgb-900 md:min-h-[78vh]">
+              <span aria-hidden="true" className="font-montserrat text-7xl font-semibold">{candidate.name.split(/\s+/).map((part) => part[0]).slice(0, 2).join('')}</span>
             </div>
-            <div className="flex max-sm:flex-col w-full justify-between gap-8 items-center md:mt-8 mt-6">
-              <ScrollArea className="space-y-4 md:h-[35vh] h-[30vh]">
-                <p className="font-montserrat text-sm">{finalist.description}</p>
-                <ul className='list-decimal list-inside font-montserrat mb-8 mt-4'>
-                  {finalist.achievements.map((achievement, index) => (
-                    <li key={index} className='text-sm text-justify'>{" " + achievement}</li>
-                  ))}
-                </ul>
-              </ScrollArea>
-              <div className="min-w-40 flex flex-col items-center justify-center gap-2 max-sm:hidden">
-                <p className="">Pindai QR untuk Vote</p>
-                <Image height={200} width={200} alt='qr-code' src={qrPath} className='bg-white rounded-2xl w-40 h-40 border border-dgb aspect-square' />
-                <Link className='w-full bg-fb font-medium px-6 text-center py-1.5 rounded-md mt-2' href={qrPath} download={`qr-${finalist.name}`}>Unduh</Link>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
-      </div>
+
+        <div className="flex flex-col gap-6 p-6 md:p-9">
+          <header>
+            <p className="font-montserrat text-xs font-bold uppercase tracking-[0.18em] text-fb">{category.name} · {category.editionYear}</p>
+            <h1 className="mt-3 font-montserrat text-3xl font-semibold md:text-4xl">{candidate.name}</h1>
+            <p className="mt-2 text-sm text-white/70">{category.code}-{String(candidate.number).padStart(2, '0')}</p>
+          </header>
+
+          <section aria-label="Profil peserta">
+            <h2 className="font-montserrat text-lg font-semibold">Profil</h2>
+            <p className="mt-2 whitespace-pre-line text-sm leading-7 text-white/80">{candidate.bio || 'Deskripsi peserta belum tersedia.'}</p>
+            {candidate.achievements.length ? (
+              <ul className="mt-4 list-inside list-disc space-y-2 text-sm leading-6 text-white/80">
+                {candidate.achievements.map((achievement, index) => <li key={candidate.id + '-' + index}>{achievement}</li>)}
+              </ul>
+            ) : null}
+          </section>
+
+          {candidate.profileVideoUrl ? (
+            <section aria-label="Video profil">
+              <h2 className="mb-2 font-montserrat text-lg font-semibold">Video profil</h2>
+              <video controls playsInline preload="metadata" className="w-full rounded-lg bg-black">
+                <source src={candidate.profileVideoUrl} />
+              </video>
+            </section>
+          ) : null}
+
+          <section className="mt-auto rounded-xl border border-white/15 bg-dgb-900/50 p-5">
+            <h2 className="font-montserrat text-lg font-semibold">QR voting</h2>
+            {candidate.qrImageUrl ? (
+              <div className="mt-4 flex flex-col items-center gap-4 sm:flex-row">
+                <Image src={candidate.qrImageUrl} alt={'QR voting ' + candidate.name} width={192} height={192} className="aspect-square rounded-lg bg-white object-contain p-2" />
+                <div>
+                  <p className="text-sm leading-6 text-white/80">Pindai kode untuk membuka kanal voting peserta.</p>
+                  <p className="mt-2 text-sm font-semibold">Biaya per poin: {price}</p>
+                  <a href={candidate.qrImageUrl} download={'qr-' + candidate.slug} className="mt-4 inline-flex min-h-10 items-center justify-center rounded-md bg-fb px-4 py-2 text-sm font-semibold text-dgb-900">Unduh QR</a>
+                </div>
+              </div>
+            ) : (
+              <p className="mt-2 text-sm text-white/75">QR voting belum tersedia.</p>
+            )}
+          </section>
+        </div>
+      </article>
     </main>
-  )
+  );
 }

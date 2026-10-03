@@ -17,7 +17,7 @@ export default function HeroVideo({ children, fallbackImageSrc, videoWebMSrc, vi
   return (
     <section className="relative min-h-[38rem] w-full overflow-hidden bg-dgb-900 pt-16 text-white md:h-[82svh]">
       <AnimatePresence>
-        {(!hasVideo || !videoReady) ? <motion.div key="fallback" initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }} className="absolute inset-0"><Image src={fallbackImageSrc} alt="" fill priority sizes="100vw" className="object-cover" /></motion.div> : null}
+        {(!hasVideo || !videoReady) ? <motion.div key="fallback" initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }} className="absolute inset-0"><Image src={fallbackImageSrc} alt="" fill preload sizes="100vw" className="object-cover" /></motion.div> : null}
       </AnimatePresence>
       {hasVideo ? (
         <motion.video autoPlay loop muted playsInline preload="metadata" onCanPlay={() => setVideoReady(true)} initial={{ opacity: 0 }} animate={{ opacity: videoReady ? 1 : 0 }} transition={{ duration: 0.6 }} className="absolute inset-0 h-full w-full object-cover">

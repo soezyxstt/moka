@@ -155,6 +155,7 @@ export function PeriodDetailClient({
   canEdit = true,
 }: PeriodDetailClientProps) {
   const [isPending, startTransition] = useTransition();
+  const canEditPeriod = canEdit && period.lifecycle !== "archived";
 
   // Mode View: Tree List or Visual Chart
   const [activeView, setActiveView] = useState<"tree" | "visual">("tree");
@@ -623,13 +624,19 @@ export function PeriodDetailClient({
             </Button>
           </div>
 
-          {canEdit ? (
+          {canEditPeriod ? (
             <AdminButton onClick={openCreateRootUnit} className="gap-1.5 text-xs">
               <Plus size={14} /> Tambah unit utama
             </AdminButton>
           ) : null}
         </div>
       </div>
+
+      {period.lifecycle === "archived" ? (
+        <p className="rounded-md border border-fb-200 bg-fb-50 px-3 py-2 text-xs text-fb-900">
+          Periode arsip hanya dapat dilihat.
+        </p>
+      ) : null}
 
       {/* Period Metadata Card */}
       <div className="rounded-xl border border-dgb-100 bg-white p-5 shadow-xs">
@@ -661,7 +668,7 @@ export function PeriodDetailClient({
           </div>
 
           <div className="flex flex-col gap-2 shrink-0 lg:items-end">
-            {canEdit ? (
+            {canEditPeriod ? (
               <Button
                 type="button"
                 variant="outline"
@@ -676,7 +683,7 @@ export function PeriodDetailClient({
             <div className="rounded-lg bg-dgb-50/50 p-3 text-xs">
               <div className="flex items-center justify-between gap-3">
                 <p className="font-semibold text-dgb">Edisi terhubung</p>
-                {canEdit ? (
+                {canEditPeriod ? (
                   <Button
                     type="button"
                     variant="ghost"
@@ -729,7 +736,7 @@ export function PeriodDetailClient({
                   title="Belum ada unit kerja"
                   description="Mulai susun struktur organisasi dengan menambahkan unit kerja utama (level 1)."
                 />
-                {canEdit ? (
+                {canEditPeriod ? (
                   <div className="mt-4 flex justify-center">
                     <AdminButton onClick={openCreateRootUnit} className="gap-1.5">
                       <Plus size={14} /> Tambah unit pertama
@@ -751,7 +758,7 @@ export function PeriodDetailClient({
                   onAssignMember={openAssignMember}
                   onEditMember={openEditMember}
                   onDeleteMember={(m) => setDeletingMember(m)}
-                  canEdit={canEdit}
+                  canEdit={canEditPeriod}
                   canMoveUp={index > 0}
                   canMoveDown={index < treeRoots.length - 1}
                 />
