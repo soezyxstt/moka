@@ -1,156 +1,170 @@
-import { Images, UserRound } from "lucide-react";
+import { ArrowRight, ArrowUpRight, FileText, Images, UserRound } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
-import { typography } from "@/components/custom/typography";
+import { Section } from "@/components/custom/section";
 import { Button } from "@/components/custom/button";
-import { getPublicAboutContent, type PublicGalleryAlbum } from "@/server/cms/public-readers";
+import { typography } from "@/components/custom/typography";
+import { getPublicAboutContent, getPublicSiteIdentity, type PublicGalleryAlbum } from "@/server/cms/public-readers";
 
 export const metadata = { title: "Tentang Kami" };
 
-function cssBackground(url?: string) {
-  return url ? `url(${JSON.stringify(url)})` : undefined;
-}
-
 export default async function AboutUs() {
-  const about = await getPublicAboutContent();
-  const hero = about.sections.hero;
-  const visi = about.sections.visi;
-  const misiSection = about.sections.misi;
-  const legalitas = about.sections.legalitas;
-  const organisasi = about.sections.organisasi;
+  const [about, site] = await Promise.all([getPublicAboutContent(), getPublicSiteIdentity()]);
+  const contact = site.contacts.find((item) => item.kind === "email") ?? site.contacts.find((item) => item.kind === "instagram");
+  const { hero, visi, misi, legalitas, organisasi } = about.sections;
   const heroImage = about.assets["about.hero.bg"];
-  const introImage = about.assets["about.intro.image"];
+  const introImage = about.assets["about.intro.image"] ?? heroImage;
   const visionImage = about.assets["about.vision.image"];
   const history = about.history.filter((period) => period.members.length > 0);
-  const hasHero = Boolean(hero?.eyebrow?.trim() || hero?.title?.trim() || hero?.body?.trim() || heroImage);
-  const hasVision = Boolean(visi?.eyebrow?.trim() || visi?.title?.trim() || about.vision || about.mission.length || misiSection?.title?.trim() || introImage || visionImage || about.assets["about.vision.bg"]);
-  const hasLegalitas = Boolean(legalitas?.eyebrow?.trim() || legalitas?.title?.trim() || legalitas?.body?.trim());
-  const hasOrganisasi = Boolean(organisasi?.eyebrow?.trim() || organisasi?.title?.trim() || organisasi?.body?.trim() || about.pengurus.length);
+  const hasHero = Boolean(hero?.title?.trim() || hero?.body?.trim() || heroImage || introImage);
+  const hasVision = Boolean(visi?.title?.trim() || about.vision || visionImage);
+  const hasMission = Boolean(misi?.title?.trim() || about.mission.length);
+  const hasLegalitas = Boolean(legalitas?.title?.trim() || legalitas?.body?.trim() || about.legalDocument);
+  const hasOrganisasi = Boolean(organisasi?.title?.trim() || organisasi?.body?.trim() || about.pengurus.length);
+  const roleGroups = [
+    { label: "Dewan pengawas", pattern: /dewan pengawas/i },
+    { label: "Ketua, sekretaris, dan bendahara", pattern: /^(ketua umum|wakil ketua|sekretaris|wakil sekretaris|bendahara|wakil bendahara)/i },
+    { label: "Bidang", pattern: /bidang/i },
+  ];
+  const roster = roleGroups.map((group, index) => ({ label: group.label, members: about.pengurus.filter((person) => roleGroups.findIndex((role) => role.pattern.test(person.position)) === index) }));
+  roster.push({ label: "Pengurus lainnya", members: about.pengurus.filter((person) => !roleGroups.some((group) => group.pattern.test(person.position))) });
 
   return (
     <main className="relative min-h-screen">
-      {hasHero ? <section className="relative grid h-[62svh] min-h-[28rem] place-items-center overflow-hidden bg-dgb-900 bg-cover bg-center md:h-[75svh] md:min-h-[34rem]" style={{ backgroundImage: cssBackground(heroImage?.url) }}>
-        {heroImage ? <Image src={heroImage.url} alt={heroImage.alt ?? ""} fill preload className="object-cover object-center opacity-40" sizes="100vw" /> : null}
-        <div aria-hidden className="absolute inset-0 bg-linear-to-br from-dgb-800 via-dgb-600/60 via-65% to-95% to-fb-300/50" />
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-8 text-center md:px-20">
-          {hero?.eyebrow?.trim() ? <p className="mb-2 font-inter text-sm font-semibold uppercase tracking-wide text-white/85">{hero.eyebrow.trim()}</p> : null}
-          {hero?.title?.trim() ? <h1 className="mx-auto max-w-2xl font-montserrat !text-3xl font-semibold leading-tight text-white animate-fade-in md:!text-5xl">{hero.title.trim()}</h1> : null}
-          {hero?.body?.trim() ? <p className="mx-auto mt-4 max-w-3xl font-inter text-white/85">{hero.body.trim()}</p> : null}
+      {hasHero ? <Section className="overflow-hidden bg-brand-50 pb-10 pt-28 md:pb-14 md:pt-40" background={heroImage?.url} overlay="brand">
+        <div className={`relative mx-auto grid w-full max-w-7xl items-center gap-8 lg:gap-12 ${introImage ? "lg:grid-cols-[1.1fr_1fr]" : ""}`}>
+          <div>
+            {hero?.title?.trim() ? <h1 className="max-w-3xl font-manrope text-4xl font-semibold leading-[1.1] text-brand-900 sm:text-5xl lg:text-6xl">{hero.title.trim() === "Kenali Kami Lebih Dekat" ? "PAMOKA Garut" : hero.title.trim()}</h1> : null}
+            <p className="mt-5 max-w-2xl font-inter text-lg font-medium leading-7 text-brand-800">Paguyuban Mojang Jajaka Kabupaten Garut, dikenal melalui MOKA Garut.</p>
+            {hero?.body?.trim() ? <typography.p className="mt-4 max-w-2xl leading-7">{hero.body.trim()}</typography.p> : hero?.title?.trim() === "Kenali Kami Lebih Dekat" && about.mission.length ? <typography.p className="mt-4 max-w-2xl leading-7">Wadah pengembangan diri generasi muda Garut melalui budaya, kepemimpinan, dan kegiatan bersama.</typography.p> : null}
+            <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
+              <Button asChild size="lg"><Link href="#gallery">Lihat kegiatan<ArrowRight className="ml-2 size-4" aria-hidden /></Link></Button>
+              {contact ? <a href="#kontak" className="inline-flex min-h-11 items-center text-base text-brand underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">Hubungi pengurus</a> : null}
+            </div>
+          </div>
+          {introImage ? <div className="relative aspect-[3/2] overflow-hidden rounded-lg">
+            <Image src={introImage.url} alt={introImage.alt ?? ""} fill preload className="object-cover" sizes="(max-width: 1023px) 90vw, 45vw" />
+          </div> : null}
         </div>
-      </section> : null}
+      </Section> : null}
 
-      {hasVision ? <section id="visi-misi" className="relative overflow-x-clip bg-dgb-50 bg-cover bg-center pb-14 md:pb-20" style={{ backgroundImage: cssBackground(about.assets["about.vision.bg"]?.url) }}>
-        {introImage ? <div className="relative z-10 mx-auto w-[88vw] max-w-4xl -translate-y-14 md:-translate-y-20">
-          <Image src={introImage.url} alt={introImage.alt ?? ""} width={1080} height={720} className="aspect-[16/9] w-full rounded-l-full rounded-br-full object-cover shadow-xl shadow-dgb-900/15" sizes="(max-width: 768px) 88vw, 896px" />
+      <Section id="gallery" className="bg-highlight-50 py-10 md:py-12" background={about.assets["about.gallery.bg"]?.url} overlay="highlight" contentClassName="mx-auto max-w-7xl">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <typography.h1 className="text-3xl text-brand-900 md:text-4xl">Kegiatan kami</typography.h1>
+          <Link href="/galeri" className="inline-flex min-h-11 w-fit items-center gap-2 border-b border-brand/40 text-sm font-medium text-brand transition-colors hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">Lihat semua galeri<ArrowRight className="size-4" aria-hidden /></Link>
+        </div>
+        {about.galleries.length ? <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr]">
+          {about.galleries.slice(0, 3).map((album, index) => <AlbumPreview key={album.id} album={album} featured={index === 0} />)}
+        </div> : <typography.p className="mt-8">Belum ada album terbit untuk edisi ini.</typography.p>}
+      </Section>
+
+      {hasVision || hasMission ? <Section id="visi-misi" className="bg-brand-50 py-10 md:py-12" background={about.assets["about.vision.bg"]?.url} overlay="brand" contentClassName="mx-auto max-w-7xl">
+        {hasVision ? <div className={`grid items-center gap-6 lg:gap-12 ${visionImage ? "lg:grid-cols-[1.4fr_1fr]" : ""}`}>
+          <div className="min-w-0">
+            {visi?.title?.trim() ? <typography.h1 className="text-2xl text-brand-900 md:text-3xl">{visi.title.trim()}</typography.h1> : null}
+            {about.vision ? <typography.p className="mt-4 max-w-3xl text-xl font-medium leading-8 text-brand-800 md:text-2xl md:leading-9">{about.vision}</typography.p> : null}
+          </div>
+          {visionImage ? <div className="relative aspect-[3/2] overflow-hidden rounded-lg">
+            <Image src={visionImage.url} alt={visionImage.alt ?? ""} fill className="object-contain" sizes="(max-width: 1023px) 90vw, 38vw" />
+          </div> : null}
         </div> : null}
 
-        <div className={introImage ? "-mt-2 md:-mt-4" : "pt-14 md:pt-20"}>
-          <div className={`mx-auto grid max-w-7xl items-end gap-8 px-8 md:gap-16 md:px-20 ${visionImage ? "md:grid-cols-[minmax(0,1fr)_25rem]" : "md:grid-cols-1"}`}>
-            <div className="pb-4 md:pb-12 md:pl-[6%]">
-              {visi?.eyebrow?.trim() ? <typography.t1>{visi.eyebrow.trim()}</typography.t1> : null}
-              {visi?.title?.trim() ? <typography.h1 className="text-dgb-900">{visi.title.trim()}</typography.h1> : null}
-              {about.vision ? <typography.p className="mt-4 max-w-2xl leading-7">{about.vision}</typography.p> : null}
-            </div>
-            {visionImage ? <div className="relative hidden md:block">
-              <div aria-hidden className="absolute -inset-y-10 left-1/3 w-[50vw] bg-dgb-300" />
-              <Image src={visionImage.url} alt={visionImage.alt ?? ""} width={500} height={360} className="relative aspect-[5/3] w-full rounded-tl-2xl object-cover" />
-            </div> : null}
-          </div>
+        {hasMission ? <div className={hasVision ? "mt-8 md:mt-10" : ""}>
+          {misi?.title?.trim() ? <typography.h1 className="mb-5 text-2xl text-brand-900 md:text-3xl">{misi.title.trim()}</typography.h1> : null}
+          <ol className="grid gap-x-10 lg:grid-cols-2">
+            {about.mission.map((item, index) => <li key={`${index}-${item}`} className="grid grid-cols-[2.5rem_1fr] gap-3 border-t border-brand-200 py-4 md:grid-cols-[3rem_1fr] md:gap-4 lg:last:odd:col-span-2">
+              <span aria-hidden className="font-manrope text-3xl font-medium tabular-nums text-highlight-700">{String(index + 1).padStart(2, "0")}</span>
+              <typography.p className="min-w-0 leading-7">{item}</typography.p>
+            </li>)}
+          </ol>
+        </div> : null}
+      </Section> : null}
 
-          {about.mission.length || misiSection?.title?.trim() || misiSection?.eyebrow?.trim() ? <div className="ml-auto mt-16 w-[94%] rounded-tl-[64px] bg-linear-to-bl from-dgb-300 via-dgb-300 via-30% to-fb-300 px-7 py-10 text-white md:w-[90%] md:rounded-tl-[80px] md:px-12 md:py-12">
-            {misiSection?.eyebrow?.trim() ? <typography.t1>{misiSection.eyebrow.trim()}</typography.t1> : null}
-            {misiSection?.title?.trim() ? <h2 className="mb-8 font-montserrat text-2xl font-semibold">{misiSection.title.trim()}</h2> : null}
-            {about.mission.length ? <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5 lg:gap-0">
-              {about.mission.map((item, index) => <article key={`${index}-${item}`} className="font-montserrat lg:border-l lg:border-white/22 lg:px-6 lg:first:border-l-0 lg:first:pl-0 lg:last:pr-0">
-                <div className="mb-3 flex items-center gap-2"><h3 className="font-semibold">Misi {index + 1}</h3></div>
-                <p className="text-sm leading-6 text-white/85">{item}</p>
-              </article>)}
-            </div> : null}
-          </div> : null}
+      {hasLegalitas ? <Section id="legalitas" className="bg-highlight-50 py-8 md:py-10" contentClassName="mx-auto grid max-w-7xl gap-5 lg:grid-cols-[1fr_2fr] lg:gap-12">
+        <div>
+          {legalitas?.title?.trim() ? <typography.h1 className="text-3xl text-brand-900 md:text-4xl">{legalitas.title.trim()}</typography.h1> : null}
         </div>
-      </section> : null}
-
-      {hasLegalitas ? <section className="relative overflow-hidden bg-fb-50 px-8 py-14 md:px-20 md:py-20">
-        <div aria-hidden className="pointer-events-none absolute inset-0 bg-fb-50/80" />
-        <div className="relative mx-auto max-w-7xl">
-          {legalitas?.eyebrow?.trim() ? <typography.t1>{legalitas.eyebrow.trim()}</typography.t1> : null}
-          {legalitas?.title?.trim() ? <typography.h1 className="mt-2 text-dgb-900">{legalitas.title.trim()}</typography.h1> : null}
-          {legalitas?.body?.trim() ? <typography.p className="mt-3 max-w-4xl font-medium leading-7">{legalitas.body.trim()}</typography.p> : null}
+        <div className="min-w-0">
+          {legalitas?.body?.trim() ? <typography.p className="leading-7">{legalitas.body.trim()}</typography.p> : null}
+          {about.legalDocument ? <a href={about.legalDocument.url} target="_blank" rel="noreferrer" className="group mt-6 flex min-h-14 items-center gap-4 border-y border-brand-200 py-5 text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-highlight-400">
+            <FileText className="size-6 shrink-0" aria-hidden />
+            <span className="min-w-0 flex-1 font-inter text-sm font-semibold leading-6">{about.legalDocument.title}<span className="block font-inter text-xs font-normal text-brand-700">Lihat dokumen PDF</span></span>
+            <ArrowUpRight className="size-5 shrink-0 transition-transform motion-safe:group-hover:-translate-y-0.5 motion-safe:group-hover:translate-x-0.5" aria-hidden />
+          </a> : null}
         </div>
-      </section> : null}
+      </Section> : null}
 
-      {hasOrganisasi ? <section className="relative overflow-hidden bg-dgb-50 px-8 py-14 md:px-20 md:py-20">
-        <div aria-hidden className="pointer-events-none absolute inset-0 bg-fb-50/40" />
-        <div className="relative mx-auto w-full max-w-7xl">
-          {organisasi?.eyebrow?.trim() ? <typography.t1>{organisasi.eyebrow.trim()}</typography.t1> : null}
-          {organisasi?.title?.trim() ? <typography.h1 className="mt-2 max-w-3xl text-dgb-900">{organisasi.title.trim()}</typography.h1> : null}
-          {organisasi?.body?.trim() ? <typography.p className="mt-3 max-w-3xl">{organisasi.body.trim()}</typography.p> : null}
-          {about.organizationPeriodLabel ? <p className="mt-4 font-inter text-sm font-medium text-dgb-700">{about.organizationPeriodLabel}</p> : null}
-          {about.pengurus.length ? <div className="mt-6 grid gap-x-8 gap-y-4 sm:grid-cols-2 md:grid-cols-3">
-            {about.pengurus.map((person) => <article key={`${person.name}-${person.position}`} className="group mx-auto flex w-full max-w-xs flex-col rounded-lg p-4 font-montserrat sm:p-6">
-              <div className="relative mb-4 aspect-square w-full overflow-hidden bg-dgb-100">
-                {person.imageUrl ? <Image src={person.imageUrl} alt={`${person.name}, ${person.position}`} fill className="object-cover object-top transition-transform duration-500 group-hover:scale-[1.02]" sizes="(max-width: 640px) 80vw, (max-width: 768px) 42vw, 24vw" /> : <div aria-hidden className="absolute inset-0 bg-linear-to-br from-dgb-200/80 to-fb-200/80" />}
-              </div>
-              <h3 className="mb-1 text-lg font-semibold text-dgb-900 md:text-xl">{person.name}</h3>
-              <p className="text-sm italic leading-6 text-[#505050]">{person.position}</p>
-            </article>)}
-          </div> : null}
-        </div>
-      </section> : null}
-
-      {history.length ? <section className="relative overflow-hidden bg-fb-50 px-8 py-14 md:px-20 md:py-20">
-        <div aria-hidden className="pointer-events-none absolute inset-0 bg-fb-50/80" />
-        <div className="relative mx-auto w-full max-w-7xl">
-          <typography.t1>Riwayat</typography.t1>
-          <typography.h1 className="mt-2 text-dgb-900">Riwayat kepengurusan</typography.h1>
-          <div className="mt-8 space-y-10">
-            {history.map((period) => <section key={period.id} className="rounded-xl border border-dgb-100 bg-white/75 p-5 md:p-8">
-              <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
-                <h2 className="font-montserrat text-xl font-semibold text-dgb-900">{period.label}</h2>
-                <p className="font-inter text-sm text-[#505050]">{period.startYear} sampai {period.endYear}</p>
-              </div>
-              <div className="mt-6 grid gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                {period.members.map((person) => <article key={person.id} className="group rounded-lg bg-dgb-50/70 p-4">
-                  <div className="relative mb-4 aspect-square overflow-hidden rounded-lg bg-dgb-100">
-                    {person.imageUrl ? <Image src={person.imageUrl} alt={`${person.name}, ${person.position}`} fill className="object-cover object-top transition-transform duration-500 group-hover:scale-[1.02]" sizes="(max-width: 640px) 80vw, (max-width: 768px) 42vw, 24vw" /> : <div aria-hidden className="absolute inset-0 grid place-items-center bg-linear-to-br from-dgb-200/80 to-fb-200/80"><UserRound className="size-10 text-dgb-700/70" /></div>}
-                  </div>
-                  <h3 className="font-montserrat font-semibold text-dgb-900">{person.name}</h3>
-                  <p className="mt-1 font-inter text-sm leading-6 text-[#505050]">{person.position}</p>
-                </article>)}
-              </div>
-            </section>)}
+      {hasOrganisasi ? <Section id="pengurus" className="bg-brand-50 py-10 md:py-12" contentClassName="mx-auto max-w-7xl">
+        <div>
+          <div>
+            {organisasi?.title?.trim() ? <typography.h1 className="max-w-3xl text-3xl text-brand-900 md:text-4xl">{organisasi.title.trim()}</typography.h1> : null}
+            {about.organizationPeriodLabel ? <p className="mt-3 font-inter text-base font-medium text-brand-700">{about.organizationPeriodLabel}</p> : null}
+            {organisasi?.body?.trim() ? <typography.p className="mt-4 max-w-3xl leading-7">{organisasi.body.trim()}</typography.p> : null}
           </div>
         </div>
-      </section> : null}
-
-      <section id="gallery" className="relative bg-dgb-50 bg-cover bg-center px-8 py-14 md:px-24 md:py-20" style={{ backgroundImage: cssBackground(about.assets["about.gallery.bg"]?.url) }}>
-        <div aria-hidden className="pointer-events-none absolute inset-0 bg-dgb-50/90" />
-        <div className="relative mx-auto max-w-6xl">
-          <typography.t1>Dokumentasi</typography.t1>
-          <typography.h1 className="mt-2 text-dgb-900">Galeri PAMOKA</typography.h1>
-          {about.galleries.length ? (
-            <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3">
-              {about.galleries.slice(0, 3).map((album) => <AlbumPreview key={album.id} album={album} />)}
+        {roster.filter((group) => group.members.length).map((group) => <section key={group.label} className="mt-8 border-t border-brand-200 pt-5">
+          <h3 className="font-manrope text-lg font-semibold text-brand-900">{group.label}</h3>
+          <div className="mt-5 grid grid-cols-2 gap-x-5 gap-y-7 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          {group.members.map((person) => <article key={`${person.name}-${person.position}`} className="min-w-0">
+            <div className="relative aspect-square overflow-hidden rounded-t-full bg-linear-to-t from-brand-200/70 to-brand-50">
+              {person.imageUrl ? <Image src={person.imageUrl} alt={`${person.name}, ${person.position}`} fill className="object-contain object-bottom" sizes="(max-width: 639px) 42vw, (max-width: 1023px) 28vw, (max-width: 1279px) 22vw, 15vw" /> : <UserRound aria-hidden className="absolute inset-0 m-auto size-12 text-brand-400" />}
             </div>
-          ) : (
-            <p className="mt-8 rounded-xl border border-dashed border-dgb-200 bg-white/55 px-6 py-10 text-center font-inter text-sm text-[#505050]">Belum ada album terbit untuk edisi ini.</p>
-          )}
-          <div className="mt-8 flex justify-center"><Link href="/galeri"><Button variant="outline">Lihat lebih lengkap</Button></Link></div>
+            <h4 className="mt-3 font-manrope text-base font-semibold leading-6 text-brand-900">{person.name}</h4>
+            <p className="mt-1 text-sm leading-6 text-brand-800">{person.position}</p>
+          </article>)}
+          </div>
+        </section>)}
+      </Section> : null}
+
+      {history.length ? <Section id="riwayat" className="bg-highlight-50 py-10 md:py-12" contentClassName="mx-auto max-w-7xl">
+        <typography.h1 className="text-3xl text-brand-900 md:text-4xl">Riwayat kepengurusan</typography.h1>
+        <div className="mt-7 grid grid-cols-2 gap-x-6 gap-y-8 lg:grid-cols-4 lg:gap-x-8">
+          {history.map((period) => <section key={period.id} className="min-w-0 border-t-2 border-highlight-300 pt-4">
+            <h3 className="font-manrope text-lg font-medium tabular-nums text-brand-900 md:text-2xl">{period.label}</h3>
+            <div className="mt-3 space-y-5">
+              {period.members.map((person) => <div key={person.id} className="min-w-0">
+                <div className="relative aspect-[3/2] overflow-hidden">
+                  {person.imageUrl ? <Image src={person.imageUrl} alt={`${person.name}, ${person.position}`} fill className="object-contain object-bottom" sizes="(max-width: 1023px) 40vw, 22vw" /> : <UserRound aria-hidden className="absolute inset-0 m-auto size-8 text-brand-400" />}
+                </div>
+                <div className="min-w-0">
+                  <h4 className="mt-3 font-manrope text-sm font-semibold leading-6 text-brand-900 md:text-base">{person.name}</h4>
+                  <p className="mt-1 text-sm leading-6 text-body">{person.position}</p>
+                </div>
+              </div>)}
+            </div>
+          </section>)}
         </div>
-      </section>
+      </Section> : null}
+
+      {contact ? <Section id="kontak" className="bg-brand-50 py-10 md:py-12" contentClassName="mx-auto flex max-w-7xl flex-col items-start gap-6 md:flex-row md:items-center md:justify-between">
+        <div className="min-w-0">
+          <typography.h1 className="max-w-2xl text-2xl text-brand-900 md:text-3xl">Informasi kegiatan dan kerja sama</typography.h1>
+          <typography.p className="mt-3 leading-7">Hubungi pengurus PAMOKA Garut melalui {contact.kind === "email" ? "email" : "Instagram"}.</typography.p>
+          <a href={contact.href} className="mt-2 inline-flex min-h-11 max-w-full items-center break-all text-base text-brand underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-highlight-400">{contact.kind === "email" ? contact.href.slice(7) : contact.label}</a>
+        </div>
+        <Button asChild size="lg"><a href={contact.href}>Hubungi pengurus<ArrowUpRight className="ml-2 size-4" aria-hidden /></a></Button>
+      </Section> : null}
     </main>
   );
 }
 
-function AlbumPreview({ album }: { album: PublicGalleryAlbum }) {
+function AlbumPreview({ album, featured }: { album: PublicGalleryAlbum; featured: boolean }) {
   const firstVideo = album.items.find((item) => item.youtubeId)?.youtubeId;
+  const imageUrl = album.coverUrl ?? (firstVideo ? `https://img.youtube.com/vi/${firstVideo}/hqdefault.jpg` : null);
   return (
-    <article className="overflow-hidden rounded-xl border border-dgb-100 bg-white/80">
-      <Link href={`/galeri#${album.slug}`} className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fb-400">
-        {album.coverUrl ? <Image src={album.coverUrl} alt={album.coverAlt ?? album.title} width={640} height={420} className="aspect-[3/2] w-full object-cover" /> : firstVideo ? <Image src={`https://img.youtube.com/vi/${firstVideo}/hqdefault.jpg`} alt={album.title} width={640} height={420} className="aspect-[3/2] w-full object-cover" /> : <div className="flex aspect-[3/2] items-center justify-center bg-dgb-50"><Images className="size-8 text-dgb-400" aria-hidden="true" /></div>}
-        <div className="p-4"><h3 className="font-montserrat text-lg font-semibold text-dgb-900">{album.title}</h3>{album.description ? <p className="mt-2 line-clamp-3 font-inter text-sm leading-6 text-[#505050]">{album.description}</p> : null}</div>
-      </Link>
-    </article>
+    <Link href={`/galeri#${album.slug}`} className={`group flex min-w-0 flex-col gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-highlight-400 ${featured ? "sm:col-span-2 lg:col-span-1 lg:row-span-2" : ""}`}>
+      <div className={`relative overflow-hidden rounded-lg bg-brand-100 ${featured ? "aspect-[4/3] lg:aspect-auto lg:min-h-[26rem] lg:flex-1" : "aspect-[16/9]"}`}>
+        {imageUrl ? <Image src={imageUrl} alt={album.coverAlt ?? album.title} fill className="object-cover transition-transform duration-500 motion-safe:group-hover:scale-[1.02]" sizes={featured ? "(max-width: 1023px) 90vw, 55vw" : "(max-width: 639px) 90vw, 40vw"} /> : <Images className="absolute inset-0 m-auto size-8 text-brand" aria-hidden />}
+      </div>
+      <div className="flex items-start justify-between gap-3 text-brand-900">
+        <div>
+          <h3 className="font-manrope text-lg font-medium leading-7">{album.title}</h3>
+          {album.description?.trim() ? <typography.p className="mt-1 leading-7">{album.description.trim()}</typography.p> : null}
+          <p className="mt-2 text-sm font-medium text-brand">Lihat dokumentasi</p>
+        </div>
+        <ArrowRight className="mt-1 size-5 shrink-0 text-brand" aria-hidden />
+      </div>
+    </Link>
   );
 }

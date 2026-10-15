@@ -20,7 +20,6 @@ export default async function SponsorsPage() {
   if (!currentEdition) {
     return (
       <AdminPage
-        eyebrow="Konten"
         title="Sponsor"
       >
         <AdminCard padding="none">
@@ -28,7 +27,7 @@ export default async function SponsorsPage() {
             <AdminEmptyState
               icon="handshake"
               title="Belum ada edisi dipilih"
-              description="Pilih edisi pada selector di header untuk mulai."
+              description="Pilih edisi di bagian atas."
             />
           </div>
         </AdminCard>
@@ -93,7 +92,6 @@ export default async function SponsorsPage() {
 
   return (
     <AdminPage
-      eyebrow="Konten"
       title="Sponsor"
       action={<AdminBadge value={currentEdition.lifecycle} />}
     >

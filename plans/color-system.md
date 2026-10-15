@@ -1,0 +1,38 @@
+# Plan 017: Sistem warna dua warna utama
+
+Status: DONE (source dan palet 2026 tersimpan pada database produksi; tanpa deployment).
+
+Permintaan operator 2026-10-15 mengotorisasi penggantian seluruh warna presentasi dengan token terpusat. Dependensi: AGENTS.md, Plan 013, Plan 014, Plan 015 dan panduan CSS Next.js terpasang sudah dibaca. Drift terhadap 3874ede diperiksa; worktree berisi pekerjaan sebelumnya yang wajib dipertahankan.
+
+## Cakupan
+
+Permintaan operator berikutnya mengotorisasi penerapan palet 2026 pada database dari `.env.prod`. Preflight read-only mengonfirmasi host `pamoka-soezyxstt.aws-ap-south-1.turso.io`, 2025 aktif, dan belum ada 2026. Tambahan cakupan: penyimpanan `site/palette` pada tabel pageSection existing, pembaca publik, form/action berizin pada Identitas edisi, tes transaksi dan dokumentasi. Persiapkan backup terenkripsi dan restore verification sebelum write remote. Buat 2026 sebagai draf melalui alur edisi existing bila diperlukan; jangan aktifkan, deploy, atau mengubah data 2025. Mutasi melalui sesi operator yang sah, permission dan audit dalam transaksi. Tidak memerlukan schema atau migrasi.
+
+Tambahan 2026-10-15: set 2026 dari gambar operator, biru tua dan emas, pada CSS pusat dan `data-edition-year` root layout. Publik/pratinjau mengikuti tahun yang dibaca CMS; 2025 dipertahankan. Cakupan tambahan: CSS, layout, kontras navbar mobile, tes kebijakan dan dokumentasi. Folder ekspor `artifacts/` yang sudah diabaikan Git juga diabaikan ESLint. Tidak mengubah data atau mengaktifkan edisi. Drift terhadap 3874ede diperiksa kembali.
+
+`src/app/globals.css`, seluruh style di `src/`, pemeriksaan regresi di `scripts/`, serta dokumentasi desain. Dua input warna tahunan menghasilkan ramp brand dan highlight. Netral, status, grafik, mask, overlay, dan identitas provider memiliki token eksplisit. Tindak lanjut operator menambahkan penyimpanan palet CMS per edisi tanpa perubahan schema.
+
+## Kondisi berhenti
+
+Penulisan database hanya `site/palette` edisi 2026 yang diotorisasi beserta revisi dan auditnya. Jangan mengubah schema, permission, autentikasi, media tersimpan, upload, deploy atau aktivasi edisi. Aset foto, video, logo dan QR tidak diwarnai ulang. Perubahan sebelumnya tidak boleh ditimpa. Pemeriksaan runtime admin memerlukan sesi yang sah.
+
+## Penerimaan
+
+Seluruh warna source menggunakan token kecuali definisi pusat. Guard otomatis menolak literal warna dan utility palet bawaan di source. Verifikasi lint, typecheck, tes, build serta browser desktop dan 380 px, termasuk pergantian dua warna dan dark mode. Dokumentasikan batas kontras dan aset bermerek.
+
+## Hasil 2026-10-15
+
+- Penyimpanan CMS memakai `pageSection site/palette`, validasi hex/order/kontras, izin edit dan publikasi, optimistic version, penolakan arsip/draf pending, serta revisi dan audit atomik. Reader hanya membaca palet terbit dari edisi publik atau preview yang sama; nilai tidak valid memakai fallback source. Form tersedia pada Identitas edisi. Tujuh tes terkait, typecheck, lint (warning TanStack existing), dan production build lulus. Backup produksi terenkripsi AES-GCM dengan kunci DPAPI dipulihkan secara lokal: 49 tabel, 2632 baris, integritas ok, nol FK error. Salinan plaintext dan restore sementara telah dibersihkan.
+- Palet biru/emas 2026 disimpan pada produksi melalui server action sementara berizin, sesi operator lokal yang sah, dan pemeriksaan akun super admin aktif/terverifikasi yang sama di produksi. Gangguan browser dan koneksi diatasi dengan runtime lokal terpisah serta request database no-store. Readback membuktikan versi 1, status published, satu revisi dan satu audit `edition.palette.publish`. Digest 12 tabel terkait 2025 identik dengan backup; foreign-key check nol error. Edisi 2026 tetap draft dan 2025 tetap active. Tidak ada aktivasi, migrasi, upload atau deployment. Route operasi sementara dihapus setelah sukses. Laporan `.tmp/palette-2026/result.json`; bukti `palette-production-saved.png` di folder visualizations chat.
+
+- Tindak lanjut operator memakai pasangan gambar 2026 pada selector CSS khusus tahun. Root layout membaca tahun publik atau pratinjau CMS, tanpa aktivasi edisi atau penyimpanan palet baru di database. Navbar mobile 2026 memakai permukaan highlight terang dan kontrol brand agar logo navy existing terbaca. Portal tetap mengikuti root yang sama. Pasangan default 2025 dipertahankan.
+- Lima tes kebijakan final lulus, termasuk semua pasangan warna dan kontras dasar. Typecheck lulus; build final menghasilkan 39 halaman. Build sempat terganggu perubahan route registrasi dan penghapusan route sementara oleh pekerjaan paralel, lalu berhasil diulang setelah source stabil. Output ekspor `artifacts/` yang diabaikan Git kini diabaikan ESLint agar helper ekspor tidak masuk lint aplikasi.
+- Browser production lokal terpisah pada port 3108 mengonfirmasi root tahun 2026 dan nilai kedua token persis sesuai gambar operator. Voting diperiksa pada 1440 px dan 380 px tanpa overflow; navbar mobile dan logo terbaca. Screenshot `palette-2026-desktop.png` dan `palette-2026-mobile.png` tersimpan di folder visualizations chat. Setelah menutup pratinjau, root kembali tahun 2025 beserta palet hijau/jingga. Edisi 2026 tetap draf; tidak ada domain write, aktivasi atau deploy. Konten 2026 belum lengkap, sehingga ini penerimaan palet dan reflow, bukan rilis konten.
+
+- Dua input `--palette-dark` dan `--palette-light` menghasilkan ramp brand/highlight, gradient, overlay dan chart. Nama warna lama di source sudah dihapus. Tailwind default palette dinonaktifkan. Netral, status, provider Google, mask foto, dan shadow terpusat.
+- Tiga lane GPT-6 Luna Max menangani admin, route publik, dan komponen bersama. Primary memeriksa integrasi, kontras serta verifikasi. Perubahan worktree lain, termasuk pekerjaan branding tahunan yang berjalan bersamaan, dipertahankan.
+- Guard seluruh `src/` menghasilkan nol pelanggaran, termasuk route legacy, CSS module, SVG dan fixture. Empat tes kebijakan menguji detektor, kelengkapan referensi/ramp, urutan gelap/terang, dan kontras dasar. Literal hanya boleh di deklarasi custom property pusat.
+- Suite 87 tes lulus sebelum penambahan satu pemeriksaan kontras; empat tes kebijakan final lulus. Typecheck, lint dan production build 38 halaman lulus. Lint hanya menyisakan warning TanStack Table existing. Shim npm default rusak; script npm.cmd dijalankan dari instalasi NVM yang tersedia, tanpa perubahan toolchain global.
+- Fixture dengan CSS Tailwind asli membuktikan palet hijau/jingga, ungu/emas dan biru/mint. Status tetap sama setelah pergantian; dark mode dan 380 px tanpa overflow. Halaman Voting nyata diperiksa memakai dua input ungu/emas sementara, lalu input asli dipulihkan dan dikonfirmasi pada dashboard CMS. Bukti tersimpan pada `palette-purple-mobile.png` di folder visualizations chat.
+- Sampel browser: Tentang desktop 1280 px dan mobile 380 px; Voting dan menu mobile 380 px; dashboard dan direktori peserta CMS 380 px; Galeri CMS desktop 1440 px; organisasi CMS desktop dan 380 px; Voting CMS desktop. Tidak ada overflow pada sampel tersebut. Route Berita dan Media sempat menampilkan loading pada snapshot, sehingga tidak dihitung sebagai penerimaan visual penuh. Sebagian thumbnail galeri gagal mengambil media eksternal pada production-mode lokal; pengujian palet tidak mengubah delivery media.
+- QA ini memvalidasi warna dan reflow sampel, bukan seluruh workflow CMS, upload, autosave, OAuth, semua state permission atau setiap pasangan foto/teks. Palet baru harus diperiksa kontrasnya sebelum rilis. Tidak ada write CMS, upload, migrasi atau deployment pada pekerjaan warna ini.

@@ -58,10 +58,10 @@ function StatusTag({ ready, label }: { ready: boolean; label?: string }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-semibold",
+        "inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-semibold",
         ready
-          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-          : "border-amber-200 bg-amber-50 text-amber-800",
+          ? "border-success-200 bg-success-50 text-success-700"
+          : "border-warning-200 bg-warning-50 text-warning-800",
       )}
     >
       {ready ? <CheckCircle2 className="size-3.5" /> : <CircleAlert className="size-3.5" />}
@@ -89,7 +89,7 @@ function SlotPreview({
 
   return (
     <div
-      className="relative overflow-hidden rounded-lg border border-border bg-muted/30"
+      className={cn("relative overflow-hidden rounded-lg border border-border", definition.darkPreview ? "bg-brand-900" : "bg-muted/30")}
       style={{ aspectRatio: definition.aspectRatio.replace(":", " /") }}
       aria-label={`Pratinjau ${definition.label}`}
     >
@@ -98,12 +98,13 @@ function SlotPreview({
           src={asset.url}
           alt={asset.alt ?? definition.label}
           fill
+          unoptimized={asset.mimeType === "image/svg+xml"}
           sizes="(max-width: 640px) 100vw, 45vw"
-          className="object-cover"
+          className={definition.fit === "contain" ? "object-contain p-4" : "object-cover"}
           style={{ objectPosition: `${focalX}% ${focalY}%` }}
         />
       ) : asset ? (
-        <div className="flex h-full flex-col items-center justify-center gap-2 bg-fb-50 px-4 text-center text-fb-800">
+        <div className="flex h-full flex-col items-center justify-center gap-2 bg-highlight-50 px-4 text-center text-highlight-800">
           <Video className="size-7" />
           <span className="max-w-full truncate text-xs font-semibold">{asset.filename}</span>
         </div>
@@ -111,7 +112,7 @@ function SlotPreview({
         <div className="flex h-full flex-col items-center justify-center gap-2 px-4 text-center text-muted-foreground">
           {definition.acceptType === "video" ? <Video className="size-7" /> : <ImageIcon className="size-7" />}
           <span className="text-xs">Belum ada media</span>
-          <span className="text-[11px]">Rasio {definition.aspectRatio}</span>
+          <span className="text-xs">Rasio {definition.aspectRatio}</span>
         </div>
       )}
     </div>
@@ -130,29 +131,30 @@ export function SiteAssetsClient({
 
   return (
     <div className="space-y-7">
+      <p className="text-sm text-muted-foreground">Aset Pasanggiri {edition.year}. {edition.lifecycle === "archived" ? "Arsip hanya dapat dibaca." : "Penggantian berlaku untuk edisi ini. Media sebelumnya tetap tersimpan."}</p>
       <div className="grid gap-3 sm:grid-cols-3">
         <AdminCard padding="none" className="overflow-hidden">
-          <div className="border-l-2 border-dgb px-4 py-3.5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Slot manifest</p>
-            <p className="mt-1 font-montserrat text-2xl font-semibold text-dgb-900">{totalSlots}</p>
+          <div className="border-l-2 border-brand px-4 py-3.5">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Slot manifest</p>
+            <p className="mt-1 font-manrope text-2xl font-semibold text-brand-900">{totalSlots}</p>
             <p className="mt-1 text-xs text-muted-foreground">Slot tetap yang tersedia</p>
           </div>
         </AdminCard>
 
         <AdminCard padding="none" className="overflow-hidden">
-          <div className="border-l-2 border-dgb px-4 py-3.5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Terpasang</p>
-            <p className="mt-1 font-montserrat text-2xl font-semibold text-dgb-900">{filledSlots}/{totalSlots}</p>
+          <div className="border-l-2 border-brand px-4 py-3.5">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Terpasang</p>
+            <p className="mt-1 font-manrope text-2xl font-semibold text-brand-900">{filledSlots}/{totalSlots}</p>
             <p className="mt-1 text-xs text-muted-foreground">Media siap pada slot</p>
           </div>
         </AdminCard>
 
         <AdminCard padding="none" className="overflow-hidden">
-          <div className="border-l-2 border-fb px-4 py-3.5">
+          <div className="border-l-2 border-highlight px-4 py-3.5">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Slot wajib</p>
-                <p className="mt-1 font-montserrat text-2xl font-semibold text-dgb-900">{requiredFilled}/{requiredSlots.length}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Slot wajib</p>
+                <p className="mt-1 font-manrope text-2xl font-semibold text-brand-900">{requiredFilled}/{requiredSlots.length}</p>
               </div>
               <StatusTag ready={requiredFilled === requiredSlots.length} label={requiredFilled === requiredSlots.length ? "Lengkap" : "Perlu diisi"} />
             </div>
@@ -161,7 +163,7 @@ export function SiteAssetsClient({
         </AdminCard>
       </div>
 
-      <Accordion type="single" collapsible className="space-y-3">
+      <Accordion type="single" collapsible defaultValue="brand" className="space-y-3">
         {SITE_ASSET_GROUPS.map((group) => {
           const groupSlots = slotsData.filter((slot) => slot.definition.group === group.key);
           const groupFilled = groupSlots.filter((slot) => Boolean(slot.binding?.mediaId && slot.mediaAsset)).length;
@@ -171,7 +173,7 @@ export function SiteAssetsClient({
               <AccordionTrigger className="hover:no-underline">
                 <div className="min-w-0 text-left">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-montserrat text-base font-semibold text-dgb-900">{group.label}</span>
+                    <span className="font-manrope text-base font-semibold text-brand-900">{group.label}</span>
                     <StatusTag ready={groupFilled === groupSlots.length} label={`${groupFilled}/${groupSlots.length}`} />
                   </div>
                   <p className="mt-1 line-clamp-1 text-xs font-normal text-muted-foreground">{group.description}</p>
@@ -213,6 +215,7 @@ function SiteAssetSlotCard({
   const [focalY, setFocalY] = useState<number>(item.binding?.focalY ?? 50);
   const [isBound, setIsBound] = useState(Boolean(item.binding?.mediaId && item.mediaAsset));
   const [isConfirmUnbindOpen, setIsConfirmUnbindOpen] = useState(false);
+  const [version, setVersion] = useState(item.binding?.version ?? 0);
 
   const { definition } = item;
 
@@ -226,6 +229,8 @@ function SiteAssetSlotCard({
     }
 
     const formData = new FormData();
+    formData.set("editionId", editionId);
+    formData.set("version", String(version));
     formData.set("slotKey", definition.slotKey);
     formData.set("mediaId", selectedAsset.id);
     formData.set("altOverride", altOverride.trim());
@@ -234,7 +239,8 @@ function SiteAssetSlotCard({
 
     startTransition(async () => {
       try {
-        await bindSiteAssetAction(formData);
+        const saved = await bindSiteAssetAction(formData);
+        setVersion(saved.version);
         setIsBound(true);
         toast.success(`${definition.label} disimpan`);
       } catch (err) {
@@ -247,11 +253,14 @@ function SiteAssetSlotCard({
     if (!canManageContent) return;
 
     const formData = new FormData();
+    formData.set("editionId", editionId);
+    formData.set("version", String(version));
     formData.set("slotKey", definition.slotKey);
 
     startTransition(async () => {
       try {
-        await unbindSiteAssetAction(formData);
+        const saved = await unbindSiteAssetAction(formData);
+        setVersion(saved.version);
         setSelectedAsset(null);
         setAltOverride("");
         setIsBound(false);
@@ -271,19 +280,19 @@ function SiteAssetSlotCard({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 space-y-2">
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="rounded-md border border-dgb-100 bg-dgb-50/60 px-2 py-1 text-[10px] font-semibold text-dgb-800">
+              <span className="rounded-md border border-brand-100 bg-brand-50/60 px-2 py-1 text-xs font-semibold text-brand-800">
                 {mediaTypeLabel(definition.acceptType)}
               </span>
-              <span className="rounded-md border border-border bg-muted px-2 py-1 text-[10px] text-muted-foreground">
+              <span className="rounded-md border border-border bg-muted px-2 py-1 text-xs text-muted-foreground">
                 Rasio {definition.aspectRatio}
               </span>
               {definition.required ? (
-                <span className="rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-[10px] font-semibold text-amber-800">
+                <span className="rounded-md border border-warning-200 bg-warning-50 px-2 py-1 text-xs font-semibold text-warning-800">
                   Wajib
                 </span>
               ) : null}
             </div>
-            <h3 className="font-montserrat text-sm font-semibold text-dgb-900">{definition.label}</h3>
+            <h3 className="font-manrope text-sm font-semibold text-brand-900">{definition.label}</h3>
             <p className="text-xs leading-5 text-muted-foreground">{definition.description}</p>
           </div>
           <StatusTag ready={isBound} label={isBound ? "Terpasang" : "Kosong"} />
@@ -317,7 +326,7 @@ function SiteAssetSlotCard({
               />
             </AdminField>
 
-            {definition.acceptType === "image" ? (
+            {definition.acceptType === "image" && definition.fit !== "contain" ? (
               <div className="grid grid-cols-2 gap-3">
                 <AdminField label="Fokus X (%)" hint="0 sampai 100.">
                   <AdminInput
@@ -353,7 +362,7 @@ function SiteAssetSlotCard({
             size="sm"
             disabled={isPending}
             onClick={() => setIsConfirmUnbindOpen(true)}
-            className="border-rose-200 text-xs text-destructive hover:bg-rose-50"
+            className="border-danger-200 text-xs text-destructive hover:bg-danger-50"
           >
             <Trash2 className="size-3.5" />
             Lepas media
@@ -368,14 +377,14 @@ function SiteAssetSlotCard({
       <AlertDialog open={isConfirmUnbindOpen} onOpenChange={setIsConfirmUnbindOpen}>
         <AlertDialogContent className="max-w-[calc(100%-2rem)] sm:max-w-lg">
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-montserrat">Lepas media dari slot?</AlertDialogTitle>
+            <AlertDialogTitle className="font-manrope">Lepas media dari slot?</AlertDialogTitle>
             <AlertDialogDescription>
               Media tetap tersimpan di pustaka. Slot &quot;{definition.label}&quot; akan menjadi kosong.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isPending}>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={handleUnbind} disabled={isPending} className="bg-destructive text-white hover:bg-destructive/90">
+            <AlertDialogAction onClick={handleUnbind} disabled={isPending} className="bg-destructive text-canvas hover:bg-destructive/90">
               Lepas media
             </AlertDialogAction>
           </AlertDialogFooter>

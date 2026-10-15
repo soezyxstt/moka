@@ -12,20 +12,19 @@ export const metadata = { title: "Aset situs" };
 
 export default async function SiteAssetsPage() {
   const { effectivePermissions } = await requirePermission("content.view");
-  const canManageContent = effectivePermissions.has("content.edit");
   const editionContext = await getAdminEditionContext();
+  const canManageContent = effectivePermissions.has("content.edit") && editionContext?.lifecycle !== "archived";
 
   if (!editionContext) {
     return (
       <AdminPage
-        eyebrow="Konten"
         title="Aset situs"
       >
         <AdminCard>
           <AdminEmptyState
             icon="images"
             title="Belum ada edisi dipilih"
-            description="Pilih edisi pada selector di header untuk mulai."
+            description="Pilih edisi di bagian atas."
           />
         </AdminCard>
       </AdminPage>
@@ -78,7 +77,6 @@ export default async function SiteAssetsPage() {
 
   return (
     <AdminPage
-      eyebrow="Konten"
       title="Aset situs"
     >
       <SiteAssetsClient

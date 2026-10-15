@@ -7,6 +7,8 @@ export default defineConfig([
   ...nextTypeScript,
   globalIgnores([
     ".next/**",
+    ".tmp/**",
+    "artifacts/**",
     ".worktrees/**",
     "node_modules/**",
     ".local-migration/**",

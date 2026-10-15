@@ -32,8 +32,10 @@ async function createTestDatabase() {
 }
 
 test("manifest aset situs mendefinisikan seluruh slot tetap dengan metadata lengkap", () => {
-  assert.equal(SITE_ASSET_SLOTS.length, 24);
-  assert.equal(SITE_ASSET_GROUPS.length, 3);
+  assert.equal(SITE_ASSET_SLOTS.length, 47);
+  assert.equal(SITE_ASSET_GROUPS.length, 5);
+  assert.equal(getSlotsByGroup("site").length, 1);
+  assert.equal(getSlotsByGroup("brand").length, 22);
 
   const homeSlots = getSlotsByGroup("home");
   const aboutSlots = getSlotsByGroup("about");

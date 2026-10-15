@@ -90,7 +90,6 @@ export function ParticipantCreateForm({
     <form onSubmit={handleSubmit} className="space-y-6">
       <AdminCard>
         <AdminCardHeader
-          eyebrow="Tahap seleksi awal"
           title="Penempatan pendaftar"
           description="Pendaftar baru otomatis masuk ke tahap pertama dengan status terdaftar."
         />
@@ -110,9 +109,8 @@ export function ParticipantCreateForm({
 
       <AdminCard>
         <AdminCardHeader
-          eyebrow="Formulir"
           title="Identitas pendaftar"
-          description="Data hasil formulir pendaftaran manual."
+
         />
         <div className="grid gap-5">
           <div className="grid gap-4 sm:grid-cols-2">

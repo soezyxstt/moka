@@ -20,7 +20,6 @@ export default async function NewNewsPage() {
 
   return (
     <AdminPage
-      eyebrow="Konten"
       title="Tulis berita"
     >
       <NewsWorkspace

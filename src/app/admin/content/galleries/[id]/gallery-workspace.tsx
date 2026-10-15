@@ -379,14 +379,14 @@ export function GalleryWorkspace({
       {/* Top Header & View Toggle */}
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border bg-card p-4 shadow-xs">
         <div className="flex items-center gap-3">
-          <Link href="/admin/content/galleries">
-            <Button variant="outline" size="sm" className="h-8 px-2.5 text-xs">
-              <ArrowLeft size={14} className="mr-1" /> Daftar Album
-            </Button>
-          </Link>
+          <Button asChild variant="outline" size="sm" className="h-8 px-2.5 text-xs">
+            <Link href="/admin/content/galleries">
+              <ArrowLeft size={14} className="mr-1" /> Daftar album
+            </Link>
+          </Button>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="font-montserrat text-sm font-semibold text-foreground">
+              <h2 className="font-manrope text-sm font-semibold text-foreground">
                 {title || "Album galeri"}
               </h2>
               <AdminBadge value={status} />
@@ -397,11 +397,12 @@ export function GalleryWorkspace({
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 rounded-lg border border-border bg-muted/40 p-1">
+        <div className="flex items-center gap-1.5 rounded-md border border-border bg-muted/40 p-1" role="group" aria-label="Tampilan album">
           <Button
             size="sm"
             variant={viewMode === "editor" ? "default" : "ghost"}
             onClick={() => setViewMode("editor")}
+            aria-pressed={viewMode === "editor"}
             className="h-7 text-xs px-2.5"
           >
             <FileEdit size={13} className="mr-1" /> Editor
@@ -410,39 +411,41 @@ export function GalleryWorkspace({
             size="sm"
             variant={viewMode === "split" ? "default" : "ghost"}
             onClick={() => setViewMode("split")}
+            aria-pressed={viewMode === "split"}
             className="h-7 text-xs px-2.5 hidden lg:inline-flex"
           >
-            <LayoutGrid size={13} className="mr-1" /> Split
+            <LayoutGrid size={13} className="mr-1" /> Keduanya
           </Button>
           <Button
             size="sm"
             variant={viewMode === "preview" ? "default" : "ghost"}
             onClick={() => setViewMode("preview")}
+            aria-pressed={viewMode === "preview"}
             className="h-7 text-xs px-2.5"
           >
-            <Eye size={13} className="mr-1" /> Preview
+            <Eye size={13} className="mr-1" /> Pratinjau
           </Button>
         </div>
       </div>
 
       {/* Main Workspace Layout */}
-      <div className={`grid gap-6 ${viewMode === "split" ? "lg:grid-cols-12" : "grid-cols-1"}`}>
+      <div className={`grid grid-cols-1 gap-6 ${viewMode === "split" ? "lg:grid-cols-12" : ""}`}>
         {/* Editor Column */}
         {(viewMode === "editor" || viewMode === "split") && (
-          <div className={`${viewMode === "split" ? "lg:col-span-7" : "max-w-4xl mx-auto w-full"} space-y-6`}>
+          <div className={`${viewMode === "split" ? "lg:col-span-7" : "max-w-4xl mx-auto w-full"} min-w-0 space-y-6`}>
             {/* Metadata Card */}
             <AdminCard className="space-y-4 p-5 sm:p-5">
               <AdminCardHeader
-                eyebrow="Album"
                 title="Detail album"
-                description="Atur identitas, sampul, dan kaitan acara."
+
               />
 
               <form onSubmit={handleSaveMeta} className="space-y-4">
-                <fieldset disabled={!canEdit} className="space-y-4">
+              <fieldset disabled={!canEdit} className="min-w-0 space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium">Judul Album *</label>
+                  <label htmlFor="album-title" className="text-xs font-medium">Judul album *</label>
                   <Input
+                    id="album-title"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     className="text-xs"
@@ -451,18 +454,20 @@ export function GalleryWorkspace({
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium">Slug URL *</label>
+                  <label htmlFor="album-slug" className="text-xs font-medium">Alamat album *</label>
                   <Input
+                    id="album-slug"
                     value={slug}
                     onChange={(e) => setSlug(slugify(e.target.value))}
-                    className="text-xs font-mono"
+                    className="text-xs font-inter"
                     required
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium">Deskripsi Album</label>
+                  <label htmlFor="album-description" className="text-xs font-medium">Deskripsi album</label>
                   <Textarea
+                    id="album-description"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     className="text-xs min-h-[60px]"
@@ -471,8 +476,9 @@ export function GalleryWorkspace({
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-medium">Tipe Album</label>
+                    <label htmlFor="album-type" className="text-xs font-medium">Tipe album</label>
                     <AdminSelect
+                      id="album-type"
                       aria-label="Tipe album"
                       value={ownerType}
                       onValueChange={(value) => setOwnerType(value as "standalone" | "event")}
@@ -486,8 +492,9 @@ export function GalleryWorkspace({
 
                   {ownerType === "event" ? (
                     <div className="space-y-1.5">
-                      <label className="text-xs font-medium">Pilih Acara *</label>
+                      <label htmlFor="album-event" className="text-xs font-medium">Acara *</label>
                       <AdminSelect
+                        id="album-event"
                         aria-label="Pilih acara"
                         value={ownerId}
                         onValueChange={setOwnerId}
@@ -498,8 +505,9 @@ export function GalleryWorkspace({
                     </div>
                   ) : (
                     <div className="space-y-1.5">
-                      <label className="text-xs font-medium">Status Publikasi</label>
+                      <label htmlFor="album-status" className="text-xs font-medium">Status publikasi</label>
                       <AdminSelect
+                        id="album-status"
                         aria-label="Status publikasi album"
                         value={status}
                         onValueChange={(value) => setStatus(value as "published" | "draft")}
@@ -516,7 +524,7 @@ export function GalleryWorkspace({
                 <div className="space-y-1.5 pt-2">
                   <AdminMediaField
                     name="coverMediaId"
-                    label="Foto Sampul / Cover Album"
+                    label="Foto sampul"
                     value={coverMediaId}
                     initialAsset={coverAsset}
                     onChange={(asset) => {
@@ -533,7 +541,7 @@ export function GalleryWorkspace({
                   <Button
                     type="submit"
                     disabled={isSavingMeta || isMutating}
-                    className="bg-dgb hover:bg-dgb/90 text-white text-xs h-8"
+                    className="bg-brand hover:bg-brand/90 text-canvas text-xs h-8"
                   >
                     <Save size={13} className="mr-1.5" />
                     {isSavingMeta ? "Menyimpan..." : "Simpan detail"}
@@ -547,7 +555,7 @@ export function GalleryWorkspace({
             <AdminCard className="space-y-4 p-5 sm:p-5">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
                 <div>
-                  <h3 className="font-montserrat text-sm font-semibold text-foreground">
+                  <h3 className="font-manrope text-sm font-semibold text-foreground">
                     Foto dan video ({items.length})
                   </h3>
                   <p className="text-xs text-muted-foreground">
@@ -560,7 +568,7 @@ export function GalleryWorkspace({
                     <Button
                       disabled={isMutating}
                       onClick={() => setBatchPickerOpen(true)}
-                      className="bg-dgb hover:bg-dgb/90 text-white text-xs h-8"
+                      className="bg-brand hover:bg-brand/90 text-canvas text-xs h-8"
                     >
                       <ImageIcon size={13} className="mr-1.5" /> Pilih foto
                     </Button>
@@ -588,7 +596,7 @@ export function GalleryWorkspace({
                   {items.map((item, idx) => (
                     <div
                       key={item.id}
-                      className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card p-3 shadow-2xs hover:border-fb/40 transition-colors"
+                      className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card p-3 shadow-2xs hover:border-highlight/40 transition-colors"
                     >
                       {/* Left: Preview & Type */}
                       <div className="flex items-center gap-3 min-w-[200px] flex-1">
@@ -602,7 +610,7 @@ export function GalleryWorkspace({
                               sizes="80px"
                             />
                           ) : item.youtubeId ? (
-                            <div className="relative h-full w-full bg-black/80 flex items-center justify-center">
+                            <div className="relative h-full w-full bg-ink/80 flex items-center justify-center">
                               <Image
                                 src={`https://img.youtube.com/vi/${item.youtubeId}/hqdefault.jpg`}
                                 alt="Pratinjau YouTube"
@@ -610,7 +618,7 @@ export function GalleryWorkspace({
                                 className="object-cover opacity-80"
                                 sizes="80px"
                               />
-                              <Video size={18} className="absolute text-white drop-shadow-md" />
+                              <Video size={18} className="absolute text-canvas drop-shadow-md" />
                             </div>
                           ) : (
                             <div className="flex h-full w-full items-center justify-center text-muted-foreground">
@@ -621,15 +629,15 @@ export function GalleryWorkspace({
 
                         <div className="space-y-1 flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="font-mono text-xs font-bold text-muted-foreground">
+                            <span className="font-inter text-xs font-bold text-muted-foreground">
                               #{idx + 1}
                             </span>
                             {item.youtubeId ? (
-                              <span className="inline-flex items-center gap-1 rounded bg-red-600/10 px-1.5 py-0.5 text-[10px] font-semibold text-red-600">
+                              <span className="inline-flex items-center gap-1 rounded bg-danger-600/10 px-1.5 py-0.5 text-xs font-semibold text-danger-600">
                                 <Video size={10} /> YouTube: {item.youtubeId}
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 rounded bg-emerald-600/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-600">
+                              <span className="inline-flex items-center gap-1 rounded bg-success-600/10 px-1.5 py-0.5 text-xs font-semibold text-success-600">
                                 <ImageIcon size={10} /> Foto
                               </span>
                             )}
@@ -704,10 +712,10 @@ export function GalleryWorkspace({
           <div className={`${viewMode === "split" ? "lg:col-span-5" : "max-w-4xl mx-auto w-full"} space-y-4`}>
             <div className="rounded-xl border border-border bg-card p-4 shadow-xs sticky top-4 space-y-4">
               <div className="flex items-center justify-between border-b border-border pb-3">
-                <span className="font-montserrat text-xs font-bold uppercase tracking-wider text-fb">
+                <span className="font-manrope text-xs font-bold uppercase tracking-wider text-highlight-700">
                   Pratinjau publik
                 </span>
-                <span className="text-[11px] text-muted-foreground font-mono">
+                <span className="text-xs text-muted-foreground font-inter">
                   {editionName}
                 </span>
               </div>
@@ -716,8 +724,8 @@ export function GalleryWorkspace({
               <div className="grid grid-cols-12 gap-3 min-h-[420px] rounded-lg border border-border/60 bg-background p-3">
                 {/* Left Mini Sidebar Index */}
                 <div className="col-span-4 border-r border-border/60 pr-2 space-y-2">
-                  <p className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">
-                    Daftar Album
+                  <p className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
+                    Daftar album
                   </p>
                   <div className="space-y-1">
                     {siblingGalleries.map((sib) => {
@@ -725,15 +733,15 @@ export function GalleryWorkspace({
                       return (
                         <div
                           key={sib.id}
-                          className={`rounded-md p-1.5 text-[11px] transition-colors ${
+                          className={`rounded-md p-1.5 text-xs transition-colors ${
                             isCurrent
-                              ? "bg-fb/10 font-semibold text-fb border-l-2 border-fb"
+                              ? "bg-highlight/10 font-semibold text-highlight-700 border-l-2 border-highlight"
                               : "text-muted-foreground hover:bg-muted"
                           }`}
                         >
                           <div className="flex items-center justify-between">
                             <span className="line-clamp-1">{sib.title}</span>
-                            <span className="text-[9px] opacity-70">
+                            <span className="text-xs opacity-70">
                               {isCurrent ? items.length : sib.itemCount}
                             </span>
                           </div>
@@ -746,11 +754,11 @@ export function GalleryWorkspace({
                 {/* Right Album Gallery Grid Section */}
                 <div className={cn("col-span-8 pl-1 space-y-3 overflow-y-auto max-h-[500px]", adminNativeScrollbarClassName)}>
                   <div>
-                    <h4 className="font-montserrat text-sm font-bold text-foreground">
+                    <h4 className="font-manrope text-sm font-bold text-foreground">
                       {title || "Judul Album"}
                     </h4>
                     {description && (
-                      <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5">
+                      <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
                         {description}
                       </p>
                     )}
@@ -777,7 +785,7 @@ export function GalleryWorkspace({
                               sizes="160px"
                             />
                           ) : item.youtubeId ? (
-                            <div className="relative h-full w-full bg-black flex items-center justify-center">
+                            <div className="relative h-full w-full bg-ink flex items-center justify-center">
                               <Image
                                 src={`https://img.youtube.com/vi/${item.youtubeId}/hqdefault.jpg`}
                                 alt="Pratinjau YouTube"
@@ -785,13 +793,13 @@ export function GalleryWorkspace({
                                 className="object-cover opacity-80"
                                 sizes="160px"
                               />
-                              <Video size={20} className="absolute text-white drop-shadow-md" />
+                              <Video size={20} className="absolute text-canvas drop-shadow-md" />
                             </div>
                           ) : null}
 
                           {item.caption && (
-                            <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 to-transparent p-1.5 pt-4">
-                              <p className="text-[10px] text-white line-clamp-1 font-inter">
+                            <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-ink/80 to-transparent p-1.5 pt-4">
+                              <p className="text-xs text-canvas line-clamp-1 font-inter">
                                 {item.caption}
                               </p>
                             </div>
@@ -821,7 +829,7 @@ export function GalleryWorkspace({
       <Dialog open={youtubeDialogOpen} onOpenChange={setYoutubeDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-montserrat text-base">
+            <DialogTitle className="font-manrope text-base">
               Tambah Video YouTube
             </DialogTitle>
             <DialogDescription className="font-inter text-xs">
@@ -831,8 +839,9 @@ export function GalleryWorkspace({
 
           <form onSubmit={handleAddYoutube} className="space-y-4 py-2">
             <div className="space-y-1.5">
-              <label className="text-xs font-medium">URL atau ID YouTube *</label>
+              <label htmlFor="youtube-url" className="text-xs font-medium">URL atau ID YouTube *</label>
               <Input
+                id="youtube-url"
                 value={youtubeInput}
                 onChange={(e) => setYoutubeInput(e.target.value)}
                 placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ atau dQw4w9WgXcQ"
@@ -842,11 +851,12 @@ export function GalleryWorkspace({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium">Keterangan Video (Opsional)</label>
+              <label htmlFor="youtube-caption" className="text-xs font-medium">Keterangan video (opsional)</label>
               <Input
+                id="youtube-caption"
                 value={youtubeCaption}
                 onChange={(e) => setYoutubeCaption(e.target.value)}
-                placeholder="Malam Penobatan Grand Final 2025"
+                placeholder="Malam penobatan grand final"
                 className="text-xs"
               />
             </div>
@@ -860,7 +870,7 @@ export function GalleryWorkspace({
               >
                 Batal
               </Button>
-              <Button type="submit" className="bg-dgb hover:bg-dgb/90 text-white text-xs">
+              <Button type="submit" className="bg-brand hover:bg-brand/90 text-canvas text-xs">
                 Tambahkan ke Album
               </Button>
             </DialogFooter>
@@ -872,7 +882,7 @@ export function GalleryWorkspace({
       <AlertDialog open={!!deleteItemTarget} onOpenChange={(open) => !open && setDeleteItemTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-montserrat">Hapus Item Galeri</AlertDialogTitle>
+            <AlertDialogTitle className="font-manrope">Hapus Item Galeri</AlertDialogTitle>
             <AlertDialogDescription className="font-inter text-xs">
               Apakah Anda yakin ingin menghapus item ini dari album? Tindakan ini tidak menghapus file media asli di perpustakaan media.
             </AlertDialogDescription>

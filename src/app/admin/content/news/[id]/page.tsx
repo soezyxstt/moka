@@ -100,7 +100,6 @@ export default async function EditNewsPage({ params }: PageProps) {
 
   return (
     <AdminPage
-      eyebrow="Konten"
       title={article.title}
     >
       <NewsWorkspace

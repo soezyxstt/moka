@@ -1,16 +1,48 @@
 # Panduan Lengkap PAMOKA CMS
 
+## Persiapan Pasanggiri tahunan
+
+1. Buka **Kelola edisi**, isi tahun dan nama. Sistem membuat draf beserta kategori JD, MD, JR, MR otomatis. Pilih edisi tersebut pada header sebelum mengisi modul lain.
+2. Isi **Identitas edisi**, termasuk nama, logo dan slogan. Isi program unggulan di menu yang sama.
+3. Di **Kepengurusan**, hubungkan edisi dengan periode yang sesuai. Satu periode dapat dipakai untuk beberapa Pasanggiri, misalnya tiga tahun. Visi dan misi publik mengikuti periode ini; edit di metadata periode.
+4. Di **Teks halaman > Identitas dan kontak**, isi judul situs, deskripsi pencarian, baris identitas dan tagar, email dan tautan sosial. Gunakan kolom Nama tautan serta Alamat email atau Tautan lengkap untuk kontak. Simpan draf, lalu terbitkan. Identitas dan tagar mengikuti edisi terpilih; bagian kontak yang belum tersedia dapat memakai edisi sebelumnya.
+5. Isi teks Beranda, Tentang, Galeri, dan Voting. Pilih PDF di Legalitas organisasi. Di **Aset situs**, atur gambar halaman, poster/video kategori, latar profil, dan gambar pratinjau tautan.
+6. Isi acara, album dan item carousel, sponsor, berita, peserta dan medianya sesuai jadwal. Data setiap modul mengikuti edisi pada header.
+7. Dari **Kelola edisi**, buka **Pratinjau situs edisi**. Pratinjau hanya terlihat pada browser admin berizin, termasuk draf teks tersimpan. Modul lain mengikuti status publikasinya sendiri. Tutup melalui banner pratinjau.
+8. Lengkapi daftar kesiapan lalu aktifkan dengan alasan. Server menolak aktivasi jika kategori, logo/slogan, periode, teks inti, atau gambar hero wajib belum siap. Peserta atau voting tidak diwajibkan tersedia sejak hari pertama.
+
+Pengurus lama tetap tersimpan. Pembaruan foto atau identitas orang tidak mengubah identitas pada periode arsip. Buat periode baru sesuai pergantian organisasi, kemudian tautkan edisi tahunan yang dinaunginya.
+
+### Pembaruan bertahap mulai edisi 2026
+
+Edisi baru dapat disiapkan sedikit demi sedikit. Situs mendahulukan konten edisi aktif/pratinjau, kemudian mencari tahun lebih lama yang berstatus aktif atau arsip. Draf tahun lain tidak menjadi sumber. Admin tetap mengedit data tahun yang dipilih; pewarisan hanya terjadi saat situs membaca konten, tanpa menyalin atau mengubah data tahun sebelumnya.
+
+- **Teks halaman:** satu bagian berisi konten mengganti bagian lama secara utuh. Lengkapi seluruh bagian yang akan diterbitkan; field kosong di dalamnya tidak diisi satu per satu dari tahun lama.
+- **Aset umum:** penggantian berlaku per slot. Melepas media dapat menampilkan media edisi sebelumnya kembali. Siapkan file WebP yang diperkecil sebelum upload melalui pustaka.
+- **Program, sponsor, berita:** daftar tahun pertama yang berisi data dipakai seluruhnya. Satu sponsor aktif 2026 sudah menggantikan daftar sponsor lama; lengkapi daftar pengganti sebelum menerbitkannya.
+- **Acara:** slug yang sama mengganti informasi acara. Hero dan carousel memakai sumber yang tersedia secara terpisah. Carousel 2026 yang belum diisi dapat tetap memakai carousel lama.
+- **Galeri:** album terbit mengganti album lama dengan slug yang sama. Item dari dua tahun tidak dicampur untuk album tersebut.
+- **Data khusus tahun:** identitas, tahun, slogan, pendaftaran, kategori, peserta/foto/QR, kampanye voting dan hasil hanya memakai edisi terpilih. Peserta 2025 tidak mengisi daftar 2026.
+
+Persiapan database produksi 2026 telah diterapkan melalui CMS: tema **Niti Harti, Nanjeur Bukti**, pengurus tetap hingga 2028, enam program, 35 WebP terpilih dan kit identitas 22 slot. Edisi 2026 tetap draf, 2025 tetap aktif. Source pewarisan memerlukan deployment terpisah. Sponsor dan carousel kegiatan tetap memakai sumber sebelumnya. Peserta terdaftar baru 30, yaitu 12 JD dan 18 JR; MD/MR serta profil lain belum lengkap. Target sementara 20 per kategori tidak berarti seluruh peserta sudah terdaftar. Potret terbaru sudah dipotong dari sumber asli untuk membuang bingkai dan QR poster. Hero memakai gabungan pinilih dewasa dan rumaja transparan, sedangkan ajakan memakai pasangan rumaja. Semua penggantian tersimpan pada CMS produksi; media lama tetap tersedia. Tampilan koreksi sudah diperiksa pada 380/1440 px melalui build produksi lokal dengan salinan data publik, tanpa overflow atau gambar teramati rusak. Deployment source tetap terpisah.
+
+Navigasi dan footer mengikuti tahap CMS: Finalis saat tahap final tersedia dan bukan draf, selain itu Semifinalis saat tahap semifinal tersedia dan bukan draf. Tanpa tahap final, daftar semifinal memakai tahap berslug `semifinal` atau `semifinalis` yang sudah aktif/tertutup pada edisi tersebut. Tahap Audisi tidak dianggap semifinal. Daftar finalis tetap kosong sampai tahap final tersedia dan dibuka. Penutupan tahap tetap memerlukan keputusan seleksi sesuai alur CMS; memasang foto tidak menetapkan kelolosan.
+
 Panduan operasional sistem manajemen konten (CMS) resmi **Paguyuban Mojang Jajaka Kabupaten Garut (PAMOKA Garut)**.
 
 ---
 
 ## 1. Masuk dan Manajemen Akses
 
-1. Akses halaman login di `/admin/login` dan lakukan autentikasi dengan akun Google.
-2. Pengguna baru otomatis berstatus **Pending**. Buka menu **Minta akses**, jelaskan tugas operasional Anda, dan pilih modul yang diperlukan.
+1. Buka `/admin/login` dan pilih **Lanjut dengan Google**. Tombol menampilkan status menghubungkan; jika gagal, pesan muncul dan Anda dapat mencoba lagi.
+2. Pengguna baru berstatus **Menunggu**. Pada halaman **Minta akses**, jelaskan kebutuhan Anda dan pilih area yang diperlukan.
 3. Administrator dengan izin `access.approve` akan meninjau dan menyetujui permintaan dari menu **Pengguna** (`/admin/users`).
 4. Satu pengguna dapat memegang kombinasi role (misalnya: *Content Editor*, *Media Manager*, *Voting Operator*).
 5. Super admin di-bootstrap manual melalui Turso database sesuai runbook; tidak ada bootstrap otomatis.
+
+Navigasi desktop memakai sidebar terang; pada ponsel, buka menu di kiri atas. Menu **Konten** dapat dibuka atau ditutup. Pilihan edisi berada di header. Dialog, pilihan, tombol, formulir, dan disclosure memakai primitive lokal dengan warna serta font situs publik. Nama kolom dan label dibuat ringkas; batas input, alasan perubahan, serta peringatan penghapusan tetap ditampilkan.
+
+Pada situs publik, menu kategori desktop dibuka dengan klik atau Enter, lalu ditutup dengan Escape atau klik di luar. Kontrol formulir Select mempertahankan nilai saat submit dan kembali ke nilai awal saat reset; reset juga membersihkan pesan pilihan wajib.
 
 ---
 
@@ -39,6 +71,7 @@ Halaman utama dashboard (`/admin`) menyediakan ikhtisar terpadu:
    - **Sponsor & Mitra**: Partner pendukung edisi.
    - **Berita Editorial**: Artikel yang telah dipublikasikan.
    - **Galeri Dokumentasi**: Album dokumentasi foto dan video.
+   - **Panitia**: Pengelolaan internal admin; tidak ditampilkan pada public site untuk rilis 2025.
 3. **Pintas Navigasi Cepat**: Tautan langsung ke modul yang belum lengkap beserta bar persentase kesiapan.
 4. **Log Audit Terkini**: Ringkasan aktivitas transaksional admin dalam zona waktu Indonesia Barat (`Asia/Jakarta`).
 
@@ -47,7 +80,7 @@ Halaman utama dashboard (`/admin`) menyediakan ikhtisar terpadu:
 ## 4. Identitas Edisi & Program Unggulan
 
 Menu **Identitas Edisi** (`/admin/content/edition-settings`) mengelola brand dan agenda resmi edisi aktif:
-1. **Logo Resmi**: Unggah atau pilih logo berlatar transparan (PNG/WebP, rasio 1:1).
+1. **Logo Resmi**: Pilih logo utama dari pustaka, termasuk SVG statis atau PNG transparan. Logo ini menjadi pengganti bila varian navbar/footer pada Aset situs belum diisi.
 2. **Slogan Edisi**: Masukkan tagline resmi edisi (misal: *Nu Nyunda Tur Nyakola*).
 3. **Program Unggulan**: Kelola daftar program kerja edisi dengan judul, deskripsi, status aktif, dan tombol pemindah urutan (naik/turun).
 4. **Pembaruan Transaksional**: Setiap perubahan dicatat di audit log dengan penguncian versi optimistik (`version`).
@@ -56,17 +89,28 @@ Menu **Identitas Edisi** (`/admin/content/edition-settings`) mengelola brand dan
 
 ## 5. Aset Situs Tetap
 
-Menu **Aset Situs Tetap** (`/admin/content/site-assets`) mengelola penempatan media pada 24 slot visual tetap untuk Beranda, Tentang, dan halaman kategori:
+Menu **Aset Situs Tetap** (`/admin/content/site-assets`) mengelola 47 slot visual per edisi, termasuk 22 slot logo, ikon dan gambar berbagi:
 1. Buka kelompok halaman yang ingin diubah. Hanya satu kelompok ditampilkan agar halaman tetap ringkas.
 2. Setiap kartu slot menampilkan nama bagian, jenis media, rasio, status keterisian, dan pratinjau.
 3. Gunakan tombol **Pilih media** untuk memilih dari pustaka atau mengunggah file baru.
-4. Anda dapat menyesuaikan **Alt text khusus slot** dan titik fokus gambar (Fokus X dan Y dalam persentase 0 hingga 100).
+4. Anda dapat menyesuaikan **Alt text khusus slot** dan titik fokus foto. Logo dan ikon mempertahankan proporsi serta tidak memiliki kontrol crop.
 5. Tombol **Lepas media** mengosongkan slot terpilih tanpa menghapus file asli dari pustaka media.
-6. Tidak tersedia tombol penambahan slot sembarangan guna menjaga integritas desain situs publik.
+6. Tidak tersedia tombol penambahan slot sembarangan guna menjaga integritas desain situs publik. Slot umum yang belum terisi dapat menampilkan media tahun sebelumnya sesuai aturan pembaruan bertahap.
+
+### Penggantian aset Pasanggiri tahunan
+
+1. Pilih edisi yang dituju, misalnya **2026 Draf**, di header. Pilihan ini tidak mengaktifkan edisi publik.
+2. Buka **Logo dan identitas tahunan**. Isi logo organisasi, gabungan, Pasanggiri, simbol, dan monogram sesuai varian terang/gelap. Override navbar desktop, navbar seluler, dan footer bersifat opsional; situs memakai varian logo edisi yang sama bila override kosong.
+3. Pilih atau unggah aset melalui pustaka UploadThing. SVG hanya menerima bentuk/teks statis, tanpa skrip, CSS, gambar tertanam, atau sumber eksternal. Gambar OG harus PNG/JPEG/WebP; ikon Apple dan aplikasi harus PNG sesuai dimensi yang tertulis pada slot.
+4. Simpan tiap slot. Penggantian menyimpan binding sebelumnya pada revisi dan audit tanpa menghapus file media. Form dengan versi lama atau konteks edisi yang berubah ditolak.
+5. Pratinjau edisi dari **Kelola edisi** sebelum aktivasi. Navbar/footer, ikon, manifest aplikasi, OG dan Twitter membaca edisi aktif atau pratinjau berizin. Gambar Pasanggiri digunakan pada Voting dan daftar peserta; gambar sampul peserta/artikel yang spesifik tetap dapat mengalahkan gambar umum.
+6. Edisi arsip hanya dapat dibaca pada editor aset dan identitas. Untuk tahun baru, pilih edisi baru dan unggah media baru; jangan mengganti binding tahun sebelumnya. File serta binding 2025 tetap historis. Kit 2026 sudah diunggah ke UploadThing dan dipasang pada 22 slot di `local.db`, memakai 18 media unik dalam folder `Kit identitas 2026`. Edisi 2026 tetap draf dan 2025 tetap aktif. Mapping lokal berada di `.tmp/branding-2026/bindings.json`; laporan verifikasi di `upload-result.json` pada folder yang sama. Kit juga sudah dipasang melalui CMS pada database produksi, dengan logo edisi dan 22 slot brand terverifikasi. Hasil produksi lengkap ada di `.tmp/edition-2026/production-final-verification.json`. Deployment source tetap terpisah.
+
+Perubahan pada edisi publik aktif berlaku saat slot disimpan. Edisi draf tetap tidak terlihat oleh pengunjung biasa. Ikon yang sudah terpasang di perangkat dan gambar sosial dapat tersimpan pada cache browser/platform; gunakan file baru agar URL berbeda. Avatar, monogram, dan OG alternatif disimpan sebagai aset kampanye yang dapat digunakan ulang, tanpa dipaksakan tampil pada setiap halaman.
 
 ---
 
-Editor **Teks halaman** (`/admin/content/pages`) menyediakan slot tetap untuk beranda dan Tentang: hero, program, berita, ajakan, visi, misi, legalitas, dan organisasi. Simpan perubahan sebagai draf, lalu terbitkan dengan izin penerbitan. Riwayat revisi dan audit dicatat per edisi. Tulis satu misi per baris. Pada slot **home/ajakan**, isi opsional **Label tombol** dan **Tautan tombol**. Tautan harus berupa path situs seperti `/pendaftaran` atau URL penuh `http(s)`; jika tautan diisi, label tombol wajib diisi. Tombol hanya tampil setelah draf diterbitkan. Halaman publik lokal `localhost:3001` membaca konten CMS terbit pada edisi aktif; bagian tanpa konten akan dikosongkan. Produksi tetap menunggu otorisasi cutover Plan 010.
+Editor **Teks halaman** (`/admin/content/pages`) menyediakan 15 slot untuk identitas/kontak, Beranda, Tentang, pengantar Galeri, dan pengantar Voting. Simpan draf, lalu terbitkan dengan izin penerbitan. Revisi dan audit dicatat per edisi. Bila periode kepengurusan ditautkan, isi visi/misi dikelola melalui Kepengurusan; editor halaman tetap mengatur judul bagiannya. Pada Ajakan bergabung, label tombol dan tautan bersifat opsional; tautan memakai path situs atau URL http(s) lengkap dan memerlukan label. Pratinjau dari Kelola edisi menampilkan draf teks tanpa mengganti edisi aktif. Production tetap mengikuti rekonsiliasi dan runbook cutover.
 
 ## 6. Sponsor & Mitra
 
@@ -101,7 +145,7 @@ Menu **Kepengurusan** (`/admin/organization`) mengelola struktur kepengurusan PA
 4. **Direktori Orang Bersama**: Profil orang (nama, bio, media sosial, foto) dapat digunakan kembali untuk kepengurusan berbagai periode maupun kepanitiaan edisi.
 5. **Edisi Terhubung**: Buka detail periode lalu pilih **Atur** pada bagian Edisi terhubung. Satu periode dapat memiliki beberapa edisi. Jika edisi masih terhubung ke periode lain, centang konfirmasi pemindahan sebelum menyimpan.
 6. **Visi dan Misi**: Buka **Edit metadata periode** untuk memperbarui visi serta menambah, menghapus, atau mengurutkan poin misi.
-7. **Riwayat Periode**: Periode arsip hanya dapat dilihat. Periode aktif dan arsip tidak dapat dihapus. Profil orang, unit, dan penugasan yang terhubung ke periode arsip tidak dapat diubah atau dihapus.
+7. **Riwayat periode**: Susunan periode arsip hanya dapat dilihat. Periode aktif dan arsip tidak dapat dihapus. Profil orang terbaru boleh diperbarui; sebelum perubahan pertama, sistem menyimpan salinan identitas sebelumnya untuk setiap keanggotaan arsip. Nama dan foto pada riwayat tidak ikut berubah. Profil yang masih dirujuk arsip tidak dapat dihapus.
 
 ---
 
@@ -131,7 +175,7 @@ Menu **Mojang Jajaka** (`/admin/content/participants`) mengelola peserta Pasangg
    - **Sosial Media**: Tautan akun Instagram, TikTok, YouTube, LinkedIn, dll.
    - **Media Profil**: Foto dikelompokkan berdasarkan peran (`Closeup`, `Full Body`, `Detail Busana`, `Karantina`, `Lainnya`). Foto Closeup otomatis tersinkronisasi ke foto utama. Profil dapat memiliki satu video aktif berformat MP4 atau WebM.
    - **QRIS dan Voting**: QRIS dibuat di luar sistem, lalu gambarnya diunggah atau dipilih dari Pustaka Media.
-   - **Halaman profil publik**: Foto, bio, prestasi, QR, dan video yang siap tampil dibaca dari peserta yang mencapai tahap semifinal atau final pada edisi aktif.
+   - **Halaman profil publik**: Foto, bio, prestasi, QR, dan video yang siap tampil dibaca dari peserta yang mencapai tahap semifinal atau final pada edisi aktif. Slogan pada daftar peserta mengikuti nilai di Identitas Edisi.
 10. **Live Preview**: Pratinjau kartu peserta secara langsung saat mengedit.
 
 ---
@@ -147,7 +191,11 @@ Menu **Galeri** (`/admin/content/galleries`) menyediakan dua tipe album:
 
 Di dalam album, admin dapat memilih beberapa foto dari Pustaka Media, menambahkan video YouTube, mengubah keterangan, dan mengatur urutan. Setiap item hanya memiliki satu sumber. Pratinjau menampilkan indeks album dan susunan medianya.
 
-Album terbit ditampilkan pada `/galeri`. Bagian Galeri di `/tentang` menampilkan maksimal tiga preview. Item album acara menjadi carousel pada detail kegiatan. Runtime lokal memakai konten bawaan sebagai fallback jika belum ada konten CMS terbit; produksi belum dialihkan.
+Halaman publik Galeri memakai dinding foto tanpa kartu, judul foto, atau keterangan terlihat. Keterangan tetap tersimpan dan dipakai sebagai deskripsi aksesibel bila alt belum tersedia. Foto dapat diperbesar dan dinavigasi dengan tombol atau panah keyboard; video tersedia setelah foto.
+
+Album terbit ditampilkan pada `/galeri`. Bagian Kegiatan kami di `/tentang` berada setelah pengantar dan menampilkan maksimal tiga preview foto tanpa wadah kartu, deskripsi album bila tersedia, dan tautan ke album terkait. Kontak di akhir halaman mengikuti email atau Instagram pada Teks halaman dengan prioritas tahun yang dijelaskan di atas. Judul legacy Kenali Kami Lebih Dekat ditampilkan sebagai PAMOKA Garut dengan pengantar ringkas berdasarkan misi; judul khusus dan isi hero yang diterbitkan tetap dipakai. Item album acara menjadi carousel pada detail kegiatan. Public site membaca CMS terbit dengan pewarisan sesuai jenis konten, tanpa tahun fallback yang tertanam. Perilaku source terbaru belum menjadi bukti perilaku deployment pada `www.pamokagarut.com`. Lihat `docs/runbooks/cms-cutover.md` untuk persiapan produksi dan batas rilis.
+
+Lampiran legalitas dipilih melalui **Teks halaman > Legalitas organisasi > Dokumen legalitas**. Pilih PDF dari pustaka media, isi nama dokumen, simpan draf, lalu terbitkan. Untuk melepas lampiran, hapus pilihan media lalu simpan dan terbitkan. Sistem memeriksa kembali status siap, tipe PDF, dan URL HTTPS saat publikasi. Riwayat menampilkan anggota periode arsip dengan identitas historis yang dipertahankan.
 
 ---
 
@@ -158,8 +206,10 @@ Menu **Voting** (`/admin/voting`) mengelola kampanye voting kameumeut:
 2. **Mulai Manual**: Ketik nama kampanye dan alasan. Sistem membekukan daftar peserta tahap sebagai snapshot.
 3. **Siapkan QRIS**: Unggah atau pilih gambar QRIS eksternal pada profil peserta. PDF dan media yang belum siap tidak dapat menerima tally.
 4. **Catat Tally**: Pilih peserta snapshot dan tanggal, lalu masukkan akumulasi pemasukan harian dari dashboard merchant QRIS.
-5. **Tampilkan Hasil**: Ubah visibilitas dengan alasan. Kampanye draf belum dapat ditampilkan.
+5. **Tampilkan Hasil**: Ubah visibilitas dengan alasan. Kampanye draf belum dapat ditampilkan. Nilai legacy yang tidak dikenal dianggap tersembunyi; gunakan **Tetapkan hasil ke tersembunyi** untuk menormalkan nilai itu melalui action audited.
 6. **Tutup Manual**: Tutup kampanye dengan nama dan alasan. Tally terkunci setelah kampanye ditutup.
+
+Halaman publik `/voting` dan route kategori selalu dapat dibuka dan membaca kategori edisi aktif. Jika kampanye belum dibuat dengan jadwal dan harga yang terverifikasi, halaman kategori menampilkan status **Kampanye belum tersedia**. Seed lokal 2025 tidak memuat kampanye atau tally karena sumber tidak menyediakan data terverifikasi. Route lama `/monitor` dialihkan ke `/admin/voting`; halaman admin memeriksa izin `voting.view`.
 
 ---
 
@@ -192,4 +242,22 @@ Import satu kali ini hanya tersedia saat aplikasi memakai `NODE_ENV` nonproducti
 
 Prosedur ini tidak menulis database Turso remote, tidak melakukan production cutover, dan tidak men-deploy aplikasi.
 
-**Hasil lokal 1 Oktober 2026:** import selesai pada `local.db` dengan 340 aset siap. Edisi 2025 aktif dan edisi 2026 menjadi draf. Browser sudah memuat data beranda, Tentang, Galeri, carousel acara, daftar semifinalis, dan profil finalis dari CMS. Sumber tidak menyediakan jadwal dan harga kampanye voting, tally terverifikasi, tier sponsor, atau video profil individu. Belum ada campaign voting 2025; buat melalui **Voting** setelah jadwal dan harga dipastikan. Seluruh 68 sponsor saat ini bertier `pendukung` dan perlu dipetakan sebelum digunakan sebagai klasifikasi final.
+**Hasil lokal 3 Oktober 2026:** import selesai pada `local.db` dengan 340 aset siap. Edisi 2025 aktif dan edisi 2026 menjadi draf. Browser sebelumnya memuat data beranda, Tentang, Galeri, carousel acara, daftar semifinalis, dan profil finalis dari CMS. Migrasi `0016_faithful_edwin_jarvis.sql` menambah nomor dan urutan per tahap; repair lokal yang diaudit melengkapi 104 entry 2025 tanpa entry hilang atau duplikat. Tiga label CMS berbahasa Inggris pada Beranda dan Tentang sudah dikoreksi. Sumber tidak menyediakan jadwal dan harga kampanye voting, tally terverifikasi, tier sponsor, atau video profil individu. Route voting dan kategori tersedia, tetapi belum ada kampanye 2025; buat melalui **Voting** setelah jadwal dan harga dipastikan. Seluruh 68 sponsor saat ini bertier `pendukung` dan perlu dipetakan sebelum digunakan sebagai klasifikasi final.
+
+Preflight production pada 3 Oktober 2026 hanya membaca database. Production sudah memiliki edisi 2025 aktif, tetapi belum memiliki seluruh schema dan konten lokal. Campaign lama dan 572 tally tetap tidak terverifikasi; tinjau visibilitas hasil sesuai runbook sebelum public cutover. Jangan jalankan importer legacy `cms:apply:2025`; command tersebut telah dipensiunkan.
+## Palet warna tahunan
+
+Pilih edisi admin, buka **Konten > Identitas edisi**, lalu isi **Warna gelap** dan **Warna terang** pada bagian Palet. Gunakan kode hex enam digit. **Simpan palet** memerlukan izin edit dan publikasi konten, mencatat revisi/audit, dan tidak mengaktifkan edisi. Edisi arsip hanya dapat dibaca. Jika ada konflik versi, muat ulang sebelum menyimpan. Palet mengikuti edisi publik aktif atau pratinjau berizin. Untuk mencoba 2026, gunakan **Pratinjau situs edisi 2026** di Kelola edisi; selector konteks kerja admin saja tidak mengganti palet publik. Tim teknis mengikuti `docs/runbooks/annual-color-palette.md`; data lokal dan produksi terpisah, dan source reader baru memerlukan deployment. Warna status dan netral tetap konsisten; foto dan logo tersimpan tidak diwarnai ulang.
+## Informasi pendaftaran
+
+Pada edisi mulai 2026, buka **Konten > Teks halaman > Pendaftaran**. Tersedia pengantar, kategori usia, syarat, kriteria, OTS, berkas dan timeline. Edisi lama tidak menampilkan kelompok ini. Edisi arsip hanya dapat dibaca.
+
+- **Isi materi 2026** mengisi formulir kosong dari materi operator, tanpa menimpa isian yang ada. Simpan setiap bagian sebagai draf. Template hanya tersedia untuk 2026; edisi berikutnya mulai kosong.
+- Daftar syarat, kriteria, OTS dan berkas memakai satu poin per baris.
+- Kategori usia memakai `kategori | rentang usia | keterangan opsional`, satu kategori per baris.
+- Timeline memakai `tanggal | agenda | keterangan opsional`, satu agenda per baris, maksimal 50 agenda. Urutan baris adalah urutan publik; tanggal ditampilkan sebagaimana ditulis, tanpa konversi zona waktu.
+- Pengantar memiliki tombol opsional. Gunakan label singkat dan path situs atau URL http(s) lengkap. Kosongkan tautan bila formulir belum tersedia.
+- Gunakan **Kelola edisi > Pratinjau situs edisi** untuk melihat draf tersimpan, lalu buka `/pendaftaran`. Pratinjau tidak mengaktifkan edisi.
+- Terbitkan setiap bagian setelah ditinjau. Menu publik, footer dan sitemap menampilkan Pendaftaran ketika pengantar edisi terkait sudah terbit dan memiliki judul serta isi. Menerbitkan isian pengantar kosong menyembunyikan halaman dari publik.
+
+Materi awal 2026 mengikuti naskah operator. Cocokkan perubahan jadwal, status sertifikat prestasi, raksukan, biaya dan tautan formulir dengan keputusan panitia sebelum publikasi. Halaman ini menyajikan informasi; data pendaftar tetap dikelola melalui alur existing.

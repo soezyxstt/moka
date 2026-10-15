@@ -193,7 +193,6 @@ export default async function OrganizationPage() {
 
   return (
     <AdminPage
-      eyebrow="Kepengurusan"
       title="Kepengurusan"
     >
       <OrganizationWorkspace

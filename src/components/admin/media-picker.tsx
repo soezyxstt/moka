@@ -85,13 +85,13 @@ function formatBytes(bytes: number) {
 function getMimeBadge(mimeType: string) {
   if (mimeType.startsWith("image/")) {
     const ext = mimeType.replace("image/", "").toUpperCase();
-    return { label: ext, color: "border-dgb-200 bg-dgb-50 text-dgb-800" };
+    return { label: ext, color: "border-brand-200 bg-brand-50 text-brand-800" };
   }
   if (mimeType.startsWith("video/")) {
-    return { label: "VIDEO", color: "border-fb-200 bg-fb-50 text-fb-800" };
+    return { label: "VIDEO", color: "border-highlight-200 bg-highlight-50 text-highlight-800" };
   }
   if (mimeType === "application/pdf") {
-    return { label: "PDF", color: "border-rose-200 bg-rose-50 text-rose-800" };
+    return { label: "PDF", color: "border-danger-200 bg-danger-50 text-danger-800" };
   }
   return { label: "FILE", color: "border-border bg-muted text-muted-foreground" };
 }
@@ -110,22 +110,23 @@ export function AdminMediaPreview({
   const badge = getMimeBadge(asset.mimeType);
 
   return (
-    <div className={cn("relative flex items-center gap-3.5 rounded-lg border border-dgb-100 bg-white p-3 shadow-xs", className)}>
+    <div className={cn("relative flex items-center gap-3.5 rounded-lg border border-brand-100 bg-canvas p-3 shadow-xs", className)}>
       <div className="relative size-16 shrink-0 overflow-hidden rounded-md border border-border bg-muted">
         {isImage ? (
           <Image
             src={asset.url}
+            unoptimized={asset.mimeType === "image/svg+xml"}
             alt={asset.alt ?? asset.filename}
             fill
             sizes="64px"
             className="object-cover"
           />
         ) : isVideo ? (
-          <div className="grid size-full place-items-center bg-fb-50 text-fb-700">
+          <div className="grid size-full place-items-center bg-highlight-50 text-highlight-700">
             <Video size={22} />
           </div>
         ) : (
-          <div className="grid size-full place-items-center bg-dgb-50 text-dgb">
+          <div className="grid size-full place-items-center bg-brand-50 text-brand">
             <FileText size={22} />
           </div>
         )}
@@ -133,29 +134,29 @@ export function AdminMediaPreview({
 
       <div className="min-w-0 flex-1 space-y-1">
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className={cn("rounded-sm border px-1.5 py-0.2 text-[10px] font-bold uppercase", badge.color)}>
+          <span className={cn("rounded-sm border px-1.5 py-0.2 text-xs font-bold uppercase", badge.color)}>
             {badge.label}
           </span>
           {asset.decorative ? (
-            <span className="rounded-sm border border-amber-200 bg-amber-50 px-1.5 py-0.2 text-[10px] font-semibold text-amber-800">
+            <span className="rounded-sm border border-warning-200 bg-warning-50 px-1.5 py-0.2 text-xs font-semibold text-warning-800">
               Dekoratif
             </span>
           ) : asset.alt ? (
-            <span className="max-w-44 truncate rounded-sm border border-dgb-100 bg-dgb-50/50 px-1.5 py-0.2 text-[10px] font-medium text-dgb-800">
+            <span className="max-w-44 truncate rounded-sm border border-brand-100 bg-brand-50/50 px-1.5 py-0.2 text-xs font-medium text-brand-800">
               Alt: {asset.alt}
             </span>
           ) : null}
           {aspectRatioHint ? (
-            <span className="rounded-sm border border-border bg-muted px-1.5 py-0.2 text-[10px] text-muted-foreground">
+            <span className="rounded-sm border border-border bg-muted px-1.5 py-0.2 text-xs text-muted-foreground">
               Rasio {aspectRatioHint}
             </span>
           ) : null}
         </div>
-        <p className="truncate font-inter text-xs font-semibold text-dgb-900" title={asset.filename}>
+        <p className="truncate font-inter text-xs font-semibold text-brand-900" title={asset.filename}>
           {asset.filename}
         </p>
-        <p className="text-[11px] text-muted-foreground">
-          {formatBytes(asset.bytes)} · {asset.lifecycle}
+        <p className="text-xs text-muted-foreground">
+          {formatBytes(asset.bytes)} · {asset.lifecycle === "ready" ? "Siap" : asset.lifecycle}
         </p>
       </div>
 
@@ -163,7 +164,7 @@ export function AdminMediaPreview({
         href={asset.url}
         target="_blank"
         rel="noreferrer"
-        className="grid size-8 shrink-0 place-items-center rounded-md border border-border text-muted-foreground transition-colors hover:border-dgb-200 hover:bg-dgb-50 hover:text-dgb"
+        className="grid size-8 shrink-0 place-items-center rounded-md border border-border text-muted-foreground transition-colors hover:border-brand-200 hover:bg-brand-50 hover:text-brand"
         title="Lihat file asli"
         aria-label="Lihat file asli"
       >
@@ -469,20 +470,20 @@ export function AdminMediaPicker({
           returnFocusRef.current.focus();
         }}
       >
-        <DialogHeader className="border-b border-dgb-100 bg-background px-5 py-4">
+        <DialogHeader className="border-b border-brand-100 bg-background px-5 py-4">
           <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <DialogTitle className="font-montserrat text-lg font-semibold text-dgb-900">{title}</DialogTitle>
+              <DialogTitle className="font-manrope text-lg font-semibold text-brand-900">{title}</DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground">{description}</DialogDescription>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {isMultiple ? (
-                <span className="inline-flex items-center gap-1.5 rounded-md border border-fb-200 bg-fb-50 px-2.5 py-1 text-xs font-semibold text-fb-800">
+                <span className="inline-flex items-center gap-1.5 rounded-md border border-highlight-200 bg-highlight-50 px-2.5 py-1 text-xs font-semibold text-highlight-800">
                   {selectedIds.length} dipilih
                 </span>
               ) : null}
               {activeEdition ? (
-                <span className="inline-flex items-center gap-1.5 rounded-md border border-dgb-200 bg-dgb-50 px-2.5 py-1 text-xs font-semibold text-dgb">
+                <span className="inline-flex items-center gap-1.5 rounded-md border border-brand-200 bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand">
                   Edisi: {activeEdition.name} ({activeEdition.year})
                 </span>
               ) : null}
@@ -492,8 +493,8 @@ export function AdminMediaPicker({
 
         <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(0,1fr)_auto] overflow-hidden lg:grid-cols-[200px_minmax(0,1fr)_260px] lg:grid-rows-none">
           {/* Left Sidebar: Folder Browser & Scope */}
-          <aside className={cn("hidden border-b border-border bg-dgb-50/25 p-3.5 lg:block lg:border-b-0 lg:border-r lg:overflow-y-auto", adminNativeScrollbarClassName)}>
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-dgb-800">Cakupan Folder</p>
+          <aside className={cn("hidden border-b border-border bg-brand-50/25 p-3.5 lg:block lg:border-b-0 lg:border-r lg:overflow-y-auto", adminNativeScrollbarClassName)}>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-800">Cakupan Folder</p>
             <div className="mt-2 space-y-1">
               <Button
                 variant="ghost"
@@ -502,8 +503,8 @@ export function AdminMediaPicker({
                 className={cn(
                   "h-auto flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs font-medium transition-colors",
                   selectedFolderScope === "all" && currentFolderId === "all"
-                    ? "bg-dgb text-white"
-                    : "text-dgb-900 hover:bg-dgb-50"
+                    ? "bg-brand text-canvas"
+                    : "text-brand-900 hover:bg-brand-50"
                 )}
               >
                 <FolderOpen size={14} /> Semua media
@@ -515,7 +516,7 @@ export function AdminMediaPicker({
                   onClick={() => handleFolderScopeChange("edition")}
                   className={cn(
                     "h-auto flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs font-medium transition-colors",
-                    selectedFolderScope === "edition" ? "bg-dgb text-white" : "text-dgb-900 hover:bg-dgb-50"
+                    selectedFolderScope === "edition" ? "bg-brand text-canvas" : "text-brand-900 hover:bg-brand-50"
                   )}
                 >
                   <Folder size={14} /> Folder edisi ini
@@ -527,14 +528,14 @@ export function AdminMediaPicker({
                 onClick={() => handleFolderScopeChange("global")}
                 className={cn(
                   "h-auto flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs font-medium transition-colors",
-                  selectedFolderScope === "global" ? "bg-dgb text-white" : "text-dgb-900 hover:bg-dgb-50"
+                  selectedFolderScope === "global" ? "bg-brand text-canvas" : "text-brand-900 hover:bg-brand-50"
                 )}
               >
                 <Folder size={14} /> Folder global
               </Button>
             </div>
 
-            <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.16em] text-dgb-800">Daftar Folder</p>
+            <p className="mt-4 text-xs font-bold uppercase tracking-[0.16em] text-brand-800">Daftar Folder</p>
             <div className="mt-2 space-y-0.5">
               <Button
                 variant="ghost"
@@ -545,7 +546,7 @@ export function AdminMediaPicker({
                 }}
                 className={cn(
                   "h-auto flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs transition-colors",
-                  currentFolderId === null ? "bg-white font-semibold text-dgb shadow-xs" : "text-dgb-900/80 hover:bg-white/70"
+                  currentFolderId === null ? "bg-canvas font-semibold text-brand shadow-xs" : "text-brand-900/80 hover:bg-canvas/70"
                 )}
               >
                 <Folder size={13} /> Root media
@@ -561,7 +562,7 @@ export function AdminMediaPicker({
                   }}
                   className={cn(
                     "h-auto flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs transition-colors",
-                    currentFolderId === folder.id ? "bg-white font-semibold text-dgb shadow-xs" : "text-dgb-900/80 hover:bg-white/70"
+                    currentFolderId === folder.id ? "bg-canvas font-semibold text-brand shadow-xs" : "text-brand-900/80 hover:bg-canvas/70"
                   )}
                 >
                   <Folder size={13} />
@@ -580,7 +581,8 @@ export function AdminMediaPicker({
                 <Input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Cari nama file atau teks alt..."
+                  placeholder="Cari nama file atau teks alternatif"
+                  aria-label="Cari media"
                   className="h-9 pl-8 text-xs rounded-md"
                 />
               </div>
@@ -592,7 +594,7 @@ export function AdminMediaPicker({
                       variant="ghost"
                       type="button"
                       onClick={() => setTypeFilter("all")}
-                      className={cn("h-auto px-2 py-1 text-[11px] font-medium rounded-xs", typeFilter === "all" ? "bg-white text-dgb shadow-xs" : "text-muted-foreground")}
+                      className={cn("h-auto px-2 py-1 text-xs font-medium rounded-xs", typeFilter === "all" ? "bg-canvas text-brand shadow-xs" : "text-muted-foreground")}
                     >
                       Semua
                     </Button>
@@ -600,7 +602,7 @@ export function AdminMediaPicker({
                       variant="ghost"
                       type="button"
                       onClick={() => setTypeFilter("image")}
-                      className={cn("h-auto px-2 py-1 text-[11px] font-medium rounded-xs", typeFilter === "image" ? "bg-white text-dgb shadow-xs" : "text-muted-foreground")}
+                      className={cn("h-auto px-2 py-1 text-xs font-medium rounded-xs", typeFilter === "image" ? "bg-canvas text-brand shadow-xs" : "text-muted-foreground")}
                     >
                       Gambar
                     </Button>
@@ -608,7 +610,7 @@ export function AdminMediaPicker({
                       variant="ghost"
                       type="button"
                       onClick={() => setTypeFilter("video")}
-                      className={cn("h-auto px-2 py-1 text-[11px] font-medium rounded-xs", typeFilter === "video" ? "bg-white text-dgb shadow-xs" : "text-muted-foreground")}
+                      className={cn("h-auto px-2 py-1 text-xs font-medium rounded-xs", typeFilter === "video" ? "bg-canvas text-brand shadow-xs" : "text-muted-foreground")}
                     >
                       Video
                     </Button>
@@ -616,7 +618,7 @@ export function AdminMediaPicker({
                       variant="ghost"
                       type="button"
                       onClick={() => setTypeFilter("pdf")}
-                      className={cn("h-auto px-2 py-1 text-[11px] font-medium rounded-xs", typeFilter === "pdf" ? "bg-white text-dgb shadow-xs" : "text-muted-foreground")}
+                      className={cn("h-auto px-2 py-1 text-xs font-medium rounded-xs", typeFilter === "pdf" ? "bg-canvas text-brand shadow-xs" : "text-muted-foreground")}
                     >
                       PDF
                     </Button>
@@ -627,18 +629,18 @@ export function AdminMediaPicker({
                   <Button
                     variant="ghost"
                     type="button"
-                    aria-label="Grid view"
+                    aria-label="Tampilan kisi"
                     onClick={() => setViewMode("grid")}
-                    className={cn("grid size-7 h-7 w-7 place-items-center rounded-xs p-0", viewMode === "grid" ? "bg-white text-dgb shadow-xs" : "text-muted-foreground")}
+                    className={cn("grid size-7 h-7 w-7 place-items-center rounded-xs p-0", viewMode === "grid" ? "bg-canvas text-brand shadow-xs" : "text-muted-foreground")}
                   >
                     <Grid2X2 size={13} />
                   </Button>
                   <Button
                     variant="ghost"
                     type="button"
-                    aria-label="List view"
+                    aria-label="Tampilan daftar"
                     onClick={() => setViewMode("list")}
-                    className={cn("grid size-7 h-7 w-7 place-items-center rounded-xs p-0", viewMode === "list" ? "bg-white text-dgb shadow-xs" : "text-muted-foreground")}
+                    className={cn("grid size-7 h-7 w-7 place-items-center rounded-xs p-0", viewMode === "list" ? "bg-canvas text-brand shadow-xs" : "text-muted-foreground")}
                   >
                     <List size={13} />
                   </Button>
@@ -669,7 +671,7 @@ export function AdminMediaPicker({
                 <span className="grid size-10 place-items-center rounded-md bg-muted text-muted-foreground">
                   <FileIcon size={18} />
                 </span>
-                <p className="mt-2 font-montserrat text-sm font-semibold text-dgb-900">Tidak ada file yang sesuai</p>
+                <p className="mt-2 font-manrope text-sm font-semibold text-brand-900">Tidak ada file yang sesuai</p>
                 <p className="text-xs text-muted-foreground">Coba ubah filter atau unggah media baru.</p>
               </div>
             ) : viewMode === "grid" ? (
@@ -688,39 +690,40 @@ export function AdminMediaPicker({
                       className={cn(
                         "group relative flex h-auto flex-col overflow-hidden rounded-lg border p-0 text-left transition-all",
                         isSelected
-                          ? "border-fb-400 bg-fb-50/30 ring-2 ring-fb-300"
-                          : "border-border bg-white hover:border-dgb-200"
+                          ? "border-highlight-400 bg-highlight-50/30 ring-2 ring-highlight-300"
+                          : "border-border bg-canvas hover:border-brand-200"
                       )}
                     >
                       <div className="relative aspect-square w-full bg-muted">
                         {isImg ? (
                           <Image
                             src={asset.url}
+                            unoptimized={asset.mimeType === "image/svg+xml"}
                             alt={asset.alt ?? asset.filename}
                             fill
                             sizes="(max-width: 640px) 50vw, 160px"
                             className="object-cover transition-transform duration-200 group-hover:scale-102"
                           />
                         ) : isVid ? (
-                          <div className="grid size-full place-items-center bg-fb-50 text-fb-700">
+                          <div className="grid size-full place-items-center bg-highlight-50 text-highlight-700">
                             <Video size={24} />
                           </div>
                         ) : (
-                          <div className="grid size-full place-items-center bg-dgb-50 text-dgb">
+                          <div className="grid size-full place-items-center bg-brand-50 text-brand">
                             <FileText size={24} />
                           </div>
                         )}
                         {isSelected ? (
-                          <div className="absolute right-1.5 top-1.5 grid size-5 place-items-center rounded-full bg-fb text-white shadow-xs">
+                          <div className="absolute right-1.5 top-1.5 grid size-5 place-items-center rounded-full bg-highlight text-ink shadow-xs">
                             <Check size={12} strokeWidth={3} />
                           </div>
                         ) : null}
                       </div>
                       <div className="p-2">
-                        <p className="truncate text-xs font-semibold text-dgb-900" title={asset.filename}>
+                        <p className="truncate text-xs font-semibold text-brand-900" title={asset.filename}>
                           {asset.filename}
                         </p>
-                        <p className="mt-0.5 text-[10px] text-muted-foreground">
+                        <p className="mt-0.5 text-xs text-muted-foreground">
                           {formatBytes(asset.bytes)}
                         </p>
                       </div>
@@ -743,13 +746,13 @@ export function AdminMediaPicker({
                       className={cn(
                         "flex h-auto w-full items-center gap-3 rounded-md border p-2 text-left transition-colors",
                         isSelected
-                          ? "border-fb-400 bg-fb-50/40 ring-1 ring-fb-300"
-                          : "border-border bg-white hover:border-dgb-200"
+                          ? "border-highlight-400 bg-highlight-50/40 ring-1 ring-highlight-300"
+                          : "border-border bg-canvas hover:border-brand-200"
                       )}
                     >
                       <div className="relative size-10 shrink-0 overflow-hidden rounded-md bg-muted">
                         {isImg ? (
-                          <Image src={asset.url} alt="" fill sizes="40px" className="object-cover" />
+                          <Image src={asset.url} unoptimized={asset.mimeType === "image/svg+xml"} alt="" fill sizes="40px" className="object-cover" />
                         ) : (
                           <div className="grid size-full place-items-center text-muted-foreground">
                             <FileText size={16} />
@@ -757,12 +760,12 @@ export function AdminMediaPicker({
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-xs font-semibold text-dgb-900">{asset.filename}</p>
-                        <p className="text-[10px] text-muted-foreground">
+                        <p className="truncate text-xs font-semibold text-brand-900">{asset.filename}</p>
+                        <p className="text-xs text-muted-foreground">
                           {formatBytes(asset.bytes)} · {asset.mimeType}
                         </p>
                       </div>
-                      {isSelected ? <Check size={15} className="mr-1 text-fb" /> : null}
+                      {isSelected ? <Check size={15} className="mr-1 text-highlight-700" /> : null}
                     </Button>
                   );
                 })}
@@ -770,7 +773,7 @@ export function AdminMediaPicker({
             )}
 
             {total > 0 ? (
-              <div className="mt-auto flex flex-col gap-2 border-t border-border pt-3 text-[11px] sm:flex-row sm:items-center sm:justify-between">
+              <div className="mt-auto flex flex-col gap-2 border-t border-border pt-3 text-xs sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-muted-foreground">
                   Menampilkan {page * pageSize + 1} sampai {Math.min((page + 1) * pageSize, total)} dari {total}
                 </p>
@@ -781,7 +784,7 @@ export function AdminMediaPicker({
                     size="sm"
                     disabled={isLoading || page === 0}
                     onClick={() => setPage((current) => Math.max(current - 1, 0))}
-                    className="h-8 text-[11px]"
+                    className="h-8 text-xs"
                   >
                     Sebelumnya
                   </Button>
@@ -791,7 +794,7 @@ export function AdminMediaPicker({
                     size="sm"
                     disabled={isLoading || !hasMore}
                     onClick={() => setPage((current) => current + 1)}
-                    className="h-8 text-[11px]"
+                    className="h-8 text-xs"
                   >
                     Berikutnya
                   </Button>
@@ -804,32 +807,33 @@ export function AdminMediaPicker({
           <aside className={cn("border-t border-border bg-muted/20 p-4 lg:border-l lg:border-t-0 flex flex-col justify-between overflow-y-auto", adminNativeScrollbarClassName)}>
             {activeSelectedAsset ? (
               <div className="space-y-3">
-                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fb-700">Detail Terpilih</p>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-highlight-700">Detail Terpilih</p>
                 <div className="relative aspect-video overflow-hidden rounded-lg border border-border bg-muted">
                   {activeSelectedAsset.mimeType.startsWith("image/") ? (
                     <Image
                       src={activeSelectedAsset.url}
+                      unoptimized={activeSelectedAsset.mimeType === "image/svg+xml"}
                       alt={activeSelectedAsset.alt ?? activeSelectedAsset.filename}
                       fill
                       sizes="240px"
                       className="object-cover"
                     />
                   ) : activeSelectedAsset.mimeType.startsWith("video/") ? (
-                    <div className="grid size-full place-items-center bg-fb-50 text-fb-700">
+                    <div className="grid size-full place-items-center bg-highlight-50 text-highlight-700">
                       <Video size={30} />
                     </div>
                   ) : (
-                    <div className="grid size-full place-items-center bg-dgb-50 text-dgb">
+                    <div className="grid size-full place-items-center bg-brand-50 text-brand">
                       <FileText size={30} />
                     </div>
                   )}
                 </div>
 
                 <div>
-                  <h4 className="break-words font-montserrat text-xs font-semibold text-dgb-900">
+                  <h4 className="break-words font-manrope text-xs font-semibold text-brand-900">
                     {activeSelectedAsset.filename}
                   </h4>
-                  <dl className="mt-2 space-y-1 text-[11px]">
+                  <dl className="mt-2 space-y-1 text-xs">
                     <div className="flex justify-between">
                       <dt className="text-muted-foreground">Ukuran</dt>
                       <dd className="font-medium text-foreground">{formatBytes(activeSelectedAsset.bytes)}</dd>
@@ -839,7 +843,7 @@ export function AdminMediaPicker({
                       <dd className="max-w-28 truncate font-medium text-foreground">{activeSelectedAsset.mimeType}</dd>
                     </div>
                     <div className="flex justify-between">
-                      <dt className="text-muted-foreground">Alt Text</dt>
+                      <dt className="text-muted-foreground">Teks alternatif</dt>
                       <dd className="max-w-28 truncate font-medium text-foreground">
                         {activeSelectedAsset.decorative ? "(Dekoratif)" : activeSelectedAsset.alt ?? "Belum diisi"}
                       </dd>
@@ -850,13 +854,13 @@ export function AdminMediaPicker({
             ) : (
               <div className="py-8 text-center text-xs text-muted-foreground">
                 <p className="font-medium">Belum ada aset dipilih</p>
-                <p className="mt-1 text-[11px]">Klik salah satu aset pada daftar untuk memilih.</p>
+                <p className="mt-1 text-xs">Klik salah satu aset pada daftar untuk memilih.</p>
               </div>
             )}
 
             <div className="mt-4 space-y-2 border-t border-border pt-3">
               {isMultiple ? (
-                <p className="text-center text-[11px] font-medium text-muted-foreground">
+                <p className="text-center text-xs font-medium text-muted-foreground">
                   {selectedIds.length} media dipilih
                 </p>
               ) : null}
@@ -864,7 +868,7 @@ export function AdminMediaPicker({
                 type="button"
                 disabled={isMultiple ? selectedIds.length === 0 || selectedAssetList.length !== selectedIds.length : !activeSelectedAsset}
                 onClick={handleConfirmSelect}
-                className="w-full h-9 bg-dgb text-xs font-semibold text-white hover:bg-dgb-600"
+                className="w-full h-9 bg-brand text-xs font-semibold text-canvas hover:bg-brand-600"
               >
                 {isMultiple ? `Pilih ${selectedIds.length} media` : "Gunakan media ini"}
               </Button>
@@ -977,7 +981,7 @@ export function AdminMediaField({
             {label} {required ? <span className="text-destructive">*</span> : null}
           </span>
           {aspectRatioHint ? (
-            <span className="text-[11px] text-muted-foreground">Rasio {aspectRatioHint}</span>
+            <span className="text-xs text-muted-foreground">Rasio {aspectRatioHint}</span>
           ) : null}
         </div>
       ) : null}
@@ -993,7 +997,7 @@ export function AdminMediaField({
               type="button"
               variant="outline"
               size="sm"
-              className="h-8 text-xs border-dgb-200 bg-white text-dgb hover:bg-dgb-50"
+              className="h-8 text-xs border-brand-200 bg-canvas text-brand hover:bg-brand-50"
               onClick={() => setPickerOpen(true)}
             >
               Ganti media
@@ -1002,7 +1006,7 @@ export function AdminMediaField({
               type="button"
               variant="outline"
               size="sm"
-              className="h-8 text-xs border-rose-200 text-destructive hover:bg-rose-50"
+              className="h-8 text-xs border-danger-200 text-destructive hover:bg-danger-50"
               onClick={() => setConfirmRemoveOpen(true)}
             >
               <Trash2 size={13} className="mr-1" /> Lepas media
@@ -1018,9 +1022,9 @@ export function AdminMediaField({
           aria-haspopup="dialog"
           aria-expanded={pickerOpen}
           onClick={() => setPickerOpen(true)}
-          className="flex h-auto w-full cursor-pointer flex-col items-center justify-center gap-0 rounded-lg border border-dashed border-dgb-200 bg-dgb-50/20 px-4 py-6 text-center whitespace-normal transition-colors hover:border-fb-300 hover:bg-fb-50/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-dgb-300 focus-visible:ring-offset-2"
+          className="flex h-auto w-full cursor-pointer flex-col items-center justify-center gap-0 rounded-lg border border-dashed border-brand-200 bg-brand-50/20 px-4 py-6 text-center whitespace-normal transition-colors hover:border-highlight-300 hover:bg-highlight-50/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2"
         >
-          <span className="grid size-10 place-items-center rounded-md bg-white border border-dgb-100 text-dgb shadow-xs">
+          <span className="grid size-10 place-items-center rounded-md bg-canvas border border-brand-100 text-brand shadow-xs">
             {acceptType === "video" ? (
               <Video size={18} />
             ) : acceptType === "pdf" ? (
@@ -1029,12 +1033,12 @@ export function AdminMediaField({
               <ImageIcon size={18} />
             )}
           </span>
-          <p className="mt-2 text-xs font-semibold text-dgb-900">Pilih media</p>
-          {aspectRatioHint ? <p className="mt-0.5 text-[11px] text-muted-foreground">Rasio {aspectRatioHint}</p> : null}
+          <p className="mt-2 text-xs font-semibold text-brand-900">Pilih media</p>
+          {aspectRatioHint ? <p className="mt-0.5 text-xs text-muted-foreground">Rasio {aspectRatioHint}</p> : null}
         </Button>
       )}
 
-      {hint ? <p className="text-[11px] leading-4 text-muted-foreground">{hint}</p> : null}
+      {hint ? <p className="text-xs leading-4 text-muted-foreground">{hint}</p> : null}
 
       <AdminMediaPicker
         open={pickerOpen}
@@ -1051,14 +1055,14 @@ export function AdminMediaField({
       <AlertDialog open={confirmRemoveOpen} onOpenChange={setConfirmRemoveOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-montserrat">Lepas media terpilih?</AlertDialogTitle>
+            <AlertDialogTitle className="font-manrope">Lepas media terpilih?</AlertDialogTitle>
             <AlertDialogDescription>
               Aset media tidak akan terhapus dari pustaka, hanya dilepas dari input formulir ini.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRemove} className="bg-destructive text-white hover:bg-destructive/90">
+            <AlertDialogAction onClick={handleRemove} className="bg-destructive text-canvas hover:bg-destructive/90">
               Lepas media
             </AlertDialogAction>
           </AlertDialogFooter>

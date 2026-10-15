@@ -20,7 +20,7 @@ const HeroVideo: React.FC<HeroVideoProps> = ({ children, fallbackImageSrc, video
   const showFallback = !videoSource || !videoReady;
 
   return (
-    <div className="relative h-[90lvh] w-full overflow-hidden bg-dgb-900">
+    <div className="relative h-[90lvh] w-full overflow-hidden bg-brand-900">
       <AnimatePresence>
         {showFallback && fallbackImageSrc && (
           <motion.div
@@ -64,9 +64,9 @@ const HeroVideo: React.FC<HeroVideoProps> = ({ children, fallbackImageSrc, video
         </motion.video>
       )}
 
-      <div className="absolute inset-0 bg-black opacity-50 z-10"></div>
+      <div className="absolute inset-0 bg-ink opacity-50 z-10"></div>
 
-      <div className="absolute inset-0 flex justify-center flex-col text-white md:px-20 px-8 text-sm z-20">
+      <div className="absolute inset-0 flex justify-center flex-col text-canvas md:px-20 px-8 text-sm z-20">
         {children}
       </div>
     </div>

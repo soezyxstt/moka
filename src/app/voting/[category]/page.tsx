@@ -30,7 +30,7 @@ export default async function VotingCategoryPage({ params }: PageProps) {
 
   return (
     <main className="relative min-h-screen overflow-hidden pb-16">
-      <section className="relative flex min-h-[90svh] items-center overflow-hidden bg-dgb-900 text-white">
+      <section className="relative flex min-h-[90svh] items-center overflow-hidden bg-brand-900 text-canvas">
         {category.poster ? (
           <Image src={category.poster.url} alt={category.poster.alt ?? ''} fill priority sizes="100vw" className="object-cover" />
         ) : null}
@@ -39,28 +39,27 @@ export default async function VotingCategoryPage({ params }: PageProps) {
             <source src={category.video.url} type={category.video.mimeType} />
           </video>
         ) : null}
-        <div aria-hidden className="absolute inset-0 bg-linear-to-r from-dgb-900/90 via-dgb-900/65 to-dgb-900/35" />
+        <div aria-hidden className="absolute inset-0 bg-linear-to-r from-brand-900/90 via-brand-900/65 to-brand-900/35" />
         <div className="relative z-10 mx-auto w-full max-w-7xl px-6 py-24 md:px-12">
-          <p className="font-montserrat text-xs font-bold uppercase tracking-[0.2em] text-fb">{category.editionYear} · {category.name}</p>
-          <h1 className="mt-4 max-w-3xl font-montserrat text-4xl font-semibold text-white md:text-6xl">
+          <h1 className="max-w-3xl font-manrope text-4xl font-semibold text-canvas md:text-6xl">
             {campaign?.name ?? 'Voting ' + category.name}
           </h1>
-          <p className="mt-5 max-w-2xl text-sm leading-7 text-white/80 md:text-base">
+          <p className="mt-5 max-w-2xl text-sm leading-7 text-canvas/80 md:text-base">
             Berikan dukungan kepada peserta kategori {category.name} pada edisi {category.editionYear}.
           </p>
           {campaign ? (
-            <dl className="mt-8 grid max-w-xl gap-4 rounded-xl border border-white/20 bg-dgb-900/45 p-5 backdrop-blur-sm sm:grid-cols-2">
+            <dl className="mt-8 grid max-w-xl gap-4 rounded-xl border border-canvas/20 bg-brand-900/45 p-5 backdrop-blur-sm sm:grid-cols-2">
               <div>
-                <dt className="text-xs font-semibold uppercase tracking-wide text-white/65">Periode voting</dt>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-canvas/65">Periode voting</dt>
                 <dd className="mt-1 text-sm font-semibold">{formatCampaignDate(campaign.startsAt, campaign.timezone)} sampai {formatCampaignDate(campaign.endsAt, campaign.timezone)}</dd>
               </div>
               <div>
-                <dt className="text-xs font-semibold uppercase tracking-wide text-white/65">Biaya per poin</dt>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-canvas/65">Biaya per poin</dt>
                 <dd className="mt-1 text-sm font-semibold">{campaign.pricePerPoint > 0 ? formatCurrency(campaign.pricePerPoint) : 'Belum ditetapkan'}</dd>
               </div>
             </dl>
           ) : (
-            <p className="mt-8 inline-flex rounded-md border border-white/20 bg-dgb-900/45 px-4 py-3 text-sm text-white/80">
+            <p className="mt-8 inline-flex rounded-md border border-canvas/20 bg-brand-900/45 px-4 py-3 text-sm text-canvas/80">
               Kampanye voting belum tersedia untuk edisi ini.
             </p>
           )}
@@ -69,33 +68,32 @@ export default async function VotingCategoryPage({ params }: PageProps) {
 
       <section className="relative z-10 mx-auto w-full max-w-7xl px-6 py-12 md:px-12 md:py-16">
         <header className="mb-8 text-center">
-          <p className="font-montserrat text-xs font-bold uppercase tracking-[0.18em] text-fb">{category.editionYear}</p>
-          <typography.h1 className="mt-2 text-3xl text-white md:text-5xl">{category.name}</typography.h1>
-          <p className="mt-3 text-sm text-white/75">Peserta dalam kampanye voting ini</p>
+          <typography.h1 className="text-3xl text-canvas md:text-5xl">{category.name}</typography.h1>
+          <p className="mt-3 text-sm text-canvas/75">Peserta dalam kampanye voting ini</p>
         </header>
         {campaign && hasCandidates ? (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 lg:grid-cols-3">
             {category.candidates.map((candidate) => (
-              <Link key={candidate.id} href={'/voting/' + category.slug + '/' + candidate.slug} className="group relative aspect-[3/3.2] overflow-hidden rounded-xl border border-white/15 bg-dgb-900">
+              <Link key={candidate.id} href={'/voting/' + category.slug + '/' + candidate.slug} className="group relative aspect-[3/3.2] overflow-hidden rounded-xl border border-canvas/15 bg-brand-900">
                 {candidate.imageUrl ? (
                   <Image src={candidate.imageUrl} alt={candidate.name} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover object-top transition-transform duration-500 group-hover:scale-105" />
                 ) : (
-                  <div role="img" aria-label={'Foto ' + candidate.name + ' belum tersedia'} className="grid size-full place-items-center bg-linear-to-br from-dgb-700 to-dgb-900">
-                    <span aria-hidden="true" className="font-montserrat text-6xl font-semibold">{getInitials(candidate.name)}</span>
+                  <div role="img" aria-label={'Foto ' + candidate.name + ' belum tersedia'} className="grid size-full place-items-center bg-linear-to-br from-brand-700 to-brand-900">
+                    <span aria-hidden="true" className="font-manrope text-6xl font-semibold">{getInitials(candidate.name)}</span>
                   </div>
                 )}
-                <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/15 to-transparent" />
-                <div className="absolute inset-x-0 bottom-0 p-5 text-white">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-fb">{category.code}-{String(candidate.number).padStart(2, '0')}</p>
-                  <h2 className="mt-1 font-montserrat text-xl font-semibold">{candidate.name}</h2>
-                  <p className="mt-2 text-sm text-white/75">Lihat profil dan QR voting</p>
+                <div className="absolute inset-0 bg-linear-to-t from-ink/90 via-ink/15 to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 p-5 text-canvas">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-highlight-200">{category.code}-{String(candidate.number).padStart(2, '0')}</p>
+                  <h2 className="mt-1 font-manrope text-xl font-semibold">{candidate.name}</h2>
+                  <p className="mt-2 text-sm text-canvas/75">Lihat profil dan QR voting</p>
                 </div>
               </Link>
             ))}
           </div>
         ) : (
-          <div className="rounded-xl border border-dashed border-white/25 bg-dgb-900/35 px-6 py-12 text-center text-white/80">
-            <h2 className="font-montserrat text-xl font-semibold text-white">{campaign ? 'Peserta voting belum tersedia' : 'Kampanye belum tersedia'}</h2>
+          <div className="rounded-xl border border-dashed border-canvas/25 bg-brand-900/35 px-6 py-12 text-center text-canvas/80">
+            <h2 className="font-manrope text-xl font-semibold text-canvas">{campaign ? 'Peserta voting belum tersedia' : 'Kampanye belum tersedia'}</h2>
             <p className="mx-auto mt-2 max-w-xl text-sm leading-6">
               {campaign
                 ? 'Belum ada peserta yang tercatat untuk kategori ' + category.name + ' pada kampanye ini.'

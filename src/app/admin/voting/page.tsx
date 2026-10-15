@@ -1,7 +1,10 @@
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 import { AdminBadge, AdminCard, AdminEmptyState, AdminPage } from "@/components/admin/primitives";
-import { requirePermission } from "@/server/auth/authorization";
+import { getEffectivePermissions } from "@/server/auth/authorization";
+import { auth } from "@/server/auth/config";
 import { database } from "@/server/db/client";
 import {
   categories,
@@ -20,13 +23,17 @@ import { VotingConsole } from "./voting-console";
 export const metadata = { title: "Voting tahunan" };
 
 export default async function VotingAdminPage() {
-  const { effectivePermissions } = await requirePermission("voting.view");
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session?.user) redirect("/admin/login");
+
+  const effectivePermissions = await getEffectivePermissions(session.user.id);
+  if (!effectivePermissions.has("voting.view")) redirect("/admin/request-access");
+
   const currentEdition = await getAdminEditionContext();
 
   if (!currentEdition) {
     return (
       <AdminPage
-        eyebrow="Operasional"
         title="Voting tahunan"
       >
         <AdminCard>
@@ -123,8 +130,7 @@ export default async function VotingAdminPage() {
 
   return (
     <AdminPage
-      eyebrow="Operasional"
-      title={`Voting ${currentEdition.name}`}
+      title="Voting"
       action={<AdminBadge value={currentEdition.lifecycle} />}
     >
       <VotingConsole

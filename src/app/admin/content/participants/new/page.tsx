@@ -22,7 +22,6 @@ export default async function NewParticipantPage() {
   if (!currentEdition) {
     return (
       <AdminPage
-        eyebrow="Peserta"
         title="Tambah pendaftar"
       >
         <AdminCard padding="none">
@@ -64,7 +63,6 @@ export default async function NewParticipantPage() {
 
   return (
     <AdminPage
-      eyebrow="Peserta"
       title="Tambah pendaftar"
       action={
         <AdminLinkButton href="/admin/content/participants" variant="secondary">

@@ -3,7 +3,6 @@ import { cn } from '@/lib/utils';
 import { typography } from '@/components/custom/typography';
 
 type SectionHeaderProps = {
-  eyebrow?: ReactNode;
   title: ReactNode;
   description?: ReactNode;
   align?: 'left' | 'center';
@@ -12,14 +11,13 @@ type SectionHeaderProps = {
   className?: string;
 };
 
-export function SectionHeader({ eyebrow, title, description, align = 'left', onDark = false, titleClassName, className }: SectionHeaderProps) {
+export function SectionHeader({ title, description, align = 'left', onDark = false, titleClassName, className }: SectionHeaderProps) {
   const centered = align === 'center';
   return (
     <div className={cn('space-y-3', centered && 'text-center', className)}>
-      {eyebrow ? <typography.t1 className={cn(centered && 'mx-auto')}>{eyebrow}</typography.t1> : null}
-      <typography.h1 className={cn(onDark && 'text-white', titleClassName)}>{title}</typography.h1>
+      <typography.h1 className={cn(onDark && 'text-canvas', titleClassName)}>{title}</typography.h1>
       {description ? (
-        <typography.p className={cn('max-w-2xl', onDark && 'text-[#ddd]', centered && 'mx-auto')}>{description}</typography.p>
+        <typography.p className={cn('max-w-2xl', onDark && 'text-on-media/85', centered && 'mx-auto')}>{description}</typography.p>
       ) : null}
     </div>
   );

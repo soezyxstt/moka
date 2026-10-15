@@ -39,7 +39,7 @@ function renderMarks(textNode: TipTapNode, key: number | string): React.ReactNod
         break;
       case "code":
         element = (
-          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-sm text-foreground">
+          <code className="rounded bg-muted px-1.5 py-0.5 font-inter text-sm text-foreground">
             {element}
           </code>
         );
@@ -51,7 +51,7 @@ function renderMarks(textNode: TipTapNode, key: number | string): React.ReactNod
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-fb underline hover:text-fb-600"
+            className="text-highlight-700 underline hover:text-highlight-600"
           >
             {element}
           </a>
@@ -72,10 +72,10 @@ function renderNode(node: TipTapNode, index: number): React.ReactNode {
   switch (node.type) {
     case "paragraph":
       if (!node.content || node.content.length === 0) {
-        return <p key={index} className="mb-4 text-base leading-relaxed text-[#505050] font-inter">&nbsp;</p>;
+        return <p key={index} className="mb-4 text-base leading-relaxed text-body font-inter">&nbsp;</p>;
       }
       return (
-        <p key={index} className="mb-4 text-base leading-relaxed text-[#505050] font-inter">
+        <p key={index} className="mb-4 text-base leading-relaxed text-body font-inter">
           {node.content.map((child, i) => renderNode(child, i))}
         </p>
       );
@@ -85,20 +85,20 @@ function renderNode(node: TipTapNode, index: number): React.ReactNode {
       const children = node.content?.map((child, i) => renderNode(child, i));
       if (level === 2) {
         return (
-          <h2 key={index} className="mt-8 mb-4 font-montserrat text-2xl md:text-3xl font-bold text-dgb-900">
+          <h2 key={index} className="mt-8 mb-4 font-manrope text-2xl md:text-3xl font-bold text-brand-900">
             {children}
           </h2>
         );
       }
       if (level === 3) {
         return (
-          <h3 key={index} className="mt-6 mb-3 font-montserrat text-xl md:text-2xl font-semibold text-dgb-900">
+          <h3 key={index} className="mt-6 mb-3 font-manrope text-xl md:text-2xl font-semibold text-brand-900">
             {children}
           </h3>
         );
       }
       return (
-        <h4 key={index} className="mt-4 mb-2 font-montserrat text-lg font-semibold text-dgb-900">
+        <h4 key={index} className="mt-4 mb-2 font-manrope text-lg font-semibold text-brand-900">
           {children}
         </h4>
       );
@@ -106,14 +106,14 @@ function renderNode(node: TipTapNode, index: number): React.ReactNode {
 
     case "bulletList":
       return (
-        <ul key={index} className="my-4 ml-6 list-disc space-y-1 text-base text-[#505050] font-inter">
+        <ul key={index} className="my-4 ml-6 list-disc space-y-1 text-base text-body font-inter">
           {node.content?.map((child, i) => renderNode(child, i))}
         </ul>
       );
 
     case "orderedList":
       return (
-        <ol key={index} className="my-4 ml-6 list-decimal space-y-1 text-base text-[#505050] font-inter">
+        <ol key={index} className="my-4 ml-6 list-decimal space-y-1 text-base text-body font-inter">
           {node.content?.map((child, i) => renderNode(child, i))}
         </ol>
       );
@@ -129,7 +129,7 @@ function renderNode(node: TipTapNode, index: number): React.ReactNode {
       return (
         <blockquote
           key={index}
-          className="my-6 border-l-4 border-fb bg-fb-50/20 px-4 py-3 italic text-foreground/80 rounded-r-md"
+          className="my-6 border-l-4 border-highlight bg-highlight-50/20 px-4 py-3 italic text-foreground/80 rounded-r-md"
         >
           {node.content?.map((child, i) => renderNode(child, i))}
         </blockquote>
@@ -215,7 +215,7 @@ export function TipTapRenderer({
     return (
       <div className={cn("space-y-4 font-inter text-foreground", className)}>
         {paragraphs.map((p, index) => (
-          <p key={index} className="text-base leading-relaxed text-[#505050]">
+          <p key={index} className="text-base leading-relaxed text-body">
             {p}
           </p>
         ))}

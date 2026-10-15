@@ -120,7 +120,7 @@ export function NewsListClient({
           {(
             [
               { key: "all", label: "Semua" },
-              { key: "draft", label: "Draft" },
+              { key: "draft", label: "Draf" },
               { key: "published", label: "Terbit" },
               { key: "archived", label: "Arsip" },
             ] as const
@@ -133,12 +133,12 @@ export function NewsListClient({
               onClick={() => setStatusFilter(tab.key)}
               className={`h-7 px-3 text-xs font-medium ${
                 statusFilter === tab.key
-                  ? "bg-white font-semibold text-dgb shadow-xs"
+                  ? "bg-canvas font-semibold text-brand shadow-xs"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
               {tab.label}
-              <span className="ml-1.5 rounded-sm bg-muted px-1.5 py-0.2 text-[10px] text-muted-foreground">
+              <span className="ml-1.5 rounded-sm bg-muted px-1.5 py-0.2 text-xs text-muted-foreground">
                 {tab.key === "all"
                   ? articles.length
                   : articles.filter((a) => a.status === tab.key).length}
@@ -167,7 +167,7 @@ export function NewsListClient({
           {filteredArticles.map((article) => (
             <div
               key={article.id}
-              className="group flex flex-col gap-4 rounded-xl border border-border bg-card p-4 shadow-xs transition-all hover:border-dgb-200 hover:shadow-sm sm:flex-row sm:items-center"
+              className="group flex flex-col gap-4 rounded-xl border border-border bg-card p-4 shadow-xs transition-all hover:border-brand-200 hover:shadow-sm sm:flex-row sm:items-center"
             >
               {/* Cover Thumbnail */}
               <div className="relative h-24 w-full shrink-0 overflow-hidden rounded-lg border border-border bg-muted sm:h-20 sm:w-32">
@@ -180,7 +180,7 @@ export function NewsListClient({
                     className="object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                 ) : (
-                  <div className="grid size-full place-items-center bg-dgb-50/40 text-dgb-700">
+                  <div className="grid size-full place-items-center bg-brand-50/40 text-brand-700">
                     <Newspaper size={24} />
                   </div>
                 )}
@@ -190,13 +190,13 @@ export function NewsListClient({
               <div className="min-w-0 flex-1 space-y-1.5">
                 <div className="flex flex-wrap items-center gap-2">
                   <AdminBadge value={newsStatusLabel(article.status)} />
-                  <span className="font-mono text-xs text-muted-foreground">
+                  <span className="font-inter text-xs text-muted-foreground">
                     /berita/{article.slug}
                   </span>
                   <span className="text-xs text-muted-foreground">· versi {article.version}</span>
                 </div>
 
-                <h3 className="font-montserrat text-base font-bold text-dgb-900 line-clamp-1">
+                <h3 className="font-manrope text-base font-bold text-brand-900 line-clamp-1">
                   {article.title}
                 </h3>
 
@@ -206,7 +206,7 @@ export function NewsListClient({
                   </p>
                 )}
 
-                <div className="flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <Calendar size={12} />
                     {article.publishedAt
@@ -226,16 +226,15 @@ export function NewsListClient({
 
               {/* Action Buttons */}
               <div className="flex items-center gap-2 self-end sm:self-center">
-                <Link href={`/admin/content/news/${article.id}`}>
-                  <Button
-                    type="button"
+                <Button asChild
                     variant="outline"
                     size="sm"
-                    className="h-8 gap-1.5 border-border text-xs hover:border-dgb-200 hover:bg-dgb-50 hover:text-dgb"
+                    className="h-8 gap-1.5 border-border text-xs hover:border-brand-200 hover:bg-brand-50 hover:text-brand"
                   >
+                  <Link href={`/admin/content/news/${article.id}`}>
                     <FileEdit size={13} /> Edit dan pratinjau
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
 
                 {canEdit && (
                   <Button
@@ -243,7 +242,7 @@ export function NewsListClient({
                     variant="ghost"
                     size="sm"
                     onClick={() => setDeleteTarget(article)}
-                    className="h-8 px-2 text-xs text-destructive hover:bg-rose-50"
+                    className="h-8 px-2 text-xs text-destructive hover:bg-danger-50"
                     title="Hapus berita"
                   >
                     <Trash2 size={14} />
@@ -259,7 +258,7 @@ export function NewsListClient({
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-montserrat">Hapus Berita Ini?</AlertDialogTitle>
+            <AlertDialogTitle className="font-manrope">Hapus Berita Ini?</AlertDialogTitle>
             <AlertDialogDescription>
               Artikel &quot;{deleteTarget?.title}&quot; beserta draft dan riwayat revisinya akan dihapus secara permanen.
             </AlertDialogDescription>
@@ -269,7 +268,7 @@ export function NewsListClient({
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isDeleting}
-              className="bg-destructive text-white hover:bg-destructive/90"
+              className="bg-destructive text-canvas hover:bg-destructive/90"
             >
               {isDeleting ? "Menghapus..." : "Hapus Berita"}
             </AlertDialogAction>

@@ -353,7 +353,7 @@ export function NewsWorkspace({
 
     const currentArticleId = articleIdRef.current;
     if (!currentArticleId) {
-      toast.error("Simpan draft terlebih dahulu sebelum menerbitkan");
+      toast.error("Simpan draf terlebih dahulu sebelum menerbitkan");
       return;
     }
 
@@ -531,11 +531,11 @@ export function NewsWorkspace({
           <div className="hidden h-5 w-px bg-border sm:block" />
 
           <div className="flex items-center gap-2">
-            <span className="font-montserrat text-sm font-bold text-dgb-900">
-              {articleId ? "Edit Berita" : "Tulis Berita Baru"}
+            <span className="font-manrope text-sm font-bold text-brand-900">
+              {articleId ? "Edit berita" : "Tulis berita"}
             </span>
             <AdminBadge value={newsStatusLabel(status)} />
-            <span className="hidden rounded bg-dgb-50 px-2 py-0.5 text-[11px] font-semibold text-dgb-800 md:inline-block">
+            <span className="hidden rounded bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-800 md:inline-block">
               {editionName}
             </span>
           </div>
@@ -546,19 +546,19 @@ export function NewsWorkspace({
           {/* Autosave Indicator */}
           <div className="flex items-center gap-1.5 text-xs">
             {autosaveState === "saving" && (
-              <span className="flex items-center gap-1 text-sky-600">
+              <span className="flex items-center gap-1 text-info-600">
                 <Loader2 size={13} className="animate-spin" /> Menyimpan...
               </span>
             )}
             {autosaveState === "saved" && (
-              <span className="flex items-center gap-1 text-emerald-600">
+              <span className="flex items-center gap-1 text-success-600">
                 <CheckCircle2 size={13} />
                 <span className="hidden sm:inline">Tersimpan</span>
                 {lastSavedTime ? ` (${lastSavedTime})` : ""}
               </span>
             )}
             {autosaveState === "unsaved" && (
-              <span className="flex items-center gap-1 text-amber-600">
+              <span className="flex items-center gap-1 text-warning-600">
                 <Clock size={13} /> Belum disimpan
               </span>
             )}
@@ -592,9 +592,9 @@ export function NewsWorkspace({
               size="sm"
               onClick={() => void performSaveDraft(false)}
               disabled={isSubmitting || autosaveState === "saving"}
-              className="h-8 gap-1.5 border-dgb-200 bg-white text-xs font-semibold text-dgb hover:bg-dgb-50"
+              className="h-8 gap-1.5 border-brand-200 bg-canvas text-xs font-semibold text-brand hover:bg-brand-50"
             >
-              <Save size={13} /> Simpan draft
+              <Save size={13} /> Simpan draf
             </Button>
           )}
 
@@ -607,9 +607,9 @@ export function NewsWorkspace({
                 size="sm"
                 onClick={() => setUnpublishDialogOpen(true)}
                 disabled={isSubmitting || autosaveState === "saving"}
-                className="h-8 gap-1.5 border-amber-200 text-xs font-semibold text-amber-800 hover:bg-amber-50"
+                className="h-8 gap-1.5 border-warning-200 text-xs font-semibold text-warning-800 hover:bg-warning-50"
               >
-                <RotateCcw size={13} /> Tarik ke draft
+                <RotateCcw size={13} /> Tarik ke draf
               </Button>
             )
           ) : (
@@ -619,7 +619,7 @@ export function NewsWorkspace({
                 size="sm"
                 onClick={handlePublish}
                 disabled={isSubmitting || autosaveState === "saving"}
-                className="h-8 gap-1.5 bg-dgb text-xs font-semibold text-white hover:bg-dgb-600"
+                className="h-8 gap-1.5 bg-brand text-xs font-semibold text-canvas hover:bg-brand-600"
               >
                 <Send size={13} /> Terbitkan
               </Button>
@@ -648,7 +648,7 @@ export function NewsWorkspace({
                 size="sm"
                 onClick={() => setDeleteDialogOpen(true)}
                 disabled={isSubmitting}
-                className="h-8 px-2 text-xs text-destructive hover:bg-rose-50"
+                className="h-8 px-2 text-xs text-destructive hover:bg-danger-50"
                 title="Hapus berita"
               >
                 <Trash2 size={14} />
@@ -660,38 +660,40 @@ export function NewsWorkspace({
 
       {/* Metadata & Cover Panel */}
       <div className="rounded-xl border border-border bg-card p-5 shadow-xs">
-        <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
           {/* Left: Title, Slug, Excerpt */}
-          <div className="space-y-4">
+          <div className="min-w-0 space-y-4">
             <div>
-              <label className="mb-1 block text-xs font-semibold text-foreground">
+              <label htmlFor="news-title" className="mb-1 block text-xs font-semibold text-foreground">
                 Judul berita <span className="text-destructive">*</span>
               </label>
               <Input
+                id="news-title"
                 value={title}
                 onChange={(e) => handleTitleChange(e.target.value)}
                 disabled={!canEdit}
-                placeholder="Tulis judul berita yang menarik..."
-                className="font-montserrat text-base font-semibold"
+                placeholder="Judul berita"
+                className="font-inter text-base font-semibold"
               />
             </div>
 
             <div>
-              <div className="mb-1 flex items-center justify-between">
-                <label className="text-xs font-semibold text-foreground">
+              <div className="mb-1 flex flex-wrap items-center justify-between gap-1">
+                <label htmlFor="news-slug" className="text-xs font-semibold text-foreground">
                   Alamat berita <span className="text-destructive">*</span>
                 </label>
-                <span className="text-[11px] text-muted-foreground">
+                <span className="max-w-full break-all text-xs text-muted-foreground">
                   /berita/{slug || "judul-berita"}
                 </span>
               </div>
               <div className="flex gap-2">
                 <Input
+                  id="news-slug"
                   value={slug}
                   onChange={(e) => handleSlugChange(e.target.value)}
                   disabled={!canEdit}
                   placeholder="slug-artikel-berita"
-                  className="font-mono text-xs"
+                  className="font-inter text-xs"
                 />
                 <Button
                   type="button"
@@ -706,16 +708,17 @@ export function NewsWorkspace({
                   className="h-9 shrink-0 text-xs"
                   title="Sinkronkan kembali dari judul"
                 >
-                  Auto slug
+                  Dari judul
                 </Button>
               </div>
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-semibold text-foreground">
+              <label htmlFor="news-excerpt" className="mb-1 block text-xs font-semibold text-foreground">
                 Ringkasan <span className="text-destructive">*</span>
               </label>
               <Textarea
+                id="news-excerpt"
                 value={excerpt}
                 onChange={(e) => {
                   setExcerpt(e.target.value);
@@ -723,17 +726,17 @@ export function NewsWorkspace({
                 }}
                 disabled={!canEdit}
                 rows={3}
-                placeholder="Tulis ringkasan singkat berita (1-2 kalimat) untuk kartu dan cuplikan media sosial..."
+                placeholder="Ringkasan berita, 1-2 kalimat"
                 className="text-xs leading-relaxed"
               />
-              <p className="mt-1 text-[11px] text-muted-foreground">
-                Minimal 10 karakter; tampil pada feed kartu berita dan meta deskripsi.
+              <p className="mt-1 text-xs text-muted-foreground">
+                Minimal 10 karakter; tampil pada kartu berita dan hasil pencarian.
               </p>
             </div>
           </div>
 
           {/* Right: Cover Image Picker */}
-          <div>
+          <div className="min-w-0">
             <AdminMediaField
               name="coverMediaId"
               label="Foto sampul"
@@ -759,7 +762,7 @@ export function NewsWorkspace({
       {/* View Switcher Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-2">
         <div
-          role="tablist"
+          role="group"
           aria-label="Tampilan ruang kerja berita"
           className="flex items-center gap-1.5 rounded-lg border border-border bg-muted/30 p-1"
         >
@@ -767,12 +770,12 @@ export function NewsWorkspace({
             type="button"
             variant="ghost"
             size="sm"
-            role="tab"
-            aria-selected={viewMode === "editor"}
+
+            aria-pressed={viewMode === "editor"}
             onClick={() => setViewMode("editor")}
             className={cn(
               "h-7 px-3 text-xs font-medium",
-              viewMode === "editor" && "bg-white font-semibold text-dgb shadow-xs",
+              viewMode === "editor" && "bg-canvas font-semibold text-brand shadow-xs",
             )}
           >
             <FileEdit size={13} className="mr-1.5" /> Editor
@@ -781,12 +784,12 @@ export function NewsWorkspace({
             type="button"
             variant="ghost"
             size="sm"
-            role="tab"
-            aria-selected={viewMode === "split"}
+
+            aria-pressed={viewMode === "split"}
             onClick={() => setViewMode("split")}
             className={cn(
               "h-7 px-3 text-xs font-medium max-sm:hidden",
-              viewMode === "split" && "bg-white font-semibold text-dgb shadow-xs",
+              viewMode === "split" && "bg-canvas font-semibold text-brand shadow-xs",
             )}
           >
             <LayoutGrid size={13} className="mr-1.5" /> Keduanya
@@ -795,12 +798,12 @@ export function NewsWorkspace({
             type="button"
             variant="ghost"
             size="sm"
-            role="tab"
-            aria-selected={viewMode === "preview"}
+
+            aria-pressed={viewMode === "preview"}
             onClick={() => setViewMode("preview")}
             className={cn(
               "h-7 px-3 text-xs font-medium",
-              viewMode === "preview" && "bg-white font-semibold text-dgb shadow-xs",
+              viewMode === "preview" && "bg-canvas font-semibold text-brand shadow-xs",
             )}
           >
             <Eye size={13} className="mr-1.5" /> Pratinjau
@@ -817,7 +820,7 @@ export function NewsWorkspace({
               onClick={() => setPreviewDevice("desktop")}
               className={cn(
                 "h-7 px-2.5 text-xs font-medium",
-                previewDevice === "desktop" && "bg-white font-semibold text-dgb shadow-xs",
+                previewDevice === "desktop" && "bg-canvas font-semibold text-brand shadow-xs",
               )}
             >
               <Globe size={13} className="mr-1" /> Desktop
@@ -829,10 +832,10 @@ export function NewsWorkspace({
               onClick={() => setPreviewDevice("mobile")}
               className={cn(
                 "h-7 px-2.5 text-xs font-medium",
-                previewDevice === "mobile" && "bg-white font-semibold text-dgb shadow-xs",
+                previewDevice === "mobile" && "bg-canvas font-semibold text-brand shadow-xs",
               )}
             >
-              <Smartphone size={13} className="mr-1" /> Mobile (380px)
+              <Smartphone size={13} className="mr-1" /> Ponsel (380 px)
             </Button>
           </div>
         )}
@@ -850,7 +853,6 @@ export function NewsWorkspace({
           <div className="space-y-2">
             <div className="flex items-center justify-between px-1">
               <span className="text-xs font-semibold text-foreground">Isi berita</span>
-              <span className="text-[11px] text-muted-foreground">Isi terstruktur</span>
             </div>
             <TipTapEditor
               content={bodyJson}
@@ -871,23 +873,23 @@ export function NewsWorkspace({
           <div className={cn("space-y-2", viewMode === "split" && "max-sm:hidden")}>
             <div className="flex items-center justify-between px-1">
               <span className="text-xs font-semibold text-foreground">Pratinjau langsung</span>
-              <span className="text-[11px] text-muted-foreground">
+              <span className="text-xs text-muted-foreground">
                 {previewDevice === "mobile" ? "Layar 380 px" : "Desktop"}
               </span>
             </div>
 
             <div
               className={cn(
-                "mx-auto overflow-hidden rounded-xl border border-border bg-white shadow-xs",
+                "mx-auto overflow-hidden rounded-xl border border-border bg-canvas shadow-xs",
                 previewDevice === "mobile"
-                  ? "w-full max-w-[380px] p-4 ring-8 ring-dgb-50"
+                  ? "w-full max-w-[380px] p-4 ring-8 ring-brand-50"
                   : "w-full p-6 md:p-8",
               )}
             >
               {/* Article Preview Header */}
               <article className="space-y-6">
                 <header className="space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-semibold text-fb">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-highlight-700">
                     <span>{editionName}</span>
                     <span>·</span>
                     <span className="text-muted-foreground">
@@ -903,7 +905,7 @@ export function NewsWorkspace({
 
                   <h1
                     className={cn(
-                      "font-montserrat font-bold text-dgb-900",
+                      "font-manrope font-bold text-brand-900",
                       previewDevice === "mobile" ? "text-xl leading-tight" : "text-2xl md:text-4xl",
                     )}
                   >
@@ -948,7 +950,7 @@ export function NewsWorkspace({
       <AlertDialog open={confirmLeaveOpen} onOpenChange={setConfirmLeaveOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-montserrat">
+            <AlertDialogTitle className="font-manrope">
               Perubahan belum disimpan
             </AlertDialogTitle>
             <AlertDialogDescription>
@@ -962,7 +964,7 @@ export function NewsWorkspace({
                 setIsDirty(false);
                 router.push("/admin/content/news");
               }}
-              className="bg-destructive text-white hover:bg-destructive/90"
+              className="bg-destructive text-canvas hover:bg-destructive/90"
             >
               Tinggalkan halaman
             </AlertDialogAction>
@@ -974,7 +976,7 @@ export function NewsWorkspace({
       <AlertDialog open={unpublishDialogOpen} onOpenChange={setUnpublishDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-montserrat">Tarik Publikasi Artikel?</AlertDialogTitle>
+            <AlertDialogTitle className="font-manrope">Tarik Publikasi Artikel?</AlertDialogTitle>
             <AlertDialogDescription>
               Artikel akan dialihkan kembali menjadi draft dan tidak dapat diakses publik hingga diterbitkan ulang.
             </AlertDialogDescription>
@@ -983,9 +985,9 @@ export function NewsWorkspace({
             <AlertDialogCancel>Batal</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleUnpublish}
-              className="bg-amber-600 text-white hover:bg-amber-700"
+              className="bg-warning-600 text-canvas hover:bg-warning-700"
             >
-              Tarik ke draft
+              Tarik ke draf
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -995,7 +997,7 @@ export function NewsWorkspace({
       <AlertDialog open={archiveDialogOpen} onOpenChange={setArchiveDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-montserrat">Arsipkan Berita?</AlertDialogTitle>
+            <AlertDialogTitle className="font-manrope">Arsipkan Berita?</AlertDialogTitle>
             <AlertDialogDescription>
               Artikel akan disimpan sebagai arsip dan dapat diaktifkan kembali sewaktu-waktu.
             </AlertDialogDescription>
@@ -1004,7 +1006,7 @@ export function NewsWorkspace({
             <AlertDialogCancel>Batal</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleArchive}
-              className="bg-slate-700 text-white hover:bg-slate-800"
+              className="bg-brand text-canvas hover:bg-brand/90"
             >
               Arsipkan
             </AlertDialogAction>
@@ -1016,7 +1018,7 @@ export function NewsWorkspace({
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-montserrat">Hapus Berita Ini?</AlertDialogTitle>
+            <AlertDialogTitle className="font-manrope">Hapus Berita Ini?</AlertDialogTitle>
             <AlertDialogDescription>
               Tindakan ini akan menghapus artikel berita beserta draft dan riwayat revisinya. Tindakan tidak dapat dibatalkan.
             </AlertDialogDescription>
@@ -1025,7 +1027,7 @@ export function NewsWorkspace({
             <AlertDialogCancel>Batal</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              className="bg-destructive text-white hover:bg-destructive/90"
+              className="bg-destructive text-canvas hover:bg-destructive/90"
             >
               Hapus berita
             </AlertDialogAction>
@@ -1037,7 +1039,7 @@ export function NewsWorkspace({
       <Dialog open={revisionsOpen} onOpenChange={setRevisionsOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle className="font-montserrat">Riwayat Revisi Artikel</DialogTitle>
+            <DialogTitle className="font-manrope">Riwayat Revisi Artikel</DialogTitle>
             <DialogDescription>
               Daftar versi tersimpan untuk artikel ini. Anda dapat melihat snapshot atau memulihkannya ke editor.
             </DialogDescription>
@@ -1056,14 +1058,14 @@ export function NewsWorkspace({
                 >
                   <div className="space-y-0.5">
                     <div className="flex items-center gap-2">
-                      <span className="rounded bg-dgb-50 px-2 py-0.5 font-mono text-xs font-bold text-dgb">
+                      <span className="rounded bg-brand-50 px-2 py-0.5 font-inter text-xs font-bold text-brand">
                         Versi {rev.version}
                       </span>
                       <span className="text-xs font-medium text-foreground">
                         {rev.reason || "Revisi tersimpan"}
                       </span>
                     </div>
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       {new Date(rev.createdAt).toLocaleString("id-ID", {
                         day: "numeric",
                         month: "short",
@@ -1096,7 +1098,7 @@ export function NewsWorkspace({
       <AlertDialog open={confirmRestoreOpen} onOpenChange={setConfirmRestoreOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-montserrat">
+            <AlertDialogTitle className="font-manrope">
               Pulihkan Revisi Versi {selectedRevision?.version}?
             </AlertDialogTitle>
             <AlertDialogDescription>
@@ -1111,7 +1113,7 @@ export function NewsWorkspace({
                   handleRestoreRevision(selectedRevision);
                 }
               }}
-              className="bg-dgb text-white hover:bg-dgb-600"
+              className="bg-brand text-canvas hover:bg-brand-600"
             >
               Pulihkan ke editor
             </AlertDialogAction>

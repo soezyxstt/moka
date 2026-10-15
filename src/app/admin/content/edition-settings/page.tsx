@@ -6,25 +6,26 @@ import { getAdminEditionContext } from "@/server/cms/context";
 import { database } from "@/server/db/client";
 import { editionPrograms, editions, mediaAssets } from "@/server/db/schema";
 import { EditionSettingsClient } from "./edition-settings-client";
+import { EditionPaletteForm } from "./palette-form";
+import { readEditionPalette } from "@/server/cms/edition-palette";
 
 export const metadata = { title: "Identitas edisi" };
 
 export default async function EditionSettingsPage() {
   const { effectivePermissions } = await requirePermission("content.view");
-  const canManageContent = effectivePermissions.has("content.edit");
   const editionContext = await getAdminEditionContext();
+  const canManageContent = effectivePermissions.has("content.edit") && editionContext?.lifecycle !== "archived";
 
   if (!editionContext) {
     return (
       <AdminPage
-        eyebrow="Konten"
         title="Identitas edisi"
       >
         <AdminCard>
           <AdminEmptyState
             icon="award"
             title="Belum ada edisi dipilih"
-            description="Pilih edisi pada selector di header untuk mulai."
+            description="Pilih edisi di bagian atas."
           />
         </AdminCard>
       </AdminPage>
@@ -40,7 +41,6 @@ export default async function EditionSettingsPage() {
   if (!editionRow) {
     return (
       <AdminPage
-        eyebrow="Konten"
         title="Identitas edisi"
       >
         <AdminCard>
@@ -83,9 +83,9 @@ export default async function EditionSettingsPage() {
     .where(eq(editionPrograms.editionId, editionContext.id))
     .orderBy(asc(editionPrograms.displayOrder));
 
+  const storedPalette = await readEditionPalette(database, editionRow.id);
   return (
     <AdminPage
-      eyebrow="Konten"
       title="Identitas edisi"
     >
       <EditionSettingsClient
@@ -103,6 +103,7 @@ export default async function EditionSettingsPage() {
           initialPrograms={programs}
           canManageContent={canManageContent}
       />
+      <EditionPaletteForm key={`${editionRow.id}:palette:${storedPalette.version}`} editionId={editionRow.id} year={editionRow.year} version={storedPalette.version} palette={storedPalette.palette} canEdit={canManageContent && effectivePermissions.has("content.publish")} />
     </AdminPage>
   );
 }

@@ -43,7 +43,7 @@ import {
   votingCampaigns,
 } from "@/server/db/schema";
 
-export const metadata = { title: "Dashboard Admin" };
+export const metadata = { title: "Ringkasan admin" };
 
 const quickActions: Array<{
   href: string;
@@ -54,56 +54,56 @@ const quickActions: Array<{
 }> = [
   {
     href: "/admin/content/editions",
-    label: "Kelola Edisi",
+    label: "Kelola edisi",
     description: "Atur periode, kategori, dan aktivasi tahunan",
     icon: "calendar",
     permission: "content.view",
   },
   {
     href: "/admin/content/edition-settings",
-    label: "Identitas Edisi",
+    label: "Identitas edisi",
     description: "Logo, slogan, dan program unggulan",
     icon: "award",
     permission: "content.view",
   },
   {
     href: "/admin/content/site-assets",
-    label: "Aset Situs Tetap",
-    description: "Binding slot gambar banner & hero publik",
+    label: "Aset situs",
+    description: "Atur foto dan video halaman publik",
     icon: "layout",
     permission: "content.view",
   },
   {
     href: "/admin/content/participants",
     label: "Mojang Jajaka",
-    description: "Kelola peserta, foto multi-role, dan QRIS",
+    description: "Kelola profil peserta dan QRIS",
     icon: "users",
     permission: "content.view",
   },
   {
     href: "/admin/content/news",
-    label: "Berita Editorial",
-    description: "Tulis cerita TipTap WYSIWYG dan live preview",
+    label: "Berita",
+    description: "Tulis dan pratinjau berita",
     icon: "newspaper",
     permission: "content.view",
   },
   {
     href: "/admin/content/galleries",
-    label: "Galeri & Album",
-    description: "Album dokumentasi standalone dan acara",
+    label: "Galeri",
+    description: "Kelola album dan dokumentasi acara",
     icon: "gallery",
     permission: "content.view",
   },
   {
     href: "/admin/voting",
-    label: "Operasional Voting",
-    description: "Kampanye, rekap tally harian, dan hasil",
+    label: "Voting",
+    description: "Kelola kampanye, rekap harian, dan hasil",
     icon: "bar-chart",
     permission: "voting.view",
   },
   {
     href: "/admin/audit",
-    label: "Tinjau Audit",
+    label: "Riwayat audit",
     description: "Jejak perubahan data dan keputusan admin",
     icon: "clock",
     permission: "audit.view",
@@ -340,21 +340,20 @@ export default async function AdminDashboard() {
 
   return (
     <AdminPage
-      eyebrow="Ringkasan"
-      title={`Selamat Datang, ${session.user.name.split(" ")[0]}`}
+      title={`Selamat datang, ${session.user.name.split(" ")[0]}`}
       action={
         <AdminLinkButton href="/" variant="secondary">
-          Lihat Situs Publik <ArrowUpRight size={15} />
+          Lihat situs <ArrowUpRight size={15} />
         </AdminLinkButton>
       }
     >
       {/* Top Stats Cards */}
       <section
         className="grid gap-x-6 gap-y-4 sm:grid-cols-2 xl:grid-cols-4"
-        aria-label="Ringkasan Data CMS"
+        aria-label="Ringkasan data"
       >
         <AdminStatCard
-          label="Edisi Terpilih"
+          label="Edisi terpilih"
           value={currentEdition?.year ?? "-"}
           note={
             currentEdition
@@ -364,7 +363,7 @@ export default async function AdminDashboard() {
           icon="calendar"
         />
         <AdminStatCard
-          label="Peserta Aktif"
+          label="Peserta aktif"
           value={totalActiveParticipants}
           note={
             currentEdition
@@ -375,22 +374,22 @@ export default async function AdminDashboard() {
           accent="gold"
         />
         <AdminStatCard
-          label="Berita & Editorial"
+          label="Berita"
           value={totalNews}
           note={
             currentEdition
-              ? `${totalNews} artikel terpublikasi`
+              ? `${totalNews} artikel terbit`
               : "Pilih edisi untuk melihat data"
           }
           icon="newspaper"
           accent="blue"
         />
         <AdminStatCard
-          label="Sponsor & Mitra"
+          label="Sponsor"
           value={totalSponsors}
           note={
             currentEdition
-              ? `${totalSponsors} partner pendukung edisi ${currentEdition.year}`
+              ? `${totalSponsors} sponsor edisi ${currentEdition.year}`
               : "Pilih edisi untuk melihat data"
           }
           icon="handshake"
@@ -405,42 +404,31 @@ export default async function AdminDashboard() {
             <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="grid size-7 place-items-center rounded-md bg-fb/10 text-fb font-bold">
+                  <span className="grid size-7 place-items-center rounded-md bg-highlight/10 text-highlight-700 font-bold">
                     <ClipboardList size={16} />
                   </span>
-                  <h3 className="font-montserrat text-base font-semibold text-foreground">
-                    Kesiapan Konten {currentEdition.name} ({currentEdition.year})
+                  <h3 className="font-manrope text-base font-semibold text-foreground">
+                    Kesiapan konten
                   </h3>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
                 <div className="text-right">
-                  <span className="font-montserrat text-lg font-bold text-foreground">
+                  <span className="font-manrope text-lg font-bold text-foreground">
                     {readinessPercent}%
                   </span>
-                  <span className="block text-[10px] text-muted-foreground">
+                  <span className="block text-xs text-muted-foreground">
                     {readyCount} dari {readinessItems.length} modul siap
                   </span>
                 </div>
-                <div className="h-3 w-28 overflow-hidden rounded-full bg-muted">
-                  <div
-                    className={`h-full transition-all duration-500 ${
-                      readinessPercent === 100
-                        ? "bg-emerald-500"
-                        : readinessPercent >= 50
-                          ? "bg-fb"
-                          : "bg-amber-500"
-                    }`}
-                    style={{ width: `${readinessPercent}%` }}
-                  />
-                </div>
+                <progress value={readyCount} max={readinessItems.length} aria-label="Kesiapan konten" className="h-2 w-28 overflow-hidden rounded-md bg-muted accent-brand [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:bg-brand [&::-moz-progress-bar]:bg-brand" />
               </div>
             </div>
 
             <div className="rounded-lg border border-border bg-muted/40 px-4 py-3">
               <p className="text-xs text-muted-foreground">Periode kepengurusan terkait</p>
-              <p className="mt-1 font-montserrat text-sm font-semibold text-foreground">
+              <p className="mt-1 font-manrope text-sm font-semibold text-foreground">
                 {editionDetailRow?.organizationPeriodLabel
                   ? `${editionDetailRow.organizationPeriodLabel} (${editionDetailRow.organizationPeriodStartYear}-${editionDetailRow.organizationPeriodEndYear})`
                   : "Belum terhubung"}
@@ -454,30 +442,30 @@ export default async function AdminDashboard() {
                   href={item.href}
                   className={`group flex flex-col justify-between rounded-lg border p-3.5 transition-colors ${
                     item.ready
-                      ? "border-emerald-500/30 bg-emerald-50/20 hover:border-emerald-500/60"
-                      : "border-amber-500/30 bg-amber-50/15 hover:border-amber-500/60"
+                      ? "border-brand-200 bg-brand-50/30 hover:border-brand-300"
+                      : "border-highlight-200 bg-highlight-50/30 hover:border-highlight-300"
                   }`}
                 >
                   <div>
                     <div className="flex items-center justify-between">
-                      <span className="font-montserrat text-xs font-semibold text-foreground">
+                      <span className="font-manrope text-xs font-semibold text-foreground">
                         {item.label}
                       </span>
                       {item.ready ? (
-                        <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
+                        <CheckCircle2 size={15} className="text-brand shrink-0" />
                       ) : (
-                        <XCircle size={15} className="text-amber-600 shrink-0" />
+                        <XCircle size={15} className="text-highlight-700 shrink-0" />
                       )}
                     </div>
-                    <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed">
+                    <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
                       {item.description}
                     </p>
                   </div>
 
-                  <div className="mt-3 flex items-center justify-between border-t border-border/40 pt-2 text-[11px]">
+                  <div className="mt-3 flex items-center justify-between border-t border-border/40 pt-2 text-xs">
                     <span
                       className={`font-medium ${
-                        item.ready ? "text-emerald-700" : "text-amber-700 font-semibold"
+                        item.ready ? "text-brand-700" : "text-highlight-700 font-semibold"
                       }`}
                     >
                       {item.detail}
@@ -500,22 +488,22 @@ export default async function AdminDashboard() {
           <AdminCardHeader
             title="Pintasan modul"
           />
-          <div className="grid border-t border-dgb-100 sm:grid-cols-2">
+          <div className="grid border-t border-brand-100 sm:grid-cols-2">
             {quickActions
               .filter((item) => permissions.has(item.permission))
               .map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="group flex gap-3 border-b border-dgb-100 p-4 transition-colors hover:bg-dgb-50/40 sm:odd:border-r"
+                  className="group flex gap-3 border-b border-brand-100 p-4 transition-colors hover:bg-brand-50/40 sm:odd:border-r"
                 >
-                  <span className="grid size-10 shrink-0 place-items-center border border-dgb-100 text-dgb">
+                  <span className="grid size-10 shrink-0 place-items-center border border-brand-100 text-brand">
                     <AdminIcon name={item.icon} size={17} />
                   </span>
                   <span className="min-w-0">
-                    <span className="flex items-center gap-2 font-montserrat text-sm font-semibold text-dgb-900">
+                    <span className="flex items-center gap-2 font-manrope text-sm font-semibold text-brand-900">
                       {item.label}
-                      <ArrowRight className="size-3.5 text-fb-600 transition-transform group-hover:translate-x-0.5" />
+                      <ArrowRight className="size-3.5 text-highlight-600 transition-transform group-hover:translate-x-0.5" />
                     </span>
                     <span className="mt-1 block text-xs leading-5 text-muted-foreground">
                       {item.description}
@@ -535,14 +523,14 @@ export default async function AdminDashboard() {
               permissions.has("audit.view") ? (
                 <Link
                   href="/admin/audit"
-                  className="text-xs font-semibold text-dgb hover:text-dgb-600"
+                  className="text-xs font-semibold text-brand hover:text-brand-600"
                 >
-                  Lihat Semua Audit
+                  Lihat semua
                 </Link>
               ) : null
             }
           />
-          <div className="space-y-2 border-t border-dgb-100 pt-3">
+          <div className="space-y-2 border-t border-brand-100 pt-3">
             {recentLogs.length ? (
               recentLogs.map((log) => (
                 <AdminListRow
@@ -550,7 +538,7 @@ export default async function AdminDashboard() {
                   title={log.resourceLabel ?? log.resourceType}
                   meta={`${log.action} · ${log.actorLabel}`}
                   action={
-                    <time className="text-xs text-muted-foreground font-mono">
+                    <time className="text-xs text-muted-foreground font-inter">
                       {log.createdAt.toLocaleString("id-ID", {
                         timeZone: "Asia/Jakarta",
                         dateStyle: "medium",
@@ -561,7 +549,7 @@ export default async function AdminDashboard() {
                 />
               ))
             ) : (
-              <p className="border-y border-dashed border-dgb-200 bg-dgb-50/30 px-5 py-9 text-center text-sm text-muted-foreground">
+              <p className="border-y border-dashed border-brand-200 bg-brand-50/30 px-5 py-9 text-center text-sm text-muted-foreground">
                 Belum ada aktivitas yang tercatat.
               </p>
             )}

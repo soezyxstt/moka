@@ -10,6 +10,7 @@ import { notFound } from 'next/navigation';
 
 // Make sure your FinalisCard component is also properly typed for TSX
 interface FinalisCardProps {
+  signature: string;
   src?: string;
   name: string;
   no: string;
@@ -40,23 +41,24 @@ export default async function ProfilFinalisPage({ params }: Readonly<{ params: P
   return (
     <main className="min-h-screen overflow-hidden relative">
       <BG />
-      <div className='w-full h-[100lvh] fixed pointer-events-none z-0 bg-radial-[at_50%_50%] from-transparent to-90% to-dgb-800 backdrop-blur-sm' />
+      <div className='w-full h-[100lvh] fixed pointer-events-none z-0 bg-radial-[at_50%_50%] from-transparent to-90% to-brand-800 backdrop-blur-sm' />
       <HeroVideo
         fallbackImageSrc={cmsCategory.posterUrl}
         videoWebMSrc={cmsCategory.videoMimeType === 'video/webm' ? cmsCategory.videoUrl : null}
         videoMp4Src={cmsCategory.videoMimeType === 'video/mp4' ? cmsCategory.videoUrl : null}
       >
         <HeroTextWrapper>
-          <h1 className='text-4xl font-semibold font-montserrat capitalize max-w-xl text-3xl md:text-5xl'>Profil Finalis {cmsCategory.name} {cmsCategory.editionYear}</h1>
+          <h1 className='font-semibold font-manrope capitalize max-w-xl text-3xl md:text-5xl'>Profil Finalis {cmsCategory.name} {cmsCategory.editionYear}</h1>
         </HeroTextWrapper>
       </HeroVideo>
 
       <section className="md:px-20 md:py-20 relative px-8 py-8">
-        <typography.h1 className='text-center md:mb-12 mb-8 text-white text-3xl md:text-5xl'>Pasanggiri Mojang Jajaka {cmsCategory.editionYear} Mempersembahkan</typography.h1>
+        {cmsCategory.slogan ? <typography.h1 className='text-center md:mb-12 mb-8 text-canvas text-3xl md:text-5xl'>{cmsCategory.slogan}</typography.h1> : null}
         <div className="grid md:gap-6 gap-3 grid-cols-1 md:grid-cols-3">
           {cmsCategory.participants.length
             ? cmsCategory.participants.map((participant) => (
               <FinalisCard
+                signature={cmsCategory.signature}
                 key={participant.id}
                 name={participant.name}
                 catt={cmsCategory.code}
@@ -65,23 +67,23 @@ export default async function ProfilFinalisPage({ params }: Readonly<{ params: P
                 src={participant.imageUrl ?? undefined}
               />
             ))
-            : <p className="col-span-full rounded-xl border border-white/20 bg-white/10 px-6 py-12 text-center font-inter text-white/80">Belum ada finalis untuk edisi {cmsCategory.editionYear}.</p>}
+            : <p className="col-span-full rounded-xl border border-canvas/20 bg-canvas/10 px-6 py-12 text-center font-inter text-canvas/80">Belum ada finalis untuk edisi {cmsCategory.editionYear}.</p>}
         </div>
       </section>
     </main>
   );
 }
 
-function FinalisCard({ src, name, catt, no, href }: FinalisCardProps) { // Use the defined interface
+function FinalisCard({ src, name, catt, no, href, signature }: FinalisCardProps) {
   return (
     <Link href={href} className="aspect-[3/3] relative rounded-md overflow-hidden group">
       {src
         ? <Image src={src} alt={name} className='object-cover w-full h-full object-center transition-all group-hover:scale-102 duration-500' width={300} height={400} sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw" />
-        : <div role="img" aria-label={`Foto ${name} belum tersedia`} className="flex h-full w-full items-center justify-center bg-linear-to-br from-dgb-700 to-dgb-900 text-white">
-          <span aria-hidden="true" className="font-montserrat text-5xl font-semibold">{name.split(' ').map((part) => part[0]).slice(0, 2).join('')}</span>
+        : <div role="img" aria-label={`Foto ${name} belum tersedia`} className="flex h-full w-full items-center justify-center bg-linear-to-br from-brand-700 to-brand-900 text-canvas">
+          <span aria-hidden="true" className="font-manrope text-5xl font-semibold">{name.split(' ').map((part) => part[0]).slice(0, 2).join('')}</span>
         </div>}
-      <div className="absolute bottom-0 w-full text-white transition-all duration-500 group-hover:opacity-0">
-        <div className="leading-tight p-6 bg-gradient-to-t from-black/90 to-transparent z-0">
+      <div className="absolute bottom-0 w-full text-canvas transition-all duration-500 group-hover:opacity-0">
+        <div className="leading-tight p-6 bg-gradient-to-t from-ink/90 to-transparent z-0">
           <div className="flex justify-between font-bold text-2xl">
             <p className="">{catt}</p>
             <p className="">{name.split(" ")[0]}</p>
@@ -91,11 +93,7 @@ function FinalisCard({ src, name, catt, no, href }: FinalisCardProps) { // Use t
             <p className="">{name.split(" ")[1]}</p>
           </div>
         </div>
-        <div className="h-6 w-full bg-gradient-to-r from-fb to-fb via-fb-200 px-4 text-[10px] flex items-center gap-10 justify-center text-black z-10">
-          <p className="">mokagarut</p>
-          <p className="">#nyundaturnyakola</p>
-          <p className="">#kayakarya</p>
-        </div>
+        {signature ? <div className="min-h-6 w-full bg-gradient-to-r from-highlight to-highlight via-highlight-200 px-4 py-1 text-center text-[10px] leading-4 text-ink"><p>{signature}</p></div> : null}
       </div>
     </Link>
   );

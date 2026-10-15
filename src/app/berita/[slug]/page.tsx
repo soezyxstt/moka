@@ -31,7 +31,7 @@ export default async function NewsArticlePage({ params }: NewsPageProps) {
   return (
     <main className="min-h-screen bg-background px-6 pb-16 pt-28 md:px-10 md:pt-36">
       <article className="mx-auto max-w-3xl">
-        <Link href="/" className="mb-6 inline-flex text-sm font-medium text-dgb hover:underline">
+        <Link href="/" className="mb-6 inline-flex text-sm font-medium text-brand hover:underline">
           Kembali ke beranda
         </Link>
         <time
@@ -45,11 +45,11 @@ export default async function NewsArticlePage({ params }: NewsPageProps) {
             timeZone: 'Asia/Jakarta',
           })}
         </time>
-        <h1 className="mt-2 font-montserrat text-3xl font-semibold text-dgb-900 md:text-5xl">
+        <h1 className="mt-2 font-manrope text-3xl font-semibold text-brand-900 md:text-5xl">
           {article.title}
         </h1>
         {article.excerpt ? (
-          <p className="mt-4 font-inter text-lg leading-relaxed text-[#505050]">
+          <p className="mt-4 font-inter text-lg leading-relaxed text-body">
             {article.excerpt}
           </p>
         ) : null}

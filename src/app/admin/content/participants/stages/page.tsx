@@ -23,7 +23,6 @@ export default async function SelectionStagesPage() {
   if (!currentEdition) {
     return (
       <AdminPage
-        eyebrow="Peserta"
         title="Tahap seleksi"
       >
         <AdminCard padding="none">
@@ -114,7 +113,6 @@ export default async function SelectionStagesPage() {
 
   return (
     <AdminPage
-      eyebrow="Peserta"
       title="Tahap seleksi"
       action={
         <AdminLinkButton href="/admin/content/participants" variant="secondary">

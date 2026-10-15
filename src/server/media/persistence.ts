@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { appendAuditLog } from "@/server/auth/audit";
 import type { Database } from "@/server/db/queries";
 import { mediaAssets } from "@/server/db/schema";
+import { validateUploadedSvg } from "./static-svg";
 
 export type PersistUploadedMediaAssetInput = {
   provider: "uploadthing";
@@ -31,6 +32,7 @@ export async function persistUploadedMediaAsset(
   db: Database,
   input: PersistUploadedMediaAssetInput,
 ): Promise<PersistedMediaAssetIdentity> {
+  if (input.mimeType === "image/svg+xml") await validateUploadedSvg(input.url);
   return db.transaction(async (tx) => {
     const [existing] = await tx
       .select({ id: mediaAssets.id, provider: mediaAssets.provider, providerKey: mediaAssets.providerKey, url: mediaAssets.url })

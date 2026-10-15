@@ -70,10 +70,10 @@ function StatusTag({ ready, label }: { ready: boolean; label?: string }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-semibold",
+        "inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-semibold",
         ready
-          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-          : "border-amber-200 bg-amber-50 text-amber-800",
+          ? "border-success-200 bg-success-50 text-success-700"
+          : "border-warning-200 bg-warning-50 text-warning-800",
       )}
     >
       {ready ? <CheckCircle2 className="size-3.5" /> : <CircleAlert className="size-3.5" />}
@@ -91,6 +91,7 @@ export function EditionSettingsClient({
   const [isPending, startTransition] = useTransition();
 
   const [slogan, setSlogan] = useState(edition.slogan ?? "");
+  const [editionName, setEditionName] = useState(edition.name);
   const [logoAsset, setLogoAsset] = useState<MediaAssetSummary | null>(initialLogoAsset);
   const [programs, setPrograms] = useState<EditionProgramRow[]>(initialPrograms);
   const [editingProgram, setEditingProgram] = useState<EditionProgramRow | null>(null);
@@ -105,6 +106,8 @@ export function EditionSettingsClient({
     if (!canManageContent) return;
 
     const formData = new FormData();
+    formData.set("editionId", edition.id);
+    formData.set("name", editionName.trim());
     formData.set("logoMediaId", logoAsset?.id ?? "");
     formData.set("slogan", slogan.trim());
     formData.set("version", String(edition.version));
@@ -239,9 +242,10 @@ export function EditionSettingsClient({
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.75fr)]">
         <AdminCard padding="none" className="overflow-hidden">
           <div className="border-b border-border/70 px-5 py-4 sm:px-6">
-            <AdminCardHeader eyebrow="Identitas edisi" title="Logo dan slogan" />
+            <AdminCardHeader title="Logo dan slogan" />
           </div>
           <form onSubmit={handleIdentitySubmit} className="space-y-5 p-5 sm:p-6">
+              <AdminField label="Nama edisi"><AdminInput value={editionName} onChange={(event) => setEditionName(event.target.value)} maxLength={200} required disabled={!canManageContent || isPending} /></AdminField>
               <AdminMediaField
                 name="logoMediaId"
                 label="Logo resmi"
@@ -275,13 +279,13 @@ export function EditionSettingsClient({
 
         <AdminCard padding="none" className="overflow-hidden">
           <div className="border-b border-border/70 px-5 py-4 sm:px-6">
-            <AdminCardHeader eyebrow="Pemeriksaan" title="Kelengkapan identitas" />
+            <AdminCardHeader title="Kelengkapan identitas" />
           </div>
           <div className="space-y-4 p-5 sm:p-6">
             <div className="flex items-end justify-between gap-4">
               <div>
                 <p className="text-xs text-muted-foreground">Siap digunakan</p>
-                <p className="mt-1 font-montserrat text-3xl font-semibold tracking-[-0.04em] text-dgb-900">
+                <p className="mt-1 font-manrope text-3xl font-semibold tracking-[-0.04em] text-brand-900">
                   {completedItems}/{completionItems.length}
                 </p>
               </div>
@@ -292,15 +296,15 @@ export function EditionSettingsClient({
               {completionItems.map((item) => (
                 <div key={item.label} className="flex items-center justify-between gap-3 rounded-lg border border-border/70 bg-muted/20 px-3 py-2.5">
                   <div className="flex min-w-0 items-center gap-2">
-                    {item.ready ? <CheckCircle2 className="size-4 shrink-0 text-dgb" /> : <CircleAlert className="size-4 shrink-0 text-fb-600" />}
+                    {item.ready ? <CheckCircle2 className="size-4 shrink-0 text-brand" /> : <CircleAlert className="size-4 shrink-0 text-highlight-600" />}
                     <span className="truncate text-xs font-semibold text-foreground">{item.label}</span>
                   </div>
-                  <span className="shrink-0 text-[11px] text-muted-foreground">{item.detail}</span>
+                  <span className="shrink-0 text-xs text-muted-foreground">{item.detail}</span>
                 </div>
               ))}
             </div>
 
-            <p className="border-l-2 border-fb bg-fb-50/50 px-3 py-2.5 text-xs leading-5 text-foreground">
+            <p className="border-l-2 border-highlight bg-highlight-50/50 px-3 py-2.5 text-xs leading-5 text-foreground">
               {isComplete
                 ? "Identitas sudah lengkap untuk ditinjau."
                 : "Lengkapi bagian yang belum siap sebelum ditinjau."}
@@ -312,7 +316,6 @@ export function EditionSettingsClient({
       <AdminCard padding="none" className="overflow-hidden">
         <div className="border-b border-border/70 px-5 py-4 sm:px-6">
           <AdminCardHeader
-            eyebrow="Program edisi"
             title="Program unggulan"
             action={
               canManageContent ? (
@@ -338,12 +341,12 @@ export function EditionSettingsClient({
             {programs.map((program, index) => (
               <li key={program.id} className="grid gap-4 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-6">
                 <div className="flex min-w-0 items-start gap-3">
-                  <span className="grid size-8 shrink-0 place-items-center rounded-md border border-dgb-100 bg-dgb-50 text-xs font-bold text-dgb-800">
+                  <span className="grid size-8 shrink-0 place-items-center rounded-md border border-brand-100 bg-brand-50 text-xs font-bold text-brand-800">
                     {index + 1}
                   </span>
                   <div className="min-w-0 space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="font-montserrat text-sm font-semibold text-dgb-900">{program.title}</h3>
+                      <h3 className="font-manrope text-sm font-semibold text-brand-900">{program.title}</h3>
                       <StatusTag ready={program.active} label={program.active ? "Aktif" : "Tidak aktif"} />
                     </div>
                     {program.description ? <p className="line-clamp-2 text-xs leading-5 text-muted-foreground">{program.description}</p> : null}
@@ -384,7 +387,7 @@ export function EditionSettingsClient({
                       onClick={() => openEditProgramDialog(program)}
                       aria-label={`Edit ${program.title}`}
                       title="Edit program"
-                      className="size-8 border-dgb-200 text-dgb hover:bg-dgb-50"
+                      className="size-8 border-brand-200 text-brand hover:bg-brand-50"
                     >
                       <Pencil className="size-3.5" />
                     </Button>
@@ -396,7 +399,7 @@ export function EditionSettingsClient({
                       onClick={() => setDeletingProgram(program)}
                       aria-label={`Hapus ${program.title}`}
                       title="Hapus program"
-                      className="size-8 border-rose-200 text-destructive hover:bg-rose-50"
+                      className="size-8 border-danger-200 text-destructive hover:bg-danger-50"
                     >
                       <Trash2 className="size-3.5" />
                     </Button>
@@ -411,7 +414,7 @@ export function EditionSettingsClient({
       <Dialog open={isProgramDialogOpen} onOpenChange={setIsProgramDialogOpen}>
         <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle className="font-montserrat text-lg font-semibold text-dgb-900">
+            <DialogTitle className="font-manrope text-lg font-semibold text-brand-900">
               {editingProgram ? "Edit program unggulan" : "Tambah program unggulan"}
             </DialogTitle>
             <DialogDescription className="text-xs">Isi judul, ringkasan, dan status program.</DialogDescription>
@@ -465,7 +468,7 @@ export function EditionSettingsClient({
               <Button
                 type="submit"
                 disabled={isPending || !programTitle.trim()}
-                className="bg-dgb text-white hover:bg-dgb-600"
+                className="bg-brand text-canvas hover:bg-brand-600"
               >
                 {isPending ? "Menyimpan..." : "Simpan program"}
               </Button>
@@ -480,7 +483,7 @@ export function EditionSettingsClient({
       >
         <AlertDialogContent className="max-w-[calc(100%-2rem)] sm:max-w-lg">
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-montserrat">
+            <AlertDialogTitle className="font-manrope">
               Hapus program unggulan?
             </AlertDialogTitle>
             <AlertDialogDescription>
@@ -489,7 +492,7 @@ export function EditionSettingsClient({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteProgram} disabled={isPending} className="bg-destructive text-white hover:bg-destructive/90">
+            <AlertDialogAction onClick={handleDeleteProgram} disabled={isPending} className="bg-destructive text-canvas hover:bg-destructive/90">
               Hapus program
             </AlertDialogAction>
           </AlertDialogFooter>

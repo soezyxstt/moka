@@ -24,7 +24,6 @@ export default async function MediaPage() {
 
   return (
     <AdminPage
-      eyebrow="Pustaka"
       title="Pustaka media"
     >
       {canImport2025Media ? <Import2025MediaPanel /> : null}

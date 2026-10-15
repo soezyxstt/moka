@@ -55,6 +55,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   const staticRoutes = [
+    ...(navigation.registrationVisible ? [{ url: baseUrl + '/pendaftaran', changeFrequency: 'weekly' as const, priority: 0.9 }] : []),
     { url: baseUrl + '/', changeFrequency: 'monthly' as const, priority: 1.0 },
     { url: baseUrl + '/tentang', changeFrequency: 'monthly' as const, priority: 0.8 },
     { url: baseUrl + '/galeri', changeFrequency: galleries.length ? 'weekly' as const : 'monthly' as const, priority: 0.8 },

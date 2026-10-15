@@ -112,37 +112,40 @@ export function NewGalleryForm({
           >
             <ArrowLeft size={14} className="mr-1" /> Kembali ke daftar album
           </Link>
-          <span className="text-xs font-semibold text-fb">{editionName}</span>
+          <span className="text-xs font-semibold text-highlight-700">{editionName}</span>
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-medium">Judul Album Galeri *</label>
+          <label htmlFor="new-album-title" className="text-xs font-medium">Judul album *</label>
           <Input
+            id="new-album-title"
             value={title}
             onChange={(e) => handleTitleChange(e.target.value)}
-            placeholder="Contoh: Behind the Scenes Pasanggiri 2025"
+            placeholder={`Dokumentasi ${editionName}`}
             className="text-xs"
             required
           />
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-medium">Slug URL *</label>
+          <label htmlFor="new-album-slug" className="text-xs font-medium">Alamat album *</label>
           <Input
+            id="new-album-slug"
             value={slug}
             onChange={(e) => {
               setIsSlugCustomized(true);
               setSlug(slugify(e.target.value));
             }}
-            placeholder="behind-the-scenes-2025"
-            className="text-xs font-mono"
+            placeholder={`dokumentasi-${slugify(editionName)}`}
+            className="text-xs font-inter"
             required
           />
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-medium">Deskripsi Singkat Album</label>
+          <label htmlFor="new-album-description" className="text-xs font-medium">Deskripsi album</label>
           <Textarea
+            id="new-album-description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Kumpulan momen dokumentasi kegiatan..."
@@ -152,8 +155,9 @@ export function NewGalleryForm({
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-medium">Tipe Album</label>
+            <label htmlFor="new-album-type" className="text-xs font-medium">Tipe album</label>
             <AdminSelect
+              id="new-album-type"
               aria-label="Tipe album"
               value={ownerType}
               onValueChange={(value) => setOwnerType(value as "standalone" | "event")}
@@ -167,8 +171,9 @@ export function NewGalleryForm({
 
           {ownerType === "event" && (
             <div className="space-y-1.5">
-              <label className="text-xs font-medium">Pilih Acara *</label>
+              <label htmlFor="new-album-event" className="text-xs font-medium">Acara *</label>
               <AdminSelect
+                id="new-album-event"
                 aria-label="Pilih acara"
                 value={ownerId}
                 onValueChange={setOwnerId}
@@ -181,8 +186,9 @@ export function NewGalleryForm({
 
           {ownerType === "standalone" && (
             <div className="space-y-1.5">
-              <label className="text-xs font-medium">Status Publikasi</label>
+              <label htmlFor="new-album-status" className="text-xs font-medium">Status publikasi</label>
               <AdminSelect
+                id="new-album-status"
                 aria-label="Status publikasi album"
                 value={status}
                 onValueChange={(value) => setStatus(value as "published" | "draft")}
@@ -199,7 +205,7 @@ export function NewGalleryForm({
         <div className="space-y-1.5 pt-2">
           <AdminMediaField
             name="coverMediaId"
-            label="Foto Sampul / Cover Album"
+            label="Foto sampul"
             value={coverMediaId}
             initialAsset={coverAsset}
             onChange={(asset) => {
@@ -213,15 +219,15 @@ export function NewGalleryForm({
         </div>
 
         <div className="flex items-center justify-end gap-2 pt-4 border-t border-border">
-          <Link href="/admin/content/galleries">
-            <Button type="button" variant="outline" className="text-xs">
+          <Button asChild variant="outline" className="text-xs">
+            <Link href="/admin/content/galleries">
               Batal
-            </Button>
-          </Link>
+            </Link>
+          </Button>
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="bg-dgb hover:bg-dgb/90 text-white text-xs"
+            className="bg-brand hover:bg-brand/90 text-canvas text-xs"
           >
             <Save size={14} className="mr-1.5" />
             {isSubmitting ? "Menyimpan..." : "Buat album"}

@@ -50,19 +50,19 @@ export const NewsCard: React.FC<NewsCardProps> = ({ news }) => {
 
         {/* MODIFIED SECTION: Date is now inside the Badge */}
         <div className="mb-2"> {/* Wrapper for the badge, provides bottom margin */}
-          <Badge className={cn("text-[10px] text-black whitespace-nowrap", color)}> {/* Date is inside the badge. text-xs for better fit. */}
+          <Badge className={cn("text-[10px] text-ink whitespace-nowrap", color)}>
             {badgeText}
           </Badge>
         </div>
         {/* END OF MODIFIED SECTION */}
 
         {/* Styles for title, description, and link are PRESERVED */}
-        <h3 className="font-montserrat font-medium mb-3 text-gray-800 line-clamp-2">
-          <Link href={link} className="hover:text-dgb dark:hover:text-dgb transition-colors duration-200" target='_blank' rel="noopener noreferrer">
+        <h3 className="font-manrope font-medium mb-3 text-neutral-800 line-clamp-2">
+          <Link href={link} className="hover:text-brand transition-colors duration-200" target='_blank' rel="noopener noreferrer">
             {title}
           </Link>
         </h3>
-        <p className="text-xs text-[#505050] font-montserrat dark:text-neutral-400 mb-4 line-clamp-4 flex-grow">
+        <p className="text-sm leading-6 text-body font-inter dark:text-neutral-400 mb-4 line-clamp-4 flex-grow">
           {description}
         </p>
         <div className="mt-auto pt-2">
@@ -70,14 +70,14 @@ export const NewsCard: React.FC<NewsCardProps> = ({ news }) => {
             href={link}
             target='_blank'
             rel="noopener noreferrer"
-            className="text-sm font-medium text-dgb hover:underline focus:outline-none rounded-sm flex items-center gap-1"
+            className="text-sm font-medium text-brand hover:underline focus:outline-none rounded-sm flex items-center gap-1"
           >
             Selengkapnya <ArrowRight className='w-4 -rotate-45' />
           </Link>)
             :
             (<AlertDialog>
               <AlertDialogTrigger
-                className="text-sm font-medium text-dgb hover:underline focus:outline-none rounded-sm flex items-center gap-1"
+                className="text-sm font-medium text-brand hover:underline focus:outline-none rounded-sm flex items-center gap-1"
               >
                 Selengkapnya <ArrowRight className='w-4 -rotate-45' />
               </AlertDialogTrigger>
@@ -90,7 +90,7 @@ export const NewsCard: React.FC<NewsCardProps> = ({ news }) => {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Batal</AlertDialogCancel>
-                  <AlertDialogAction asChild className='bg-dgb'>
+                  <AlertDialogAction asChild className='bg-primary text-primary-foreground'>
                     <Link href={link} download>Lanjut</Link>
                   </AlertDialogAction>
                 </AlertDialogFooter>
@@ -105,12 +105,12 @@ export const NewsCard: React.FC<NewsCardProps> = ({ news }) => {
 // src/utils/badgeUtils.ts (or at the top of your NewsCard.tsx)
 export const getBadgeInfo = (newsDate: Date): {
   badgeText: string; // This will be the formatted date
-  color: 'bg-transparent px-0' | 'bg-[#adfa1d]' | 'bg-[#444] text-[#eee]' | 'border border-dgb bg-transparent'; // Standard Shadcn/ui badge variants
+  color: 'bg-transparent px-0 text-muted-foreground' | 'bg-highlight text-ink' | 'bg-muted text-muted-foreground' | 'border border-brand bg-transparent text-brand';
 } => {
   if (!newsDate || !(newsDate instanceof Date) || isNaN(newsDate.getTime())) {
     return {
       badgeText: '-',
-      color: 'bg-transparent px-0', // Default to transparent if date is invalid
+      color: 'bg-transparent px-0 text-muted-foreground',
     }
   }
   const today = new Date();
@@ -125,18 +125,18 @@ export const getBadgeInfo = (newsDate: Date): {
   // diffDays < 0 means itemDate is in the future
   const diffDays = Math.floor((currentDate.getTime() - itemDate.getTime()) / (1000 * 60 * 60 * 24));
 
-  let color: 'bg-transparent px-0' | 'bg-[#adfa1d]' | 'bg-[#444] text-[#eee]' | 'border border-dgb bg-transparent';
+  let color: 'bg-transparent px-0 text-muted-foreground' | 'bg-highlight text-ink' | 'bg-muted text-muted-foreground' | 'border border-brand bg-transparent text-brand';
 
   if (diffDays < 0) { // Future news
-    color = 'border border-dgb bg-transparent'; // Prominent (e.g., primary color)
+    color = 'border border-brand bg-transparent text-brand';
   } else if (diffDays === 0) { // Today's news
-    color = 'bg-[#adfa1d]'; // Prominent
+    color = 'bg-highlight text-ink';
   } else if (diffDays <= 30) { // News within the last 7 days (1-7 days ago)
-    color = 'bg-[#adfa1d]'; // Still prominent
+    color = 'bg-highlight text-ink';
   } else if (diffDays <= 180) { // News between 8 and 30 days ago
-    color = 'bg-[#444] text-[#eee]'; // Less prominent (e.g., gray or secondary color)
+    color = 'bg-muted text-muted-foreground';
   } else { // Older news (more than 30 days ago)
-    color = 'bg-transparent px-0'; // Muted (e.g., just a border)
+    color = 'bg-transparent px-0 text-muted-foreground';
   }
 
   // Format date as "DD MONTH_ALLCAPS, YYYY" (e.g., "10 MAY, 2025")

@@ -1,6 +1,9 @@
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { connection } from 'next/server';
 import { cache } from 'react';
+import { getPreviewEditionId } from '@/server/cms/preview';
+import { getPublicSiteIdentity } from '@/server/cms/public-readers';
+import { getPublicParticipantStage } from '@/server/cms/participant-stage';
 
 import { database } from '@/server/db/client';
 import {
@@ -12,7 +15,6 @@ import {
   participantStageEntries,
   participants,
   parseCategory,
-  selectionStages,
   siteAssetBindings,
   type Category,
 } from '@/server/db/schema';
@@ -38,10 +40,12 @@ export type PublicEditionParticipant = {
 };
 
 export type PublicParticipantCategory = {
+  signature: string;
   name: string;
   slug: string;
   code: Category;
   editionYear: number;
+  slogan: string | null;
   posterUrl: string | null;
   videoUrl: string | null;
   videoMimeType: string | null;
@@ -57,10 +61,11 @@ export const getPublicParticipantCategory = cache(async (
   kind: PublicParticipantKind,
 ): Promise<PublicParticipantCategory | null> => {
   await connection();
+  const previewEditionId = await getPreviewEditionId();
   const [resolvedEdition] = await database
-    .select({ id: editions.id, year: editions.year })
+    .select({ id: editions.id, year: editions.year, slogan: editions.slogan })
     .from(editions)
-    .where(eq(editions.lifecycle, 'active'))
+    .where(previewEditionId ? eq(editions.id, previewEditionId) : eq(editions.lifecycle, 'active'))
     .orderBy(desc(editions.year))
     .limit(1);
   if (!resolvedEdition) return null;
@@ -91,26 +96,20 @@ export const getPublicParticipantCategory = cache(async (
   const poster = categoryAssets.find((asset) => asset.slotKey === posterSlot && asset.mimeType.startsWith('image/'));
   const video = categoryAssets.find((asset) => asset.slotKey === videoSlot && ['video/mp4', 'video/webm'].includes(asset.mimeType));
   const publicCategory: PublicParticipantCategory = {
+    signature: (await getPublicSiteIdentity()).signature,
     name: category.label,
     slug: category.slug,
     code: categoryCode,
     editionYear: resolvedEdition.year,
+    slogan: resolvedEdition.slogan?.trim() || null,
     posterUrl: toRemoteUrl(poster?.url),
     videoUrl: toRemoteUrl(video?.url),
     videoMimeType: video?.mimeType ?? null,
     participants: [],
   };
 
-  const stages = await database
-    .select({ id: selectionStages.id, finalStage: selectionStages.finalStage, lifecycle: selectionStages.lifecycle })
-    .from(selectionStages)
-    .where(eq(selectionStages.editionId, resolvedEdition.id))
-    .orderBy(asc(selectionStages.displayOrder), asc(selectionStages.id));
-  const finalIndex = stages.findIndex((stage) => stage.finalStage);
-  const targetStage = kind === 'finalis'
-    ? stages[finalIndex]
-    : finalIndex > 0 ? stages[finalIndex - 1] : undefined;
-  if (!targetStage || targetStage.lifecycle === 'draft') return publicCategory;
+  const targetStage = await getPublicParticipantStage(database, resolvedEdition.id, kind);
+  if (!targetStage) return publicCategory;
 
   const rows = await database
     .select({

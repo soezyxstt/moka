@@ -449,24 +449,24 @@ export function OrganizationWorkspace({
     <div className="space-y-6">
       {/* Navigation Tabs */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-2">
-        <div className="flex max-w-full items-center gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Bagian kepengurusan">
+        <div className="flex max-w-full items-center gap-2 overflow-x-auto pb-1" role="group" aria-label="Bagian kepengurusan">
           <Button
             type="button"
             variant="ghost"
             size="default"
-            role="tab"
-            aria-selected={activeTab === "periods"}
+
+            aria-pressed={activeTab === "periods"}
             onClick={() => setActiveTab("periods")}
             className={cn(
               "flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold transition-colors sm:px-4",
               activeTab === "periods"
-                ? "bg-dgb text-white shadow-xs"
-                : "text-muted-foreground hover:bg-dgb-50 hover:text-dgb-900"
+                ? "bg-brand text-canvas shadow-xs"
+                : "text-muted-foreground hover:bg-brand-50 hover:text-brand-900"
             )}
           >
             <Calendar size={16} />
             <span>Periode kepengurusan</span>
-            <span className={cn("ml-1 rounded-sm px-2 py-0.5 text-xs font-bold", activeTab === "periods" ? "bg-white/20 text-white" : "bg-muted text-foreground")}>
+            <span className={cn("ml-1 rounded-sm px-2 py-0.5 text-xs font-bold", activeTab === "periods" ? "bg-canvas/20 text-canvas" : "bg-muted text-foreground")}>
               {periods.length}
             </span>
           </Button>
@@ -475,19 +475,19 @@ export function OrganizationWorkspace({
             type="button"
             variant="ghost"
             size="default"
-            role="tab"
-            aria-selected={activeTab === "people"}
+
+            aria-pressed={activeTab === "people"}
             onClick={() => setActiveTab("people")}
             className={cn(
               "flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold transition-colors sm:px-4",
               activeTab === "people"
-                ? "bg-dgb text-white shadow-xs"
-                : "text-muted-foreground hover:bg-dgb-50 hover:text-dgb-900"
+                ? "bg-brand text-canvas shadow-xs"
+                : "text-muted-foreground hover:bg-brand-50 hover:text-brand-900"
             )}
           >
             <Users size={16} />
             <span>Direktori profil</span>
-            <span className={cn("ml-1 rounded-sm px-2 py-0.5 text-xs font-bold", activeTab === "people" ? "bg-white/20 text-white" : "bg-muted text-foreground")}>
+            <span className={cn("ml-1 rounded-sm px-2 py-0.5 text-xs font-bold", activeTab === "people" ? "bg-canvas/20 text-canvas" : "bg-muted text-foreground")}>
               {peopleList.length}
             </span>
           </Button>
@@ -496,20 +496,20 @@ export function OrganizationWorkspace({
             type="button"
             variant="ghost"
             size="default"
-            role="tab"
-            aria-selected={activeTab === "legacy"}
+
+            aria-pressed={activeTab === "legacy"}
             onClick={() => setActiveTab("legacy")}
             className={cn(
               "flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold transition-colors sm:px-4",
               activeTab === "legacy"
-                ? "bg-dgb text-white shadow-xs"
-                : "text-muted-foreground hover:bg-dgb-50 hover:text-dgb-900"
+                ? "bg-brand text-canvas shadow-xs"
+                : "text-muted-foreground hover:bg-brand-50 hover:text-brand-900"
             )}
           >
             <Layers size={16} />
             <span>Perlu dipetakan</span>
             {unmappedCount > 0 ? (
-              <span className={cn("ml-1 rounded-sm px-2 py-0.5 text-xs font-bold", activeTab === "legacy" ? "bg-fb text-white" : "bg-fb-100 text-fb-800")}>
+              <span className={cn("ml-1 rounded-sm px-2 py-0.5 text-xs font-bold", activeTab === "legacy" ? "bg-highlight text-ink" : "bg-highlight-100 text-highlight-800")}>
                 {unmappedCount}
               </span>
             ) : null}
@@ -563,10 +563,10 @@ export function OrganizationWorkspace({
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <AdminBadge value={p.lifecycle} />
-                          <h3 className="mt-2.5 font-montserrat text-lg font-bold text-dgb-900">
+                          <h3 className="mt-2.5 font-manrope text-lg font-bold text-brand-900">
                             {p.label}
                           </h3>
-                          <p className="text-xs font-semibold text-fb-700">
+                          <p className="text-xs font-semibold text-highlight-700">
                             Tahun {p.startYear} - {p.endYear}
                           </p>
                           {p.lifecycle === "archived" ? (
@@ -581,8 +581,8 @@ export function OrganizationWorkspace({
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => openEditPeriod(p)}
-                                className="size-7 rounded-md p-0 text-muted-foreground hover:bg-dgb-50 hover:text-dgb-900"
-                                title="Edit metadata periode"
+                                className="size-7 rounded-md p-0 text-muted-foreground hover:bg-brand-50 hover:text-brand-900"
+                                title="Ubah periode"
                               >
                                 <Edit2 size={14} />
                               </Button>
@@ -593,8 +593,8 @@ export function OrganizationWorkspace({
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => setDeletingPeriod(p)}
-                                className="size-7 rounded-md p-0 text-muted-foreground hover:bg-rose-50 hover:text-rose-700"
-                                title="Hapus periode draft"
+                                className="size-7 rounded-md p-0 text-muted-foreground hover:bg-danger-50 hover:text-danger-700"
+                                title="Hapus periode draf"
                               >
                                 <Trash2 size={14} />
                               </Button>
@@ -604,24 +604,24 @@ export function OrganizationWorkspace({
                       </div>
 
                       {p.vision ? (
-                        <div className="mt-3.5 rounded-lg bg-dgb-50/40 p-3 text-xs text-dgb-900">
-                          <p className="font-semibold text-dgb">Visi:</p>
+                        <div className="mt-3.5 rounded-lg bg-brand-50/40 p-3 text-xs text-brand-900">
+                          <p className="font-semibold text-brand">Visi:</p>
                           <p className="mt-1 line-clamp-2 text-muted-foreground">{p.vision}</p>
                         </div>
                       ) : null}
 
                       <div className="mt-4 grid grid-cols-3 gap-2 border-t border-border pt-3 text-center text-xs">
                         <div className="rounded-md bg-muted/40 p-2">
-                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Unit</p>
-                          <p className="font-montserrat text-sm font-bold text-dgb-900">{p.unitCount}</p>
+                          <p className="text-xs uppercase tracking-wider text-muted-foreground">Unit</p>
+                          <p className="font-manrope text-sm font-bold text-brand-900">{p.unitCount}</p>
                         </div>
                         <div className="rounded-md bg-muted/40 p-2">
-                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Pengurus</p>
-                          <p className="font-montserrat text-sm font-bold text-dgb-900">{p.memberCount}</p>
+                          <p className="text-xs uppercase tracking-wider text-muted-foreground">Pengurus</p>
+                          <p className="font-manrope text-sm font-bold text-brand-900">{p.memberCount}</p>
                         </div>
                         <div className="rounded-md bg-muted/40 p-2">
-                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Edisi</p>
-                          <p className="font-montserrat text-sm font-bold text-dgb-900">{p.connectedEditionsCount}</p>
+                          <p className="text-xs uppercase tracking-wider text-muted-foreground">Edisi</p>
+                          <p className="font-manrope text-sm font-bold text-brand-900">{p.connectedEditionsCount}</p>
                         </div>
                       </div>
                     </div>
@@ -629,7 +629,7 @@ export function OrganizationWorkspace({
                     <div className="mt-5 border-t border-border pt-3">
                       <Button
                         asChild
-                        className="h-auto w-full justify-between rounded-md bg-dgb px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-dgb-600"
+                        className="h-auto w-full justify-between rounded-md bg-brand px-3 py-2 text-xs font-semibold text-canvas transition-colors hover:bg-brand-600"
                       >
                         <Link href={`/admin/organization/periods/${p.id}`}>
                           <span>Kelola struktur unit dan pengurus</span>
@@ -684,7 +684,7 @@ export function OrganizationWorkspace({
                 >
                   <div>
                     <div className="flex items-start gap-3">
-                      <div className="relative size-14 shrink-0 overflow-hidden rounded-full border border-dgb-200 bg-muted">
+                      <div className="relative size-14 shrink-0 overflow-hidden rounded-full border border-brand-200 bg-muted">
                         {person.portraitAsset ? (
                           <Image
                             src={person.portraitAsset.url}
@@ -694,22 +694,22 @@ export function OrganizationWorkspace({
                             className="object-cover"
                           />
                         ) : (
-                          <div className="grid size-full place-items-center bg-dgb-50 text-dgb-700">
+                          <div className="grid size-full place-items-center bg-brand-50 text-brand-700">
                             <User size={24} />
                           </div>
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h4 className="truncate font-montserrat text-sm font-bold text-dgb-900" title={person.name}>
+                        <h4 className="truncate font-manrope text-sm font-bold text-brand-900" title={person.name}>
                           {person.name}
                         </h4>
-                        <p className="truncate text-[11px] text-muted-foreground font-mono">@{person.slug}</p>
+                        <p className="truncate text-xs text-muted-foreground font-inter">@{person.slug}</p>
                         {person.membershipCount > 0 ? (
-                          <span className="mt-1 inline-flex items-center gap-1 rounded-sm bg-dgb-50 px-1.5 py-0.5 text-[10px] font-semibold text-dgb-800">
+                          <span className="mt-1 inline-flex items-center gap-1 rounded-sm bg-brand-50 px-1.5 py-0.5 text-xs font-semibold text-brand-800">
                             <UserCheck size={11} /> {person.membershipCount} jabatan
                           </span>
                         ) : (
-                          <span className="mt-1 inline-block text-[10px] text-muted-foreground">
+                          <span className="mt-1 inline-block text-xs text-muted-foreground">
                             Belum bertugas
                           </span>
                         )}
@@ -730,7 +730,7 @@ export function OrganizationWorkspace({
                             href={s.url}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-1 rounded-md border border-border bg-muted/40 px-2 py-0.5 text-[10px] font-medium text-foreground transition-colors hover:border-dgb-300 hover:bg-dgb-50 hover:text-dgb-900"
+                            className="inline-flex items-center gap-1 rounded-md border border-border bg-muted/40 px-2 py-0.5 text-xs font-medium text-foreground transition-colors hover:border-brand-300 hover:bg-brand-50 hover:text-brand-900"
                           >
                             <Link2 size={10} />
                             <span>{s.label || s.platform}</span>
@@ -747,7 +747,7 @@ export function OrganizationWorkspace({
                         variant="outline"
                         size="sm"
                         onClick={() => openEditPerson(person)}
-                        className="h-7 px-2.5 text-xs border-dgb-200 text-dgb hover:bg-dgb-50"
+                        className="h-7 px-2.5 text-xs border-brand-200 text-brand hover:bg-brand-50"
                       >
                         <Edit2 size={12} className="mr-1" /> Edit
                       </Button>
@@ -756,7 +756,7 @@ export function OrganizationWorkspace({
                         variant="ghost"
                         size="sm"
                         onClick={() => setDeletingPerson(person)}
-                        className="h-7 px-2 text-xs text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                        className="h-7 px-2 text-xs text-danger-600 hover:bg-danger-50 hover:text-danger-700"
                       >
                         <Trash2 size={12} />
                       </Button>
@@ -774,7 +774,7 @@ export function OrganizationWorkspace({
       {/* ========================================================================= */}
       {activeTab === "legacy" && (
         <div className="space-y-4">
-          <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-4 text-xs text-amber-900">
+          <div className="rounded-lg border border-warning-200 bg-warning-50/60 p-4 text-xs text-warning-900">
             <p className="font-semibold">Pemetaan data lama</p>
             <p className="mt-1 leading-relaxed">
               Hubungkan penugasan lama ke periode dan unit tanpa menghapus riwayatnya.
@@ -808,17 +808,17 @@ export function OrganizationWorkspace({
                   <TableBody>
                     {legacyAssignments.map((legacy) => (
                       <TableRow key={legacy.id}>
-                        <TableCell className="font-semibold text-dgb-900">{legacy.personName}</TableCell>
+                        <TableCell className="font-semibold text-brand-900">{legacy.personName}</TableCell>
                         <TableCell className="font-medium text-foreground">{legacy.title}</TableCell>
                         <TableCell className="text-muted-foreground">{legacy.group}</TableCell>
                         <TableCell className="text-muted-foreground">{legacy.termLabel || "-"}</TableCell>
                         <TableCell>
                           {legacy.isMapped ? (
-                            <Badge variant="outline" className="gap-1 rounded-md border-emerald-200 bg-emerald-50 text-emerald-800">
+                            <Badge variant="outline" className="gap-1 rounded-md border-success-200 bg-success-50 text-success-800">
                               <UserCheck size={12} /> Sudah dipetakan
                             </Badge>
                           ) : (
-                            <Badge variant="outline" className="rounded-md border-amber-200 bg-amber-50 text-amber-800">
+                            <Badge variant="outline" className="rounded-md border-warning-200 bg-warning-50 text-warning-800">
                               Perlu dipetakan
                             </Badge>
                           )}
@@ -849,7 +849,7 @@ export function OrganizationWorkspace({
       <Sheet open={isPeriodSheetOpen} onOpenChange={setIsPeriodSheetOpen}>
         <SheetContent side="right" className={cn("w-full sm:max-w-lg overflow-y-auto", adminNativeScrollbarClassName)}>
           <SheetHeader className="border-b border-border pb-4">
-            <SheetTitle className="font-montserrat text-lg font-bold text-dgb-900">
+            <SheetTitle className="font-manrope text-lg font-bold text-brand-900">
               {editingPeriod ? "Edit Periode Kepengurusan" : "Buat Periode Baru"}
             </SheetTitle>
             <SheetDescription className="text-xs text-muted-foreground">
@@ -888,9 +888,9 @@ export function OrganizationWorkspace({
                 value={periodLifecycle}
                 onValueChange={(nextLifecycle) => setPeriodLifecycle(nextLifecycle as PeriodLifecycle)}
                 options={[
-                  { value: "draft", label: "Draft (Konseptual)" },
-                  { value: "active", label: "Active (Sedang Berjalan)" },
-                  { value: "archived", label: "Archived (Arsip / Demisioner)" },
+                  { value: "draft", label: "Draf" },
+                  { value: "active", label: "Aktif" },
+                  { value: "archived", label: "Arsip" },
                 ]}
               />
             </AdminField>
@@ -906,13 +906,13 @@ export function OrganizationWorkspace({
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-foreground">Daftar Misi Organisasi</span>
+                <span className="text-xs font-semibold text-foreground">Misi organisasi</span>
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
                   onClick={() => setPeriodMissions([...periodMissions, ""])}
-                  className="h-auto rounded-none px-0 py-0 text-xs font-semibold text-dgb hover:underline"
+                  className="h-auto rounded-none px-0 py-0 text-xs font-semibold text-brand hover:underline"
                 >
                   <Plus size={13} /> Tambah misi
                 </Button>
@@ -920,7 +920,7 @@ export function OrganizationWorkspace({
               <div className="space-y-2">
                 {periodMissions.map((m, idx) => (
                   <div key={idx} className="flex items-center gap-2">
-                    <span className="grid size-6 shrink-0 place-items-center rounded-full bg-dgb-50 text-[11px] font-bold text-dgb">
+                    <span className="grid size-6 shrink-0 place-items-center rounded-full bg-brand-50 text-xs font-bold text-brand">
                       {idx + 1}
                     </span>
                     <AdminInput
@@ -939,7 +939,7 @@ export function OrganizationWorkspace({
                         variant="ghost"
                         size="icon"
                         onClick={() => setPeriodMissions(periodMissions.filter((_, i) => i !== idx))}
-                        className="size-7 rounded-md p-0 text-muted-foreground hover:text-rose-600"
+                        className="size-7 rounded-md p-0 text-muted-foreground hover:text-danger-600"
                         title="Hapus poin misi"
                       >
                         <Trash2 size={14} />
@@ -974,8 +974,8 @@ export function OrganizationWorkspace({
       <Sheet open={isPersonSheetOpen} onOpenChange={setIsPersonSheetOpen}>
         <SheetContent side="right" className={cn("w-full sm:max-w-lg overflow-y-auto", adminNativeScrollbarClassName)}>
           <SheetHeader className="border-b border-border pb-4">
-            <SheetTitle className="font-montserrat text-lg font-bold text-dgb-900">
-              {editingPerson ? "Edit Profil Orang" : "Tambah Profil Baru"}
+            <SheetTitle className="font-manrope text-lg font-bold text-brand-900">
+              {editingPerson ? "Edit Profil orang" : "Tambah Profil Baru"}
             </SheetTitle>
             <SheetDescription className="text-xs text-muted-foreground">
               Profil yang tersimpan di sini dapat ditugaskan ke kepengurusan global dan kepanitiaan edisi.
@@ -1021,7 +1021,7 @@ export function OrganizationWorkspace({
 
             <div className="space-y-2.5">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-foreground">Tautan Sosial Media</span>
+                <span className="text-xs font-semibold text-foreground">Tautan media sosial</span>
                 <Button
                   type="button"
                   variant="ghost"
@@ -1032,14 +1032,14 @@ export function OrganizationWorkspace({
                       { platform: "instagram", label: "", url: "" },
                     ])
                   }
-                  className="h-auto rounded-none px-0 py-0 text-xs font-semibold text-dgb hover:underline"
+                  className="h-auto rounded-none px-0 py-0 text-xs font-semibold text-brand hover:underline"
                 >
                   <Plus size={13} /> Tambah sosmed
                 </Button>
               </div>
 
               {personSocials.length === 0 ? (
-                <p className="text-[11px] text-muted-foreground italic">Belum ada akun sosial media ditambahkan.</p>
+                <p className="text-xs text-muted-foreground italic">Belum ada akun sosial media ditambahkan.</p>
               ) : (
                 <div className="space-y-2">
                   {personSocials.map((s, idx) => (
@@ -1078,7 +1078,7 @@ export function OrganizationWorkspace({
                           variant="ghost"
                           size="icon"
                           onClick={() => setPersonSocials(personSocials.filter((_, i) => i !== idx))}
-                          className="size-7 rounded-md p-0 text-muted-foreground hover:text-rose-600"
+                          className="size-7 rounded-md p-0 text-muted-foreground hover:text-danger-600"
                         >
                           <Trash2 size={14} />
                         </Button>
@@ -1092,7 +1092,7 @@ export function OrganizationWorkspace({
                           updated[idx].url = e.target.value;
                           setPersonSocials(updated);
                         }}
-                        className="h-8 text-xs font-mono"
+                        className="h-8 text-xs font-inter"
                       />
                     </div>
                   ))}
@@ -1124,8 +1124,8 @@ export function OrganizationWorkspace({
       <Dialog open={Boolean(mappingAssignment)} onOpenChange={(open) => !open && setMappingAssignment(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-montserrat text-base font-bold text-dgb-900">
-              Petakan Jabatan ke Organisasi Modern
+            <DialogTitle className="font-manrope text-base font-bold text-brand-900">
+              Petakan jabatan
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
               Tentukan periode kepengurusan dan unit kerja tujuan untuk penugasan ini.
@@ -1156,7 +1156,7 @@ export function OrganizationWorkspace({
 
               <AdminField label="Unit kerja tujuan">
                 {availableUnitsForPeriod.length === 0 ? (
-                  <p className="text-xs text-rose-600">
+                  <p className="text-xs text-danger-600">
                     Periode ini belum memiliki unit kerja. Silakan buat unit di detail periode terlebih dahulu.
                   </p>
                 ) : (
@@ -1193,7 +1193,7 @@ export function OrganizationWorkspace({
               className="text-xs"
             >
               {isPending ? <Loader2 size={14} className="animate-spin mr-1" /> : null}
-              Konfirmasi Pemetaan
+              Konfirmasi pemetaan
             </AdminButton>
           </DialogFooter>
         </DialogContent>
@@ -1205,7 +1205,7 @@ export function OrganizationWorkspace({
       <AlertDialog open={Boolean(deletingPeriod)} onOpenChange={(open) => !open && setDeletingPeriod(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-montserrat text-base font-bold text-destructive">
+            <AlertDialogTitle className="font-manrope text-base font-bold text-destructive">
               Hapus Periode Kepengurusan?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-xs text-muted-foreground">
@@ -1216,7 +1216,7 @@ export function OrganizationWorkspace({
             <AlertDialogCancel className="text-xs">Batal</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeletePeriod}
-              className="bg-destructive text-xs text-white hover:bg-destructive/90"
+              className="bg-destructive text-xs text-canvas hover:bg-destructive/90"
             >
               Hapus periode
             </AlertDialogAction>
@@ -1230,8 +1230,8 @@ export function OrganizationWorkspace({
       <AlertDialog open={Boolean(deletingPerson)} onOpenChange={(open) => !open && setDeletingPerson(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-montserrat text-base font-bold text-destructive">
-              Hapus Profil Orang?
+            <AlertDialogTitle className="font-manrope text-base font-bold text-destructive">
+              Hapus Profil orang?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-xs text-muted-foreground">
               Tindakan ini akan menghapus profil <strong>{deletingPerson?.name}</strong> dari direktori serta seluruh penugasan jabatan pengurus terkait.
@@ -1241,7 +1241,7 @@ export function OrganizationWorkspace({
             <AlertDialogCancel className="text-xs">Batal</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeletePerson}
-              className="bg-destructive text-xs text-white hover:bg-destructive/90"
+              className="bg-destructive text-xs text-canvas hover:bg-destructive/90"
             >
               Hapus profil
             </AlertDialogAction>

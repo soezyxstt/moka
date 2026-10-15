@@ -31,7 +31,6 @@ export default async function NewGalleryPage({
 
   return (
     <AdminPage
-      eyebrow="Galeri"
       title="Buat album"
     >
       <NewGalleryForm

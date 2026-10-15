@@ -1,5 +1,5 @@
 export const mediaMimeTypes = {
-  image: ["image/jpeg", "image/png", "image/webp", "image/avif"],
+  image: ["image/jpeg", "image/png", "image/webp", "image/avif", "image/svg+xml"],
   video: ["video/mp4", "video/webm"],
   pdf: ["application/pdf"],
 } as const;

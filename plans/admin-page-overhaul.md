@@ -38,7 +38,7 @@ Aturan teknis yang tidak dapat dinegosiasikan:
 - Gunakan `AdminPage`, `AdminCard`, `AdminField`, `AdminButton`, `AdminBadge`, `AdminEmptyState`, dan primitive admin yang sudah ada.
 - Komponen baru harus reusable. Jangan membuat media selector, filter, form shell, atau entity list khusus per halaman.
 - Gunakan `Sheet`, `Dialog`, `AlertDialog`, `Select`, `Input`, `Textarea`, `ScrollArea`, `Table`, dan primitive yang sudah tersedia.
-- Heading menggunakan Montserrat; body dan kontrol menggunakan Inter; gunakan `dgb`, `fb`, dan semantic tokens. Jangan meniru tampilan admin lama yang slate-heavy.
+- Heading menggunakan Manrope; body dan kontrol menggunakan Inter; gunakan `brand`, `highlight`, dan semantic tokens. Jangan meniru tampilan admin lama yang slate-heavy.
 - UI Bahasa Indonesia, sentence case, tanpa tanda seru, tanpa em dash atau en dash.
 - Semua gambar menggunakan `next/image`.
 - Upload hanya melalui UploadThing. Tidak boleh ada R2, S3, local blob, atau endpoint upload tanpa autentikasi.
@@ -587,7 +587,7 @@ Plan admin dinyatakan selesai hanya jika:
 - Voting memakai snapshot stage dan lifecycle mulai atau tutup manual.
 - Sponsor memiliki logo, tier, website, urutan, dan status.
 - Galeri memiliki dedicated authoring workspace.
-- Public route CMS-only dan import aset 2025 berada di luar Plan 012 dan ditangani oleh Plan 014 serta Plan 010. Import lokal sudah diotorisasi dan sedang berlangsung; production cutover tetap menunggu otorisasi target.
+- Public route CMS-only dan import aset 2025 berada di luar Plan 012 dan ditangani oleh Plan 014 serta Plan 010. Seed lokal 2025 sudah selesai. Operator meminta production cutover; rekonsiliasi dan konfirmasi target dicatat di `docs/runbooks/cms-cutover.md`.
 
 ## Asumsi yang dikunci
 

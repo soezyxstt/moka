@@ -88,12 +88,10 @@ const HeroVideo: React.FC<HeroVideoProps> = ({ children, fallbackImageSrc, video
         Your browser does not support the video tag. Please update your browser.
       </motion.video>
 
-      {/* Overlay to improve text readability - Matches your existing shadow-[inset_0_0_0_50vw_rgba(0,0,0,0.5)] */}
-      {/* We'll use a direct bg-black opacity-50 for simplicity and consistent layering */}
-      <div className="absolute inset-0 bg-black opacity-50 z-10"></div>
+      <div className="absolute inset-0 bg-ink opacity-50 z-10"></div>
 
       {/* Content over the video */}
-      <div className="absolute inset-0 flex justify-center flex-col text-white md:px-20 px-8 text-sm z-20">
+      <div className="absolute inset-0 flex justify-center flex-col text-canvas md:px-20 px-8 text-sm z-20">
         {children}
       </div>
     </div>

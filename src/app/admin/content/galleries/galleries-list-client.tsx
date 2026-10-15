@@ -154,7 +154,7 @@ export function GalleriesListClient({
             onValueChange={(value) => setStatusFilter(value as "all" | "published" | "draft")}
             className="h-9 w-auto min-w-[9rem] text-xs"
             options={[
-              { value: "all", label: "Semua Status" },
+              { value: "all", label: "Semua status" },
               { value: "published", label: "Terbit" },
               { value: "draft", label: "Draf" },
             ]}
@@ -162,11 +162,11 @@ export function GalleriesListClient({
         </div>
 
         {canEdit && (
-          <Link href="/admin/content/galleries/new">
-            <Button className="bg-dgb hover:bg-dgb/90 text-white text-xs h-9">
-              <Plus size={15} className="mr-1.5" /> Buat Album Baru
-            </Button>
-          </Link>
+          <Button asChild className="bg-brand hover:bg-brand/90 text-canvas text-xs h-9">
+            <Link href="/admin/content/galleries/new">
+              <Plus size={15} className="mr-1.5" /> Tambah album
+            </Link>
+          </Button>
         )}
       </div>
 
@@ -178,7 +178,7 @@ export function GalleriesListClient({
           description={
             search || ownerFilter !== "all" || statusFilter !== "all"
               ? "Tidak ada album galeri yang sesuai dengan filter pencarian."
-              : `Belum ada album galeri untuk ${editionName}. Klik Buat Album Baru untuk memulai.`
+              : `Belum ada album galeri untuk ${editionName}. Klik Tambah album untuk memulai.`
           }
         />
       ) : (
@@ -204,11 +204,11 @@ export function GalleriesListClient({
 
                   <div className="absolute top-2 left-2 flex gap-1.5">
                     {gal.ownerType === "event" ? (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-fb/90 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-xs">
+                      <span className="inline-flex items-center gap-1 rounded-md bg-highlight/90 px-2 py-0.5 text-xs font-semibold text-ink backdrop-blur-xs">
                         <Calendar size={11} /> {gal.ownerLabel || "Acara"}
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-dgb/90 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-xs">
+                      <span className="inline-flex items-center gap-1 rounded-md bg-brand/90 px-2 py-0.5 text-xs font-semibold text-canvas backdrop-blur-xs">
                         <Globe size={11} /> Umum
                       </span>
                     )}
@@ -222,15 +222,15 @@ export function GalleriesListClient({
                 {/* Content */}
                 <div className="p-4 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-mono text-muted-foreground">
+                    <span className="text-xs font-inter text-muted-foreground">
                       Urutan: {gal.displayOrder}
                     </span>
-                    <span className="text-xs text-fb font-mono font-medium">
+                    <span className="text-xs text-highlight-700 font-inter font-medium">
                       /{gal.slug}
                     </span>
                   </div>
 
-                  <h3 className="font-montserrat text-sm font-semibold text-foreground line-clamp-1">
+                  <h3 className="font-manrope text-sm font-semibold text-foreground line-clamp-1">
                     {gal.title}
                   </h3>
 
@@ -250,21 +250,21 @@ export function GalleriesListClient({
               <div className="border-t border-border p-4 pt-3 bg-muted/20 flex items-center justify-between gap-2">
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
                   <span className="inline-flex items-center gap-1">
-                    <ImageIcon size={13} className="text-fb" /> {gal.photoCount} Foto
+                    <ImageIcon size={13} className="text-highlight-700" /> {gal.photoCount} Foto
                   </span>
                   {gal.videoCount > 0 && (
                     <span className="inline-flex items-center gap-1">
-                      <Video size={13} className="text-fb" /> {gal.videoCount} Video
+                      <Video size={13} className="text-highlight-700" /> {gal.videoCount} Video
                     </span>
                   )}
                 </div>
 
                 <div className="flex items-center gap-1.5">
-                  <Link href={`/admin/content/galleries/${gal.id}`}>
-                    <Button variant="outline" size="sm" className="h-8 px-2.5 text-xs">
+                  <Button asChild variant="outline" size="sm" className="h-8 px-2.5 text-xs">
+                    <Link href={`/admin/content/galleries/${gal.id}`}>
                       <FileEdit size={13} className="mr-1" /> Kelola
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
 
                   {canEdit && (
                     <Button
@@ -287,7 +287,7 @@ export function GalleriesListClient({
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-montserrat">Hapus Album Galeri</AlertDialogTitle>
+            <AlertDialogTitle className="font-manrope">Hapus album</AlertDialogTitle>
             <AlertDialogDescription className="font-inter text-xs">
               Apakah Anda yakin ingin menghapus album <strong>&quot;{deleteTarget?.title}&quot;</strong>? Semua {deleteTarget?.itemCount} item media di dalam album ini akan ikut terhapus.
             </AlertDialogDescription>

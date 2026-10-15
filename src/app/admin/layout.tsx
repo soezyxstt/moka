@@ -3,6 +3,7 @@ import { auth } from "@/server/auth/config";
 import { getEffectivePermissions } from "@/server/auth/authorization";
 import { AdminShell, type AdminNavItem } from "@/components/admin/admin-shell";
 import { getAdminEditionContext, getAdminEditions } from "@/server/cms/context";
+import { getAdminBranding } from "@/server/cms/admin-branding";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -16,7 +17,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   const links: (AdminNavItem & { permission: string })[] = [
     // Ringkasan
-    { href: "/admin", label: "Dashboard", icon: "layout", group: "Ringkasan", exact: true, permission: "admin.view" },
+    { href: "/admin", label: "Ringkasan", icon: "layout", group: "Ringkasan", exact: true, permission: "admin.view" },
 
     // Konteks
     { href: "/admin/content/editions", label: "Kelola edisi", icon: "calendar", group: "Konteks", exact: false, permission: "content.view" },
@@ -49,6 +50,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <AdminShell
+      branding={currentEdition ? await getAdminBranding(currentEdition.id) : undefined}
       links={links.filter(({ permission }) => permissions.has(permission))}
       user={{ name: session.user.name, email: session.user.email }}
       currentEdition={currentEdition}

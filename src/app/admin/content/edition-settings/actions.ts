@@ -8,6 +8,27 @@ import { requirePermission } from "@/server/auth/authorization";
 import { getAdminEditionContext } from "@/server/cms/context";
 import { database } from "@/server/db/client";
 import { editionPrograms, editions, mediaAssets } from "@/server/db/schema";
+import { EditionPaletteError, saveEditionPalette } from "@/server/cms/edition-palette";
+
+export async function saveEditionPaletteAction(_previous: { message: string; error: boolean }, formData: FormData) {
+  const actor = await requirePermission("content.edit");
+  await requirePermission("content.publish");
+  const edition = await getAdminEditionContext();
+  if (!edition || edition.id !== String(formData.get("editionId") ?? "")) return { message: "Edisi pilihan berubah. Muat ulang halaman.", error: true };
+  const version = String(formData.get("version") ?? "");
+  if (version && (!Number.isInteger(Number(version)) || Number(version) < 1)) return { message: "Versi palet tidak valid.", error: true };
+  try {
+    await saveEditionPalette(database, {
+      editionId: edition.id, expectedVersion: version ? Number(version) : null,
+      palette: { dark: String(formData.get("dark") ?? "").trim(), light: String(formData.get("light") ?? "").trim() },
+      actorUserId: actor.session.user.id, actorLabel: actor.session.user.email,
+    });
+  } catch (error) {
+    return { message: error instanceof EditionPaletteError ? error.message : "Gagal menyimpan palet. Coba lagi.", error: true };
+  }
+  revalidatePath("/", "layout");
+  return { message: "Palet disimpan.", error: false };
+}
 
 export async function updateEditionSettingsAction(formData: FormData) {
   const actor = await requirePermission("content.edit");
@@ -15,12 +36,15 @@ export async function updateEditionSettingsAction(formData: FormData) {
   if (!editionContext) {
     throw new Error("Konteks edisi aktif tidak ditemukan");
   }
+  if (String(formData.get("editionId") ?? "") !== editionContext.id) throw new Error("Edisi pilihan berubah. Muat ulang halaman.");
 
   const rawLogoMediaId = formData.get("logoMediaId")?.toString().trim();
   const logoMediaId = rawLogoMediaId && rawLogoMediaId.length > 0 ? rawLogoMediaId : null;
   const rawSlogan = formData.get("slogan")?.toString().trim();
   const slogan = rawSlogan && rawSlogan.length > 0 ? rawSlogan : null;
   const version = Number(formData.get("version") ?? 1);
+  const name = String(formData.get("name") ?? "").trim();
+  if (!name || name.length > 200) throw new Error("Nama edisi wajib diisi, maksimal 200 karakter");
 
   if (logoMediaId) {
     const [asset] = await database
@@ -44,6 +68,7 @@ export async function updateEditionSettingsAction(formData: FormData) {
     if (!current) {
       throw new Error("Edisi tidak ditemukan");
     }
+    if (current.lifecycle === "archived") throw new Error("Identitas edisi arsip hanya dapat dibaca");
 
     if (current.version !== version) {
       throw new Error("Versi data telah diperbarui oleh pengguna lain. Silakan muat ulang halaman.");
@@ -53,6 +78,7 @@ export async function updateEditionSettingsAction(formData: FormData) {
     await tx
       .update(editions)
       .set({
+        name,
         logoMediaId,
         slogan,
         version: nextVersion,
@@ -68,22 +94,25 @@ export async function updateEditionSettingsAction(formData: FormData) {
       resourceId: editionContext.id,
       resourceLabel: editionContext.name,
       before: {
+        name: current.name,
         logoMediaId: current.logoMediaId,
         slogan: current.slogan,
         version: current.version,
       },
       after: {
+        name,
         logoMediaId,
         slogan,
         version: nextVersion,
       },
-      changedFields: ["logoMediaId", "slogan", "version"],
+      changedFields: ["name", "logoMediaId", "slogan", "version"],
       source: "admin-content",
     });
   });
 
   revalidatePath("/admin/content/edition-settings");
   revalidatePath("/admin");
+  revalidatePath("/", "layout");
 }
 
 export async function saveEditionProgramAction(formData: FormData) {

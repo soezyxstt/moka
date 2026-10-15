@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 type FinalistCardProps = {
+  signature?: string;
   src: string;
   name: string;
   no: string;
@@ -9,7 +10,7 @@ type FinalistCardProps = {
   href: string;
 };
 
-export function FinalistCard({ src, name, catt, no, href }: FinalistCardProps) {
+export function FinalistCard({ src, name, catt, no, href, signature }: FinalistCardProps) {
   const [firstName, ...restName] = name.split(' ');
   return (
     <Link href={href} className="group relative aspect-square overflow-hidden rounded-md">
@@ -21,8 +22,8 @@ export function FinalistCard({ src, name, catt, no, href }: FinalistCardProps) {
         priority
         className="h-full w-full object-cover object-center transition-all duration-500 group-hover:scale-102"
       />
-      <div className="absolute bottom-0 w-full text-white transition-all duration-500 group-hover:opacity-0">
-        <div className="leading-tight bg-gradient-to-t from-black/90 to-transparent p-6">
+      <div className="absolute bottom-0 w-full text-canvas transition-all duration-500 group-hover:opacity-0">
+        <div className="leading-tight bg-gradient-to-t from-ink/90 to-transparent p-6">
           <div className="flex justify-between text-2xl font-bold">
             <p>{catt}</p>
             <p>{firstName}</p>
@@ -32,11 +33,7 @@ export function FinalistCard({ src, name, catt, no, href }: FinalistCardProps) {
             <p>{restName.join(' ')}</p>
           </div>
         </div>
-        <div className="flex h-6 w-full items-center justify-center gap-10 bg-gradient-to-r from-fb via-fb-200 to-fb px-4 text-[10px] text-black">
-          <p>mokagarut</p>
-          <p>#nyundaturnyakola</p>
-          <p>#kayakarya</p>
-        </div>
+        {signature ? <div className="min-h-6 w-full bg-gradient-to-r from-highlight via-highlight-200 to-highlight px-4 py-1 text-center text-[10px] leading-4 text-ink"><p>{signature}</p></div> : null}
       </div>
     </Link>
   );

@@ -1,4 +1,4 @@
-export type SiteAssetGroup = "home" | "about" | "category";
+export type SiteAssetGroup = "home" | "about" | "category" | "site" | "brand";
 
 export type SiteAssetSlotDefinition = {
   slotKey: string;
@@ -10,6 +10,9 @@ export type SiteAssetSlotDefinition = {
   acceptType: "image" | "video";
   aspectRatio: string;
   required: boolean;
+  mimeTypes?: readonly string[];
+  fit?: "contain";
+  darkPreview?: boolean;
 };
 
 export const SITE_ASSET_GROUPS: readonly {
@@ -18,6 +21,8 @@ export const SITE_ASSET_GROUPS: readonly {
   pageRoute: string;
   description: string;
 }[] = [
+  { key: "brand", label: "Logo dan identitas tahunan", pageRoute: "/", description: "Logo, ikon dan gambar berbagi untuk edisi Pasanggiri yang dipilih." },
+  { key: "site", label: "Profil", pageRoute: "/", description: "Latar profil peserta per edisi." },
   {
     key: "home",
     label: "Beranda",
@@ -39,6 +44,41 @@ export const SITE_ASSET_GROUPS: readonly {
 ] as const;
 
 export const SITE_ASSET_SLOTS: readonly SiteAssetSlotDefinition[] = [
+  ...([
+    ["brand.logo.light", "Logo MOKA pada latar terang", "4:1", false],
+    ["brand.logo.dark", "Logo MOKA pada latar gelap", "4:1", true],
+    ["brand.combined.light", "Logo gabungan pada latar terang", "5.5:1", false],
+    ["brand.combined.dark", "Logo gabungan pada latar gelap", "5.5:1", true],
+    ["brand.event.light", "Logo Pasanggiri pada latar terang", "2:1", false],
+    ["brand.event.dark", "Logo Pasanggiri pada latar gelap", "2:1", true],
+    ["brand.symbol.light", "Simbol MOKA pada latar terang", "1:1", false],
+    ["brand.symbol.dark", "Simbol MOKA pada latar gelap", "1:1", true],
+    ["brand.monogram.light", "Monogram pada latar terang", "1:1", false],
+    ["brand.monogram.dark", "Monogram pada latar gelap", "1:1", true],
+    ["brand.navbar.desktop", "Logo navbar desktop", "4:1", true],
+    ["brand.navbar.mobile", "Logo navbar seluler", "4:1", false],
+    ["brand.footer", "Logo footer", "4:1", true],
+  ] as const).map(([slotKey, label, aspectRatio, darkPreview]): SiteAssetSlotDefinition => ({
+    slotKey, label, aspectRatio, darkPreview,
+    group: "brand", pageRoute: "/", pageLabel: "Identitas", description: "SVG atau PNG transparan. Proporsi logo tetap dipertahankan.",
+    acceptType: "image", required: false, fit: "contain",
+    mimeTypes: ["image/svg+xml", "image/png", "image/webp", "image/jpeg", "image/avif"],
+  })),
+  ...([
+    ["brand.favicon", "Ikon tab browser", "SVG atau PNG; gunakan monogram yang terbaca pada 16 dan 32 px.", ["image/svg+xml", "image/png"]],
+    ["brand.apple", "Ikon layar utama Apple", "PNG 180 x 180 px.", ["image/png"]],
+    ["brand.icon192", "Ikon aplikasi 192", "PNG 192 x 192 px.", ["image/png"]],
+    ["brand.icon512", "Ikon aplikasi 512", "PNG 512 x 512 px.", ["image/png"]],
+    ["brand.maskable", "Ikon aplikasi adaptif", "PNG 512 x 512 px; logo di dalam area aman tengah.", ["image/png"]],
+    ["brand.avatar", "Avatar", "PNG 512 x 512 px untuk profil sosial.", ["image/png"]],
+  ] as const).map(([slotKey, label, description, mimeTypes]): SiteAssetSlotDefinition => ({
+    slotKey, label, description, mimeTypes,
+    group: "brand", pageRoute: "/", pageLabel: "Identitas", acceptType: "image", aspectRatio: "1:1", required: false, fit: "contain",
+  })),
+  { slotKey: "brand.social.gold", group: "brand", pageRoute: "/", pageLabel: "Identitas", label: "Pratinjau tautan alternatif", description: "PNG atau JPEG 1200 x 630 px; varian alternatif disimpan untuk ekspor.", acceptType: "image", aspectRatio: "1.91:1", required: false, mimeTypes: ["image/png", "image/jpeg", "image/webp"] },
+  { slotKey: "brand.social.event", group: "brand", pageRoute: "/voting", pageLabel: "Pasanggiri", label: "Pratinjau tautan Pasanggiri", description: "PNG atau JPEG 1200 x 630 px untuk halaman voting dan peserta.", acceptType: "image", aspectRatio: "1.91:1", required: false, mimeTypes: ["image/png", "image/jpeg", "image/webp"] },
+  { slotKey: "site.profile.bg", group: "site", pageRoute: "/profil-finalis", pageLabel: "Profil", label: "Latar halaman profil", description: "Latar daftar dan detail finalis serta semifinalis.", acceptType: "image", aspectRatio: "16:9", required: false },
+  { slotKey: "site.social.image", group: "brand", pageRoute: "/", pageLabel: "Identitas", label: "Gambar pratinjau tautan utama", description: "PNG atau JPEG 1200 x 630 px saat tautan situs dibagikan.", acceptType: "image", aspectRatio: "1.91:1", required: false, mimeTypes: ["image/png", "image/jpeg", "image/webp"] },
   // 1. Beranda (/)
   {
     slotKey: "home.hero.bg",

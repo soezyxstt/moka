@@ -1,8 +1,13 @@
-import { and, asc, eq, inArray, isNull, or } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 
 import { AdminBadge, AdminButton, AdminCard, AdminEmptyState, AdminPage } from "@/components/admin/primitives";
 import { requirePermission } from "@/server/auth/authorization";
 import { getAdminEditionContext } from "@/server/cms/context";
+import {
+  get2025EditionId,
+  get2025StageNumberingRepairStatus,
+  get2025StageNumberingSourceEntries,
+} from "@/server/cms/import-2025";
 import { database } from "@/server/db/client";
 import {
   categories,
@@ -29,7 +34,6 @@ export default async function ParticipantsPage() {
   if (!currentEdition) {
     return (
       <AdminPage
-        eyebrow="Peserta"
         title="Mojang Jajaka"
       >
         <AdminCard padding="none">
@@ -57,21 +61,54 @@ export default async function ParticipantsPage() {
     .orderBy(asc(categories.displayOrder));
 
   const stageRows = await database
-    .select({ id: selectionStages.id, name: selectionStages.name })
+    .select({ id: selectionStages.id, name: selectionStages.name, slug: selectionStages.slug, finalStage: selectionStages.finalStage })
     .from(selectionStages)
     .where(eq(selectionStages.editionId, currentEdition.id))
     .orderBy(asc(selectionStages.displayOrder));
 
-  const incompleteStageNumbers = currentEdition.year === 2025 && canEdit
-    ? await database.select({ id: participantStageEntries.id })
-      .from(participantStageEntries)
-      .innerJoin(participants, eq(participantStageEntries.participantId, participants.id))
+  const canInspectStageRepair = canEdit
+    && process.env.NODE_ENV !== "production"
+    && process.env.TURSO_DATABASE_URL === "file:local.db"
+    && currentEdition.id === get2025EditionId()
+    && currentEdition.year === 2025
+    && currentEdition.slug === "2025";
+  const numberingSourceEntries = canInspectStageRepair
+    ? get2025StageNumberingSourceEntries()
+    : [];
+  const numberingStageIds = stageRows
+    .filter(({ slug }) => slug === "semifinalis" || slug === "finalis")
+    .map(({ id }) => id);
+  const numberingParticipantRows = numberingSourceEntries.length
+    ? await database.select({ id: participants.id, categoryId: participants.categoryId })
+      .from(participants)
       .where(and(
         eq(participants.editionId, currentEdition.id),
-        or(isNull(participantStageEntries.number), isNull(participantStageEntries.displayOrder)),
+        inArray(participants.id, [...new Set(numberingSourceEntries.map(({ participantId }) => participantId))]),
       ))
-      .limit(1)
     : [];
+  const numberingStageRows = numberingSourceEntries.length && numberingStageIds.length
+    ? await database.select({
+      participantId: participantStageEntries.participantId,
+      stageSlug: selectionStages.slug,
+      number: participantStageEntries.number,
+      displayOrder: participantStageEntries.displayOrder,
+    })
+      .from(participantStageEntries)
+      .innerJoin(selectionStages, eq(participantStageEntries.stageId, selectionStages.id))
+      .where(and(
+        inArray(participantStageEntries.participantId, [...new Set(numberingSourceEntries.map(({ participantId }) => participantId))]),
+        inArray(selectionStages.id, numberingStageIds),
+      ))
+    : [];
+  const stageNumberingRepairStatus = numberingSourceEntries.length
+    ? get2025StageNumberingRepairStatus({
+      edition: currentEdition,
+      stages: stageRows,
+      participants: numberingParticipantRows,
+      entries: numberingStageRows,
+    })
+    : "incompatible";
+  const hasIncompleteStageNumbers = stageNumberingRepairStatus === "ready";
 
   // Fetch participants with joined category and selectionStages
   const participantRows = await database
@@ -184,13 +221,12 @@ export default async function ParticipantsPage() {
 
   return (
     <AdminPage
-      eyebrow="Peserta"
       title="Mojang Jajaka"
       action={<AdminBadge value={currentEdition.lifecycle} />}
     >
-      {incompleteStageNumbers.length ? (
+      {hasIncompleteStageNumbers ? (
         <AdminCard className="flex flex-wrap items-center justify-between gap-4">
-          <p className="text-sm text-muted-foreground">Nomor dan urutan semifinalis belum lengkap.</p>
+          <p className="text-sm text-muted-foreground">Nomor dan urutan peserta di tahap semifinalis atau finalis belum lengkap.</p>
           <form action={repair2025StageNumbersAction}>
             <AdminButton type="submit" variant="secondary">Perbaiki nomor tahap 2025</AdminButton>
           </form>

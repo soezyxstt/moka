@@ -1,4 +1,5 @@
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
+import { archivedIdentity } from "@/server/organization/profile-history";
 import { notFound } from "next/navigation";
 
 import { AdminPage } from "@/components/admin/primitives";
@@ -6,6 +7,7 @@ import { requirePermission } from "@/server/auth/authorization";
 import { database } from "@/server/db/client";
 import {
   editions,
+  contentRevisions,
   mediaAssets,
   organizationMemberships,
   organizationPeriods,
@@ -94,6 +96,7 @@ export default async function PeriodDetailPage({ params }: PageProps) {
     .where(eq(organizationMemberships.periodId, id))
     .orderBy(asc(organizationMemberships.displayOrder));
 
+  const historicProfiles = period.lifecycle === "archived" && memberRows.length ? await database.select().from(contentRevisions).where(and(eq(contentRevisions.resourceType, "organizationPerson"), inArray(contentRevisions.resourceId, memberRows.map((member) => member.id)))) : [];
   const members: DetailMember[] = memberRows.map((m) => ({
     id: m.id,
     periodId: m.periodId,
@@ -103,9 +106,9 @@ export default async function PeriodDetailPage({ params }: PageProps) {
     displayOrder: m.displayOrder,
     active: m.active,
     version: m.version,
-    personName: m.personName,
+    personName: archivedIdentity(historicProfiles.find((profile) => profile.resourceId === m.id)?.snapshotJson, { name: m.personName, imageUrl: m.portraitUrl }).name,
     personSlug: m.personSlug,
-    portraitUrl: m.portraitUrl,
+    portraitUrl: archivedIdentity(historicProfiles.find((profile) => profile.resourceId === m.id)?.snapshotJson, { name: m.personName, imageUrl: m.portraitUrl }).imageUrl,
   }));
 
   // Fetch every edition so reassignment is visible before saving.
@@ -157,7 +160,6 @@ export default async function PeriodDetailPage({ params }: PageProps) {
 
   return (
     <AdminPage
-      eyebrow="Kepengurusan"
       title={period.label}
     >
       <PeriodDetailClient

@@ -88,7 +88,7 @@ export function TipTapEditor({
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {
-          class: "text-fb underline hover:text-fb-600",
+          class: "text-highlight-700 underline hover:text-highlight-600",
         },
       }),
       CustomTipTapImage.configure({
@@ -194,7 +194,7 @@ export function TipTapEditor({
   }
 
   return (
-    <div className={cn("overflow-hidden rounded-lg border border-border bg-white shadow-xs", className)}>
+    <div className={cn("overflow-hidden rounded-lg border border-border bg-canvas shadow-xs", className)}>
       {/* Toolbar */}
       <fieldset disabled={!editable} className="min-w-0 border-0 p-0">
         <div className="flex flex-wrap items-center gap-1 border-b border-border bg-muted/40 p-1.5 text-foreground">
@@ -206,7 +206,7 @@ export function TipTapEditor({
           onClick={() => editor.chain().focus().setParagraph().run()}
           className={cn(
             "h-8 px-2 text-xs",
-            editor.isActive("paragraph") && "bg-dgb-50 text-dgb font-semibold",
+            editor.isActive("paragraph") && "bg-brand-50 text-brand font-semibold",
           )}
           title="Paragraf"
         >
@@ -221,9 +221,9 @@ export function TipTapEditor({
           onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
           className={cn(
             "h-8 px-2 text-xs",
-            editor.isActive("heading", { level: 2 }) && "bg-dgb-50 text-dgb font-bold",
+            editor.isActive("heading", { level: 2 }) && "bg-brand-50 text-brand font-bold",
           )}
-          title="Heading 2"
+          title="Judul bagian"
         >
           <Heading2 size={16} />
         </Button>
@@ -236,9 +236,9 @@ export function TipTapEditor({
           onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
           className={cn(
             "h-8 px-2 text-xs",
-            editor.isActive("heading", { level: 3 }) && "bg-dgb-50 text-dgb font-bold",
+            editor.isActive("heading", { level: 3 }) && "bg-brand-50 text-brand font-bold",
           )}
-          title="Heading 3"
+          title="Subjudul"
         >
           <Heading3 size={16} />
         </Button>
@@ -253,9 +253,9 @@ export function TipTapEditor({
           onClick={() => editor.chain().focus().toggleBold().run()}
           className={cn(
             "h-8 px-2 text-xs",
-            editor.isActive("bold") && "bg-dgb-50 text-dgb font-bold",
+            editor.isActive("bold") && "bg-brand-50 text-brand font-bold",
           )}
-          title="Tebal (Bold)"
+          title="Tebal"
         >
           <Bold size={15} />
         </Button>
@@ -268,9 +268,9 @@ export function TipTapEditor({
           onClick={() => editor.chain().focus().toggleItalic().run()}
           className={cn(
             "h-8 px-2 text-xs",
-            editor.isActive("italic") && "bg-dgb-50 text-dgb font-semibold italic",
+            editor.isActive("italic") && "bg-brand-50 text-brand font-semibold italic",
           )}
-          title="Miring (Italic)"
+          title="Miring"
         >
           <Italic size={15} />
         </Button>
@@ -283,9 +283,9 @@ export function TipTapEditor({
           onClick={handleOpenLinkDialog}
           className={cn(
             "h-8 px-2 text-xs",
-            editor.isActive("link") && "bg-dgb-50 text-dgb font-semibold",
+            editor.isActive("link") && "bg-brand-50 text-brand font-semibold",
           )}
-          title="Tautan (Link)"
+          title="Tautan"
         >
           <LinkIcon size={15} />
         </Button>
@@ -296,7 +296,7 @@ export function TipTapEditor({
             variant="ghost"
             size="sm"
             onClick={() => editor.chain().focus().unsetLink().run()}
-            className="h-8 px-2 text-xs text-destructive hover:bg-rose-50"
+            className="h-8 px-2 text-xs text-destructive hover:bg-danger-50"
             title="Hapus tautan"
           >
             <Unlink size={15} />
@@ -313,7 +313,7 @@ export function TipTapEditor({
           onClick={() => editor.chain().focus().toggleBulletList().run()}
           className={cn(
             "h-8 px-2 text-xs",
-            editor.isActive("bulletList") && "bg-dgb-50 text-dgb font-semibold",
+            editor.isActive("bulletList") && "bg-brand-50 text-brand font-semibold",
           )}
           title="Daftar poin"
         >
@@ -328,7 +328,7 @@ export function TipTapEditor({
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
           className={cn(
             "h-8 px-2 text-xs",
-            editor.isActive("orderedList") && "bg-dgb-50 text-dgb font-semibold",
+            editor.isActive("orderedList") && "bg-brand-50 text-brand font-semibold",
           )}
           title="Daftar nomor"
         >
@@ -343,9 +343,9 @@ export function TipTapEditor({
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
           className={cn(
             "h-8 px-2 text-xs",
-            editor.isActive("blockquote") && "bg-dgb-50 text-dgb font-semibold",
+            editor.isActive("blockquote") && "bg-brand-50 text-brand font-semibold",
           )}
-          title="Kutipan (Blockquote)"
+          title="Kutipan"
         >
           <Quote size={15} />
         </Button>
@@ -356,11 +356,11 @@ export function TipTapEditor({
           variant="ghost"
           size="sm"
           onClick={() => setMediaPickerOpen(true)}
-          className="h-8 px-2 text-xs text-fb hover:bg-fb-50 hover:text-fb-600"
+          className="h-8 px-2 text-xs text-highlight-700 hover:bg-highlight-50 hover:text-highlight-600"
           title="Sisipkan gambar dari pustaka media"
         >
           <ImageIcon size={15} className="mr-1" />
-          <span className="text-[11px] font-medium">Sisipkan gambar</span>
+          <span className="text-xs font-medium">Sisipkan gambar</span>
         </Button>
 
         <div className="mx-auto" />
@@ -373,7 +373,7 @@ export function TipTapEditor({
           onClick={() => editor.chain().focus().undo().run()}
           disabled={!editor.can().undo()}
           className="h-8 px-2 text-xs disabled:opacity-30"
-          title="Undo"
+          title="Urungkan"
         >
           <Undo2 size={15} />
         </Button>
@@ -386,7 +386,7 @@ export function TipTapEditor({
           onClick={() => editor.chain().focus().redo().run()}
           disabled={!editor.can().redo()}
           className="h-8 px-2 text-xs disabled:opacity-30"
-          title="Redo"
+          title="Ulangi"
         >
           <Redo2 size={15} />
         </Button>
@@ -394,7 +394,7 @@ export function TipTapEditor({
       </fieldset>
 
       {/* Editor Content Area */}
-      <div className="relative min-h-[360px] bg-white">
+      <div className="relative min-h-[360px] bg-canvas">
         <EditorContent editor={editor} />
         {editor.isEmpty && (
           <div className="pointer-events-none absolute left-4 top-4 select-none font-inter text-sm text-muted-foreground/60">
@@ -407,13 +407,14 @@ export function TipTapEditor({
       <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-montserrat">Tautan Web</DialogTitle>
+            <DialogTitle className="font-manrope">Tautan web</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
-            <label className="text-xs font-semibold text-foreground">
-              Masukkan URL tautan:
+            <label htmlFor="editor-link-url" className="text-xs font-semibold text-foreground">
+              URL tautan
             </label>
             <Input
+              id="editor-link-url"
               value={linkUrl}
               onChange={(e) => setLinkUrl(e.target.value)}
               placeholder="https://example.com/berita"
@@ -440,7 +441,7 @@ export function TipTapEditor({
               type="button"
               size="sm"
               onClick={handleSaveLink}
-              className="bg-dgb hover:bg-dgb-600 text-white"
+              className="bg-brand hover:bg-brand-600 text-canvas"
             >
               Terapkan
             </Button>

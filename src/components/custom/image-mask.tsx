@@ -18,12 +18,12 @@ export default function ImageMaskFade({ src, alt, width, height, fill, className
 
   const maskStyle: React.CSSProperties = isMobile
     ? {
-        maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0) 100%)',
-        WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0) 100%)',
+        maskImage: 'var(--portrait-mask-mobile)',
+        WebkitMaskImage: 'var(--portrait-mask-mobile)',
       }
     : {
-        maskImage: 'linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0) 100%)',
-        WebkitMaskImage: 'linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0) 100%)',
+        maskImage: 'var(--portrait-mask-desktop)',
+        WebkitMaskImage: 'var(--portrait-mask-desktop)',
       };
 
   return (

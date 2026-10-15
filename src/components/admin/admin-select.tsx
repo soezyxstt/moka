@@ -90,11 +90,11 @@ export function AdminSelect({
 
   const triggerRef = React.useRef<HTMLButtonElement>(null);
   React.useEffect(() => {
-    if (isControlled) return;
     const form = triggerRef.current?.form;
     if (!form) return;
     const handleReset = () => {
-      window.setTimeout(() => setUncontrolledValue(initialValueRef.current), 0);
+      setShowRequiredError(false);
+      if (!isControlled) window.setTimeout(() => setUncontrolledValue(initialValueRef.current), 0);
     };
     form.addEventListener("reset", handleReset);
     return () => form.removeEventListener("reset", handleReset);
@@ -113,7 +113,7 @@ export function AdminSelect({
           aria-invalid={ariaInvalid ?? requiredErrorVisible}
           aria-required={required || undefined}
           className={cn(
-            "h-10 w-full min-w-0 rounded-md border-input bg-background text-sm text-foreground shadow-none focus-visible:border-dgb-300 focus-visible:ring-dgb-100",
+            "h-10 w-full min-w-0 rounded-md border-input bg-background text-sm text-foreground shadow-none focus-visible:border-brand-300 focus-visible:ring-brand-100",
             "data-[size=default]:h-10",
             "[&>span]:min-w-0 [&>span]:truncate",
             className,

@@ -4,14 +4,17 @@ import { AdminBadge, AdminCard, AdminPage } from "@/components/admin/primitives"
 import { requirePermission } from "@/server/auth/authorization";
 import { getAdminEditionContext } from "@/server/cms/context";
 import { PAGE_SECTION_SLOTS } from "@/server/cms/page-sections";
+import { registrationEditionEligible } from "@/server/cms/registration";
 import { database } from "@/server/db/client";
-import { contentDrafts, pageSections } from "@/server/db/schema";
+import { contentDrafts, pageSections, mediaAssets, editions, organizationPeriods } from "@/server/db/schema";
 
 import { PageSectionsEditor, type PageSectionEditorItem } from "./page-sections-editor";
 
 export const metadata = { title: "Teks halaman" };
 
 type SectionCopy = Pick<typeof pageSections.$inferSelect, "title" | "eyebrow" | "body"> & {
+  documentMediaId: string | null;
+  documentTitle: string | null;
   actionLabel: string | null;
   actionHref: string | null;
 };
@@ -19,14 +22,16 @@ type SectionCopy = Pick<typeof pageSections.$inferSelect, "title" | "eyebrow" | 
 function parseActionFields(presentationJson: string | null | undefined) {
   try {
     const value: unknown = JSON.parse(presentationJson ?? "{}");
-    if (typeof value !== "object" || value === null || Array.isArray(value)) return { actionLabel: null, actionHref: null };
+    if (typeof value !== "object" || value === null || Array.isArray(value)) return { actionLabel: null, actionHref: null, documentMediaId: null, documentTitle: null };
     const fields = value as Record<string, unknown>;
     return {
+      documentMediaId: typeof fields.documentMediaId === "string" ? fields.documentMediaId : null,
+      documentTitle: typeof fields.documentTitle === "string" ? fields.documentTitle : null,
       actionLabel: typeof fields.actionLabel === "string" ? fields.actionLabel : null,
       actionHref: typeof fields.actionHref === "string" ? fields.actionHref : null,
     };
   } catch {
-    return { actionLabel: null, actionHref: null };
+    return { actionLabel: null, actionHref: null, documentMediaId: null, documentTitle: null };
   }
 }
 
@@ -51,7 +56,7 @@ export default async function PagesPage() {
   const edition = await getAdminEditionContext();
   if (!edition) {
     return (
-      <AdminPage eyebrow="Konten" title="Teks halaman">
+      <AdminPage title="Teks halaman">
         <AdminCard className="text-sm text-muted-foreground">Tidak ada edisi yang tersedia.</AdminCard>
       </AdminPage>
     );
@@ -71,7 +76,7 @@ export default async function PagesPage() {
     : [];
   const draftByResourceId = new Map(drafts.map((draft) => [draft.resourceId, draft]));
 
-  const initialSections: PageSectionEditorItem[] = PAGE_SECTION_SLOTS.map((slot) => {
+  const initialSections: PageSectionEditorItem[] = PAGE_SECTION_SLOTS.filter((slot) => slot.pageKey !== "pendaftaran" || registrationEditionEligible(edition.year)).map((slot) => {
     const section = sectionByKey.get(slot.key);
     const draft = section ? draftByResourceId.get(section.id) : undefined;
     const published = {
@@ -93,18 +98,25 @@ export default async function PagesPage() {
       value: draftCopy ?? published,
     };
   });
+  const documentIds = initialSections.flatMap((section) => section.value.documentMediaId ? [section.value.documentMediaId] : []);
+  const [period] = await database.select({ label: organizationPeriods.label, vision: organizationPeriods.vision, missionJson: organizationPeriods.missionJson }).from(editions).innerJoin(organizationPeriods, eq(editions.organizationPeriodId, organizationPeriods.id)).where(eq(editions.id, edition.id)).limit(1);
+  const documents = documentIds.length ? await database.select().from(mediaAssets).where(inArray(mediaAssets.id, documentIds)) : [];
 
   return (
     <AdminPage
-      eyebrow="Konten"
       title="Teks halaman"
-      description={`Kelola teks tetap untuk beranda dan tentang pada ${edition.name}.`}
+
       action={<AdminBadge value={edition.lifecycle} />}
     >
       <PageSectionsEditor
+        editionId={edition.id}
+        editionYear={edition.year}
+        organizationPeriod={period ?? null}
+        key={edition.id}
+        documentAssets={documents.map(({ createdAt, updatedAt, ...asset }) => ({ ...asset, createdAt: createdAt.toISOString(), updatedAt: updatedAt.toISOString() }))}
         initialSections={initialSections}
-        canEdit={actor.effectivePermissions.has("content.edit")}
-        canPublish={actor.effectivePermissions.has("content.publish")}
+        canEdit={edition.lifecycle !== "archived" && actor.effectivePermissions.has("content.edit")}
+        canPublish={edition.lifecycle !== "archived" && actor.effectivePermissions.has("content.publish")}
       />
     </AdminPage>
   );

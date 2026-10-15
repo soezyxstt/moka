@@ -25,8 +25,7 @@ export default async function GalleriesPage(props: GalleriesPageProps) {
   if (!currentEdition) {
     return (
       <AdminPage
-        eyebrow="Galeri"
-        title="Galeri & Album Dokumentasi"
+        title="Galeri"
       >
         <div className="p-8 text-center text-muted-foreground text-sm">
           Tidak ada edisi yang aktif.
@@ -130,8 +129,7 @@ export default async function GalleriesPage(props: GalleriesPageProps) {
 
   return (
     <AdminPage
-      eyebrow="Galeri"
-      title="Galeri & Album Dokumentasi"
+      title="Galeri"
     >
       <GalleriesListClient
         key={currentEdition.id}

@@ -66,19 +66,18 @@ export function Import2025MediaPanel() {
   return (
     <AdminCard className="mb-6">
       <AdminCardHeader
-        eyebrow="Migrasi lokal"
         title="Import media 2025"
         description="Unggah media sumber ke UploadThing dan simpan referensinya di pustaka lokal. Import berjalan per batch dan berhenti jika ada file yang perlu diperiksa atau kapasitas tidak cukup."
       />
       {result ? (
         <div className="space-y-3 text-sm">
-          <p className="font-medium text-dgb-900" role="status">{getStatusLabel(result.status)}</p>
+          <p className="font-medium text-brand-900" role="status">{getStatusLabel(result.status)}</p>
           <div>
             <div className="mb-1 flex justify-between gap-3 text-xs text-muted-foreground">
               <span>Progres manifest</span>
               <span>{cursor} dari {result.totalCount}</span>
             </div>
-            <progress className="h-2 w-full accent-dgb" value={progress} max={100} aria-label="Progres import media 2025" />
+            <progress className="h-2 w-full accent-brand" value={progress} max={100} aria-label="Progres import media 2025" />
           </div>
           <p className="text-xs text-muted-foreground">
             Batch ini: {result.uploadedCount} diunggah, {result.reconciledCount} dipulihkan, {result.skippedCount} sudah tersedia.

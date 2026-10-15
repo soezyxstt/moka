@@ -7,7 +7,7 @@ export default function HeroTextWrapper({ children }: { children: React.ReactNod
   return (
     <motion.div
       className="capitalize max-w-xl text-3xl md:text-5xl"
-      initial={{ opacity: 0 }} // Initial state: invisible
+      initial={false}
       animate={{ opacity: 1 }} // Target state: fully visible
       transition={{
         delay: 0.15,

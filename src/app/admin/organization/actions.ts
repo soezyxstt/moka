@@ -7,6 +7,7 @@ import { appendAuditLog } from "@/server/auth/audit";
 import { requirePermission } from "@/server/auth/authorization";
 import { database } from "@/server/db/client";
 import { validatePeriodEditionSelection } from "@/server/organization/period-editions";
+import { preserveArchivedProfile } from "@/server/organization/profile-history";
 import {
   editions,
   mediaAssets,
@@ -1299,21 +1300,13 @@ export async function savePersonAction(formData: FormData) {
         throw new Error("Profil orang tidak ditemukan");
       }
 
-      const [archivedMembership] = await tx
-        .select({ id: organizationMemberships.id })
-        .from(organizationMemberships)
-        .innerJoin(organizationPeriods, eq(organizationMemberships.periodId, organizationPeriods.id))
-        .where(and(eq(organizationMemberships.personId, personId), eq(organizationPeriods.lifecycle, "archived")))
-        .limit(1);
-      if (archivedMembership) {
-        throw new Error("Profil yang tercatat pada periode arsip tidak dapat diubah");
-      }
-
       if (current.version !== version) {
         throw new Error("Versi data telah diperbarui oleh pengguna lain. Silakan muat ulang halaman.");
       }
 
       const nextVersion = current.version + 1;
+
+      const preservedMembershipIds = await preserveArchivedProfile(tx, current, actor.session.user.id);
 
       await tx
         .update(people)
@@ -1361,9 +1354,10 @@ export async function savePersonAction(formData: FormData) {
           shortBio,
           portraitMediaId,
           socialLinks,
+          preservedMembershipIds,
           version: nextVersion,
         },
-        changedFields: ["name", "slug", "shortBio", "portraitMediaId", "socialLinks", "version"],
+        changedFields: ["name", "slug", "shortBio", "portraitMediaId", "socialLinks", "version", ...(preservedMembershipIds.length ? ["archivedProfiles"] : [])],
         source: "admin-organization",
       });
     }

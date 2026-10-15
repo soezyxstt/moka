@@ -77,7 +77,7 @@ export function EventsDirectory({ initialEvents, canEdit }: { initialEvents: Eve
               </div>
               <div className="space-y-3 p-4">
                 <div className="flex flex-wrap items-center gap-2"><AdminBadge value={event.active ? "Aktif" : "Nonaktif"} /><AdminBadge value={`${event.galleryCount} album`} /></div>
-                <div><h2 className="font-montserrat text-lg font-semibold text-dgb-900">{event.label}</h2>{event.description ? <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{event.description}</p> : null}</div>
+                <div><h2 className="font-manrope text-lg font-semibold text-brand-900">{event.label}</h2>{event.description ? <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{event.description}</p> : null}</div>
                 <div className="flex flex-wrap gap-2">
                   <AdminLinkButton href={`/admin/content/events/${event.id}`} variant="secondary">Detail</AdminLinkButton>
                   <AdminLinkButton href={`/admin/content/galleries?eventId=${event.id}`} variant="secondary">Galeri</AdminLinkButton>

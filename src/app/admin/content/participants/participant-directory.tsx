@@ -122,24 +122,24 @@ export function ParticipantDirectory({
         <AdminCard padding="none"><AdminEmptyState icon="users" title="Tidak ada peserta" description="Ubah filter atau tambahkan pendaftar." /></AdminCard>
       ) : (
         <AdminCard padding="none" className="overflow-hidden">
-          <div className="divide-y divide-dgb-100">
+          <div className="divide-y divide-brand-100">
             {filtered.map((participant) => {
               const completeness = [participant.hasCloseup, participant.achievementsCount > 0, participant.socialLinksCount > 0, Boolean(participant.qrisMediaId), participant.titleCount > 0].filter(Boolean).length;
               return (
                 <article key={participant.id} className="grid gap-4 p-4 sm:grid-cols-[4rem_minmax(0,1fr)_auto] sm:items-center sm:p-5">
-                  <div className="relative size-16 overflow-hidden rounded-lg bg-dgb-50">
-                    {participant.portraitUrl ? <Image src={participant.portraitUrl} alt={participant.portraitAlt || participant.name} fill sizes="64px" className="object-cover" /> : <div className="grid h-full place-items-center font-montserrat text-sm font-semibold text-dgb">{participant.categoryCode}</div>}
+                  <div className="relative size-16 overflow-hidden rounded-lg bg-brand-50">
+                    {participant.portraitUrl ? <Image src={participant.portraitUrl} alt={participant.portraitAlt || participant.name} fill sizes="64px" className="object-cover" /> : <div className="grid h-full place-items-center font-manrope text-sm font-semibold text-brand">{participant.categoryCode}</div>}
                   </div>
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                     <Link
                       href={`/admin/content/participants/${participant.id}`}
-                      className="font-montserrat font-semibold text-dgb-900 hover:text-dgb"
+                      className="font-manrope font-semibold text-brand-900 hover:text-brand"
                     >
                       {participant.number}. {participant.name}
                     </Link>
                       <AdminBadge value={participant.categoryCode} />
-                      <AdminBadge value={statusLabels[participant.selectionStatus]} className={participant.selectionStatus === "eliminated" ? "border-red-200 bg-red-50 text-red-700" : undefined} />
+                      <AdminBadge value={statusLabels[participant.selectionStatus]} className={participant.selectionStatus === "eliminated" ? "border-danger-200 bg-danger-50 text-danger-700" : undefined} />
                       {!participant.active ? <AdminBadge value="Nonaktif" /> : null}
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground">{participant.currentStageName ?? "Tahap belum terhubung"} · Profil {completeness}/5 · {participant.titleCount} gelar</p>

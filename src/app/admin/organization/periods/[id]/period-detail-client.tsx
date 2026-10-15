@@ -588,39 +588,41 @@ export function PeriodDetailClient({
   return (
     <div className="space-y-6">
       {/* Top Breadcrumb & Actions */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-dgb-100 pb-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-brand-100 pb-3">
         <Link
           href="/admin/organization"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-dgb hover:underline"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand hover:underline"
         >
           <ArrowLeft size={14} /> Kembali
         </Link>
 
-        <div className="flex items-center gap-2">
-          <div className="flex rounded-md border border-border bg-muted p-0.5">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex rounded-md border border-border bg-muted p-0.5" role="group" aria-label="Tampilan kepengurusan">
             <Button
               type="button"
               variant="ghost"
               size="sm"
               onClick={() => setActiveView("tree")}
+              aria-pressed={activeView === "tree"}
               className={cn(
                 "flex items-center gap-1 rounded-xs px-2.5 py-1 text-xs font-semibold transition-colors",
-                activeView === "tree" ? "bg-white text-dgb shadow-xs" : "text-muted-foreground"
+                activeView === "tree" ? "bg-canvas text-brand shadow-xs" : "text-muted-foreground"
               )}
             >
-              <FolderTree size={13} /> Struktur Tree
+              <FolderTree size={13} /> Struktur
             </Button>
             <Button
               type="button"
               variant="ghost"
               size="sm"
               onClick={() => setActiveView("visual")}
+              aria-pressed={activeView === "visual"}
               className={cn(
                 "flex items-center gap-1 rounded-xs px-2.5 py-1 text-xs font-semibold transition-colors",
-                activeView === "visual" ? "bg-white text-dgb shadow-xs" : "text-muted-foreground"
+                activeView === "visual" ? "bg-canvas text-brand shadow-xs" : "text-muted-foreground"
               )}
             >
-              <LayoutGrid size={13} /> Bagan Visual
+              <LayoutGrid size={13} /> Bagan
             </Button>
           </div>
 
@@ -633,31 +635,31 @@ export function PeriodDetailClient({
       </div>
 
       {period.lifecycle === "archived" ? (
-        <p className="rounded-md border border-fb-200 bg-fb-50 px-3 py-2 text-xs text-fb-900">
+        <p className="rounded-md border border-highlight-200 bg-highlight-50 px-3 py-2 text-xs text-highlight-900">
           Periode arsip hanya dapat dilihat.
         </p>
       ) : null}
 
       {/* Period Metadata Card */}
-      <div className="rounded-xl border border-dgb-100 bg-white p-5 shadow-xs">
+      <div className="rounded-xl border border-brand-100 bg-canvas p-5 shadow-xs">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <AdminBadge value={period.lifecycle} />
-              <span className="text-xs font-semibold text-fb-700">
+              <span className="text-xs font-semibold text-highlight-700">
                 Masa Bakti: {period.startYear} - {period.endYear}
               </span>
             </div>
-            <h2 className="font-montserrat text-2xl font-bold text-dgb-900">{period.label}</h2>
+            <h2 className="font-manrope text-2xl font-bold text-brand-900">{period.label}</h2>
             {period.vision ? (
               <p className="max-w-3xl text-xs leading-relaxed text-muted-foreground">
-                <strong className="text-dgb">Visi:</strong> {period.vision}
+                <strong className="text-brand">Visi:</strong> {period.vision}
               </p>
             ) : null}
 
             {missionsList.length > 0 ? (
               <div className="mt-2 space-y-1">
-                <span className="text-xs font-semibold text-dgb">Misi Organisasi:</span>
+                <span className="text-xs font-semibold text-brand">Misi Organisasi:</span>
                 <ul className="list-inside list-disc space-y-0.5 text-xs text-muted-foreground">
                   {missionsList.map((m, idx) => (
                     <li key={idx}>{m}</li>
@@ -674,35 +676,35 @@ export function PeriodDetailClient({
                 variant="outline"
                 size="sm"
                 onClick={() => setIsEditPeriodOpen(true)}
-                className="h-8 text-xs border-dgb-200 text-dgb hover:bg-dgb-50"
+                className="h-8 text-xs border-brand-200 text-brand hover:bg-brand-50"
               >
-                <Edit2 size={13} className="mr-1.5" /> Edit metadata periode
+                <Edit2 size={13} className="mr-1.5" /> Ubah periode
               </Button>
             ) : null}
 
-            <div className="rounded-lg bg-dgb-50/50 p-3 text-xs">
+            <div className="rounded-lg bg-brand-50/50 p-3 text-xs">
               <div className="flex items-center justify-between gap-3">
-                <p className="font-semibold text-dgb">Edisi terhubung</p>
+                <p className="font-semibold text-brand">Edisi terhubung</p>
                 {canEditPeriod ? (
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
                     onClick={openEditionDialog}
-                    className="h-7 px-2 text-[11px] text-dgb hover:bg-dgb-100"
+                    className="h-7 px-2 text-xs text-brand hover:bg-brand-100"
                   >
                     Atur
                   </Button>
                 ) : null}
               </div>
               {connectedEditions.length === 0 ? (
-                <p className="text-[11px] text-muted-foreground italic mt-0.5">Belum ada edisi terhubung.</p>
+                <p className="text-xs text-muted-foreground italic mt-0.5">Belum ada edisi terhubung.</p>
               ) : (
                 <div className="mt-1 flex flex-wrap gap-1.5">
                   {connectedEditions.map((ed) => (
                     <span
                       key={ed.id}
-                      className="rounded-md border border-dgb-200 bg-white px-2 py-0.5 text-[11px] font-medium text-dgb-900"
+                      className="rounded-md border border-brand-200 bg-canvas px-2 py-0.5 text-xs font-medium text-brand-900"
                     >
                       {ed.name} ({ed.year})
                     </span>
@@ -720,7 +722,7 @@ export function PeriodDetailClient({
       {activeView === "tree" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-montserrat text-lg font-bold text-dgb-900">
+            <h3 className="font-manrope text-lg font-bold text-brand-900">
               Hierarki Struktur Unit & Penugasan Pengurus
             </h3>
             <span className="text-xs text-muted-foreground">
@@ -772,11 +774,11 @@ export function PeriodDetailClient({
       {/* VISUAL ORGANOGRAM PREVIEW */}
       {/* ===================================================================== */}
       {activeView === "visual" && (
-        <div className="rounded-xl border border-dgb-100 bg-dgb-50/20 p-6 overflow-x-auto">
+        <div className="rounded-xl border border-brand-100 bg-brand-50/20 p-6 overflow-x-auto">
           <div className="min-w-[700px] text-center">
-            <div className="inline-block rounded-xl border-2 border-dgb bg-dgb px-6 py-3 text-white shadow-md">
-              <h4 className="font-montserrat text-base font-bold">{period.label}</h4>
-              <p className="text-xs text-white/80">Visi: {period.vision || "Nu Nyunda Tur Nyakola"}</p>
+            <div className="inline-block rounded-xl border-2 border-brand bg-brand px-6 py-3 text-canvas shadow-md">
+              <h4 className="font-manrope text-base font-bold">{period.label}</h4>
+              {period.vision ? <p className="text-xs text-canvas/80">Visi: {period.vision}</p> : null}
             </div>
 
             {treeRoots.length > 0 ? (
@@ -795,7 +797,7 @@ export function PeriodDetailClient({
       <Dialog open={isEditionDialogOpen} onOpenChange={setIsEditionDialogOpen}>
         <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle className="font-montserrat text-lg font-bold text-dgb-900">
+            <DialogTitle className="font-manrope text-lg font-bold text-brand-900">
               Edisi terhubung
             </DialogTitle>
             <DialogDescription>Pilih edisi untuk periode ini.</DialogDescription>
@@ -834,7 +836,7 @@ export function PeriodDetailClient({
                     </label>
 
                     {selected && belongsElsewhere ? (
-                      <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-md bg-fb-50 p-2.5">
+                      <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-md bg-highlight-50 p-2.5">
                         <Checkbox
                           checked={reassignmentConfirmed}
                           onCheckedChange={(checked) =>
@@ -846,7 +848,7 @@ export function PeriodDetailClient({
                           }
                           aria-label={`Konfirmasi pemindahan ${edition.name} ${edition.year}`}
                         />
-                        <span className="text-xs text-fb-900">
+                        <span className="text-xs text-highlight-900">
                           Pindahkan dari {edition.organizationPeriodLabel ?? "periode lain"}
                         </span>
                       </label>
@@ -879,7 +881,7 @@ export function PeriodDetailClient({
       <Sheet open={isUnitSheetOpen} onOpenChange={setIsUnitSheetOpen}>
         <SheetContent side="right" className={cn("w-full sm:max-w-md overflow-y-auto", adminNativeScrollbarClassName)}>
           <SheetHeader className="border-b border-border pb-4">
-            <SheetTitle className="font-montserrat text-lg font-bold text-dgb-900">
+            <SheetTitle className="font-manrope text-lg font-bold text-brand-900">
               {editingUnit ? "Edit Unit Organisasi" : "Tambah Unit Baru"}
             </SheetTitle>
             <SheetDescription className="text-xs text-muted-foreground">
@@ -903,7 +905,7 @@ export function PeriodDetailClient({
                 value={unitParentId ?? ""}
                 onValueChange={(nextParentId) => setUnitParentId(nextParentId || null)}
                 options={[
-                  { value: "", label: "Unit Utama (Tingkat 1 - Root)" },
+                  { value: "", label: "Unit utama (Tingkat 1 - Root)" },
                   ...units
                     .filter((u) => !editingUnit || u.id !== editingUnit.id)
                     .map((u) => {
@@ -963,7 +965,7 @@ export function PeriodDetailClient({
       <Sheet open={isMemberSheetOpen} onOpenChange={setIsMemberSheetOpen}>
         <SheetContent side="right" className={cn("w-full sm:max-w-md overflow-y-auto", adminNativeScrollbarClassName)}>
           <SheetHeader className="border-b border-border pb-4">
-            <SheetTitle className="font-montserrat text-lg font-bold text-dgb-900">
+            <SheetTitle className="font-manrope text-lg font-bold text-brand-900">
               {editingMember ? "Edit Penugasan Pengurus" : "Tugaskan Pengurus ke Unit"}
             </SheetTitle>
             <SheetDescription className="text-xs text-muted-foreground">
@@ -984,12 +986,13 @@ export function PeriodDetailClient({
             </AdminField>
 
             <div className="space-y-2">
-              <label className="block text-xs font-semibold text-foreground">
+              <label htmlFor="period-person-search" className="block text-xs font-semibold text-foreground">
                 Pilih profil orang
               </label>
               <div className="relative">
                 <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <AdminInput
+                  id="period-person-search"
                   placeholder="Cari profil..."
                   value={personSearchQuery}
                   onChange={(e) => setPersonSearchQuery(e.target.value)}
@@ -999,7 +1002,7 @@ export function PeriodDetailClient({
               </div>
 
               <div
-                role="listbox"
+                role="group"
                 aria-label="Pilih profil orang"
                 className={cn("max-h-44 overflow-y-auto rounded-md border border-input p-1 space-y-1 bg-background", adminNativeScrollbarClassName)}
               >
@@ -1015,12 +1018,11 @@ export function PeriodDetailClient({
                       variant="ghost"
                       size="default"
                       onClick={() => setMemberPersonId(opt.id)}
-                      role="option"
-                      aria-selected={memberPersonId === opt.id}
+                      aria-pressed={memberPersonId === opt.id}
                       className={cn(
                         "flex h-auto w-full items-center gap-2.5 rounded-md p-2 text-left text-xs whitespace-normal transition-colors",
                         memberPersonId === opt.id
-                          ? "bg-dgb text-white font-semibold"
+                          ? "bg-brand text-canvas font-semibold"
                           : "hover:bg-muted text-foreground"
                       )}
                     >
@@ -1093,7 +1095,7 @@ export function PeriodDetailClient({
       <Dialog open={isEditPeriodOpen} onOpenChange={setIsEditPeriodOpen}>
         <DialogContent className={cn("sm:max-w-lg max-h-[85vh] overflow-y-auto", adminNativeScrollbarClassName)}>
           <DialogHeader>
-            <DialogTitle className="font-montserrat text-base font-bold text-dgb-900">
+            <DialogTitle className="font-manrope text-base font-bold text-brand-900">
               Edit Metadata Periode
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
@@ -1128,9 +1130,9 @@ export function PeriodDetailClient({
                 value={editLifecycle}
                 onValueChange={(nextLifecycle) => setEditLifecycle(nextLifecycle as PeriodLifecycle)}
                 options={[
-                  { value: "draft", label: "Draft (Konseptual)" },
-                  { value: "active", label: "Active (Sedang Berjalan)" },
-                  { value: "archived", label: "Archived (Arsip)" },
+                  { value: "draft", label: "Draf" },
+                  { value: "active", label: "Aktif" },
+                  { value: "archived", label: "Arsip" },
                 ]}
               />
             </AdminField>
@@ -1151,7 +1153,7 @@ export function PeriodDetailClient({
                   variant="ghost"
                   size="sm"
                   onClick={() => setEditMissions([...editMissions, ""])}
-                  className="h-auto rounded-none px-0 py-0 text-xs font-semibold text-dgb hover:underline"
+                  className="h-auto rounded-none px-0 py-0 text-xs font-semibold text-brand hover:underline"
                 >
                   <Plus size={12} /> Tambah misi
                 </Button>
@@ -1159,7 +1161,7 @@ export function PeriodDetailClient({
               <div className="space-y-2">
                 {editMissions.map((m, idx) => (
                   <div key={idx} className="flex items-center gap-2">
-                    <span className="grid size-5 shrink-0 place-items-center rounded-full bg-dgb-50 text-[10px] font-bold text-dgb">
+                    <span className="grid size-5 shrink-0 place-items-center rounded-full bg-brand-50 text-xs font-bold text-brand">
                       {idx + 1}
                     </span>
                     <AdminInput
@@ -1202,7 +1204,7 @@ export function PeriodDetailClient({
                         size="icon"
                         onClick={() => setEditMissions(editMissions.filter((_, i) => i !== idx))}
                         aria-label={`Hapus misi ${idx + 1}`}
-                        className="size-7 rounded-md p-0 text-muted-foreground hover:text-rose-600"
+                        className="size-7 rounded-md p-0 text-muted-foreground hover:text-danger-600"
                       >
                         <Trash2 size={13} />
                       </Button>
@@ -1236,8 +1238,8 @@ export function PeriodDetailClient({
       <AlertDialog open={Boolean(deletingUnit)} onOpenChange={(open) => !open && setDeletingUnit(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-montserrat text-base font-bold text-destructive">
-              Hapus Unit Organisasi?
+            <AlertDialogTitle className="font-manrope text-base font-bold text-destructive">
+              Hapus unit Organisasi?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-xs text-muted-foreground">
               Unit <strong>{deletingUnit?.name}</strong> beserta seluruh sub-unit dan penugasan pengurus di dalamnya akan dihapus.
@@ -1247,7 +1249,7 @@ export function PeriodDetailClient({
             <AlertDialogCancel className="text-xs">Batal</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteUnit}
-              className="bg-destructive text-xs text-white hover:bg-destructive/90"
+              className="bg-destructive text-xs text-canvas hover:bg-destructive/90"
             >
               Hapus unit
             </AlertDialogAction>
@@ -1261,8 +1263,8 @@ export function PeriodDetailClient({
       <AlertDialog open={Boolean(deletingMember)} onOpenChange={(open) => !open && setDeletingMember(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-montserrat text-base font-bold text-destructive">
-              Hapus Penugasan Pengurus?
+            <AlertDialogTitle className="font-manrope text-base font-bold text-destructive">
+              Hapus penugasan Pengurus?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-xs text-muted-foreground">
               Cabut penugasan <strong>{deletingMember?.personName}</strong> sebagai <strong>{deletingMember?.title}</strong>? Profil orang tetap tersimpan di direktori.
@@ -1272,7 +1274,7 @@ export function PeriodDetailClient({
             <AlertDialogCancel className="text-xs">Batal</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteMember}
-              className="bg-destructive text-xs text-white hover:bg-destructive/90"
+              className="bg-destructive text-xs text-canvas hover:bg-destructive/90"
             >
               Cabut penugasan
             </AlertDialogAction>
@@ -1317,13 +1319,13 @@ function UnitTreeRow({
   const depthPadding = (node.depth - 1) * 20;
 
   return (
-    <div className="rounded-xl border border-dgb-100 bg-white shadow-xs overflow-hidden">
+    <div className="rounded-xl border border-brand-100 bg-canvas shadow-xs overflow-hidden">
       {/* Unit Header Bar */}
       <div
         style={{ paddingLeft: `${16 + depthPadding}px` }}
         className={cn(
           "flex flex-wrap items-center justify-between gap-3 p-3.5 border-b border-border/60 transition-colors",
-          node.depth === 1 ? "bg-dgb-50/40" : node.depth === 2 ? "bg-muted/30" : "bg-white"
+          node.depth === 1 ? "bg-brand-50/40" : node.depth === 2 ? "bg-muted/30" : "bg-canvas"
         )}
       >
         <div className="flex items-center gap-2.5">
@@ -1346,20 +1348,20 @@ function UnitTreeRow({
           <div className="flex items-center gap-2">
             <span
               className={cn(
-                "rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase",
+                "rounded-md px-1.5 py-0.5 text-xs font-bold uppercase",
                 node.depth === 1
-                  ? "bg-dgb text-white"
+                  ? "bg-brand text-canvas"
                   : node.depth === 2
-                  ? "bg-dgb-100 text-dgb-900"
+                  ? "bg-brand-100 text-brand-900"
                   : "bg-muted text-muted-foreground"
               )}
             >
               Level {node.depth}
             </span>
-            <h4 className="font-montserrat text-sm font-bold text-dgb-900">{node.name}</h4>
+            <h4 className="font-manrope text-sm font-bold text-brand-900">{node.name}</h4>
           </div>
 
-          <span className="text-[11px] text-muted-foreground">
+          <span className="text-xs text-muted-foreground">
             ({node.members.length} pengurus · {node.children.length} sub-unit)
           </span>
         </div>
@@ -1398,7 +1400,7 @@ function UnitTreeRow({
                 size="sm"
                 onClick={() => onAddSubunit(node)}
                 aria-label={`Tambah sub-unit pada ${node.name}`}
-                className="h-7 px-2 text-xs border-dgb-200 text-dgb hover:bg-dgb-50"
+                className="h-7 px-2 text-xs border-brand-200 text-brand hover:bg-brand-50"
               >
                 <Plus size={12} className="mr-1" /> Sub-unit
               </Button>
@@ -1409,7 +1411,7 @@ function UnitTreeRow({
               size="sm"
               onClick={() => onAssignMember(node.id)}
               aria-label={`Tambah pengurus pada ${node.name}`}
-              className="h-7 bg-dgb px-2.5 text-xs text-white hover:bg-dgb-600"
+              className="h-7 bg-brand px-2.5 text-xs text-canvas hover:bg-brand-600"
             >
               <UserPlus size={12} className="mr-1" /> Tambah pengurus
             </Button>
@@ -1431,7 +1433,7 @@ function UnitTreeRow({
               size="icon"
               onClick={() => onDeleteUnit(node)}
               aria-label={`Hapus ${node.name}`}
-              className="size-7 rounded-md p-0 text-muted-foreground hover:bg-rose-50 hover:text-rose-700"
+              className="size-7 rounded-md p-0 text-muted-foreground hover:bg-danger-50 hover:text-danger-700"
               title="Hapus unit"
             >
               <Trash2 size={13} />
@@ -1452,10 +1454,10 @@ function UnitTreeRow({
               {node.members.map((member) => (
                 <div
                   key={member.id}
-                  className="flex items-center justify-between rounded-lg border border-border bg-white p-2.5 shadow-2xs"
+                  className="flex items-center justify-between rounded-lg border border-border bg-canvas p-2.5 shadow-2xs"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="relative size-9 shrink-0 overflow-hidden rounded-full border border-dgb-100 bg-muted">
+                    <div className="relative size-9 shrink-0 overflow-hidden rounded-full border border-brand-100 bg-muted">
                       {member.portraitUrl ? (
                         <Image
                           src={member.portraitUrl}
@@ -1465,16 +1467,16 @@ function UnitTreeRow({
                           className="object-cover"
                         />
                       ) : (
-                        <div className="grid size-full place-items-center text-dgb">
+                        <div className="grid size-full place-items-center text-brand">
                           <User size={16} />
                         </div>
                       )}
                     </div>
                     <div className="min-w-0">
-                      <p className="truncate text-xs font-bold text-dgb-900" title={member.personName}>
+                      <p className="truncate text-xs font-bold text-brand-900" title={member.personName}>
                         {member.personName}
                       </p>
-                      <p className="truncate text-[11px] font-semibold text-fb-700" title={member.title}>
+                      <p className="truncate text-xs font-semibold text-highlight-700" title={member.title}>
                         {member.title}
                       </p>
                     </div>
@@ -1499,7 +1501,7 @@ function UnitTreeRow({
                         size="icon"
                         onClick={() => onDeleteMember(member)}
                         aria-label={`Cabut penugasan ${member.personName}`}
-                        className="size-6 rounded-md p-0 text-muted-foreground hover:bg-rose-50 hover:text-rose-700"
+                        className="size-6 rounded-md p-0 text-muted-foreground hover:bg-danger-50 hover:text-danger-700"
                         title="Cabut penugasan"
                       >
                         <Trash2 size={12} />
@@ -1553,16 +1555,16 @@ function VisualOrganogramNode({ node }: { node: TreeNode }) {
   return (
     <div className="flex flex-col items-center">
       {/* Unit Box */}
-      <div className="w-56 rounded-xl border border-dgb-200 bg-white p-3.5 shadow-sm text-left">
+      <div className="w-56 rounded-xl border border-brand-200 bg-canvas p-3.5 shadow-sm text-left">
         <div className="flex items-center justify-between">
-          <span className="rounded-sm bg-dgb-50 px-1.5 py-0.2 text-[9px] font-bold text-dgb uppercase">
+          <span className="rounded-sm bg-brand-50 px-1.5 py-0.2 text-xs font-bold text-brand uppercase">
             Level {node.depth}
           </span>
-          <span className="text-[10px] text-muted-foreground font-semibold">
+          <span className="text-xs text-muted-foreground font-semibold">
             {node.members.length} Orang
           </span>
         </div>
-        <h5 className="mt-1 font-montserrat text-xs font-bold text-dgb-900 line-clamp-2">
+        <h5 className="mt-1 font-manrope text-xs font-bold text-brand-900 line-clamp-2">
           {node.name}
         </h5>
 
@@ -1580,8 +1582,8 @@ function VisualOrganogramNode({ node }: { node: TreeNode }) {
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[10px] font-bold text-foreground">{m.personName}</p>
-                  <p className="truncate text-[9px] text-fb-700 font-medium">{m.title}</p>
+                  <p className="truncate text-xs font-bold text-foreground">{m.personName}</p>
+                  <p className="truncate text-xs text-highlight-700 font-medium">{m.title}</p>
                 </div>
               </div>
             ))}
@@ -1591,7 +1593,7 @@ function VisualOrganogramNode({ node }: { node: TreeNode }) {
 
       {/* Children branches */}
       {node.children.length > 0 ? (
-        <div className="mt-4 flex gap-4 pt-4 border-t-2 border-dgb-200">
+        <div className="mt-4 flex gap-4 pt-4 border-t-2 border-brand-200">
           {node.children.map((child) => (
             <VisualOrganogramNode key={child.id} node={child} />
           ))}

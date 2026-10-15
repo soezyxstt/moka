@@ -7,6 +7,7 @@ import { getAdminEditionContext } from "@/server/cms/context";
 import { database } from "@/server/db/client";
 import {
   categories,
+  pageSections,
   editionTitles,
   editions,
   mediaAssets,
@@ -238,13 +239,14 @@ export default async function ParticipantDetailPage(props: Props) {
     })),
   };
 
+  const [identity] = await database.select({ signature: pageSections.eyebrow }).from(pageSections).where(and(eq(pageSections.editionId, editionRow.id), eq(pageSections.pageKey, "site"), eq(pageSections.sectionKey, "identity"), eq(pageSections.status, "published"))).limit(1);
   return (
     <AdminPage
-      eyebrow="Peserta"
-      title={`Profil Peserta #${String(participantDetail.number).padStart(2, "0")}`}
+      title={`Profil peserta #${String(participantDetail.number).padStart(2, "0")}`}
       action={<AdminBadge value={editionRow.lifecycle} />}
     >
       <ParticipantDetailWorkspace
+        signature={identity?.signature ?? null}
         edition={{
           id: editionRow.id,
           year: editionRow.year,

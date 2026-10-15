@@ -32,19 +32,19 @@ export function DataTable<TData, TValue>({
   })
 
   return (
-    <div className="rounded-md border border-white backdrop-blur-sm bg-black/5">
+    <div className="rounded-md border border-canvas backdrop-blur-sm bg-ink/5">
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id} className='border-white'>
+            <TableRow key={headerGroup.id} className='border-canvas'>
               {/* {withNumbering && (
-                <TableHead className="text-white">
+                <TableHead className="text-canvas">
                   No.
                 </TableHead>
               )} */}
               {headerGroup.headers.map((header) => {
                 return (
-                  <TableHead key={header.id} className='text-white'>
+                  <TableHead key={header.id} className='text-canvas'>
                     {header.isPlaceholder
                       ? null
                       : flexRender(
@@ -63,7 +63,7 @@ export function DataTable<TData, TValue>({
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
-                className='border-white'
+                className='border-canvas'
               >
                 {/* {withNumbering && (
                   <TableCell className="text-center">
@@ -80,7 +80,7 @@ export function DataTable<TData, TValue>({
           ) : (
             <TableRow>
               <TableCell colSpan={columns.length} className="h-24 text-center">
-                No results.
+                Tidak ada hasil.
               </TableCell>
             </TableRow>
           )}

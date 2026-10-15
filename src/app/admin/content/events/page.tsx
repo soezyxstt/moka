@@ -16,8 +16,7 @@ export default async function EventsPage() {
   if (!currentEdition) {
     return (
       <AdminPage
-        eyebrow="Acara"
-        title="Acara & Rangkaian Kegiatan"
+        title="Rangkaian acara"
       >
         <div className="p-8 text-center text-muted-foreground text-sm">
           Tidak ada edisi yang aktif.
@@ -87,7 +86,6 @@ export default async function EventsPage() {
 
   return (
     <AdminPage
-      eyebrow="Acara"
       title="Rangkaian acara"
     >
       <EventsDirectory

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { requirePermission } from "@/server/auth/authorization";
 import { getAdminEditionContext } from "@/server/cms/context";
-import { repair2025StageNumbers } from "@/server/cms/import-2025";
+import { get2025EditionId, repair2025StageNumbers } from "@/server/cms/import-2025";
 import { database } from "@/server/db/client";
 import {
   closeSelectionStage,
@@ -140,7 +140,7 @@ export async function rollbackStageDecisionAction(formData: FormData) {
 
 export async function repair2025StageNumbersAction(): Promise<void> {
   const { actor, edition } = await getSelectionContext();
-  if (process.env.NODE_ENV === "production" || process.env.TURSO_DATABASE_URL !== "file:local.db" || edition.year !== 2025 || edition.slug !== "2025") {
+  if (process.env.NODE_ENV === "production" || process.env.TURSO_DATABASE_URL !== "file:local.db" || edition.id !== get2025EditionId() || edition.year !== 2025 || edition.slug !== "2025") {
     throw new Error("Perbaikan ini hanya tersedia untuk edisi 2025 pada database lokal");
   }
   await database.transaction((tx) => repair2025StageNumbers(tx, actor));

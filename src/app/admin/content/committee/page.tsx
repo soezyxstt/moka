@@ -27,7 +27,6 @@ export default async function CommitteePage() {
   if (!edition) {
     return (
       <AdminPage
-        eyebrow="Konten"
         title="Panitia"
       >
         <AdminCard padding="none">
@@ -119,7 +118,6 @@ export default async function CommitteePage() {
 
   return (
     <AdminPage
-      eyebrow="Konten"
       title="Panitia"
     >
       <CommitteeWorkspaceClient

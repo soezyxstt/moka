@@ -1,12 +1,12 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
-export type SectionOverlay = 'none' | 'dgb' | 'fb' | 'dark';
+export type SectionOverlay = 'none' | 'brand' | 'highlight' | 'dark';
 
 const overlayClasses: Record<Exclude<SectionOverlay, 'none'>, string> = {
-  dgb: 'bg-dgb-50/90',
-  fb: 'bg-fb-50/90',
-  dark: 'bg-black/50',
+  brand: 'bg-brand-50/90',
+  highlight: 'bg-highlight-50/90',
+  dark: 'bg-ink/50',
 };
 
 type SectionProps = {
@@ -39,7 +39,7 @@ export function Vignette({ className }: { className?: string }) {
     <div
       aria-hidden
       className={cn(
-        'pointer-events-none fixed inset-x-0 top-0 z-0 h-[100lvh] w-full bg-radial-[at_50%_50%] from-transparent to-90% to-dgb-800',
+        'pointer-events-none fixed inset-x-0 top-0 z-0 h-[100lvh] w-full bg-radial-[at_50%_50%] from-transparent to-90% to-brand-800',
         className
       )}
     />

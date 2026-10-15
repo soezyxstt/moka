@@ -1,23 +1,36 @@
 import type { Metadata } from "next";
+import type { CSSProperties } from "react";
 import "./globals.css";
 import { Navbar } from '@/components/navbar';
 import Footer from '@/components/footer';
-import { inter, montserrat } from '@/style/font';
+import { inter, manrope } from '@/style/font';
 import { ScrollToTopButton } from '@/components/scroll-to-top';
 import Lenis from '@/components/lenis';
 import 'react-lite-youtube-embed/dist/LiteYouTubeEmbed.css';
 import { Toaster } from '@/components/ui/sonner';
 import Script from "next/script";
 import { SiteChrome } from '@/components/site-chrome';
-import { getPublicNavigation } from '@/server/cms/public-readers';
+import { getPreviewEditionId } from '@/server/cms/preview';
+import { stopPreviewAction } from '@/app/admin/content/editions/preview-actions';
+import { Button } from '@/components/custom/button';
+import { getPublicNavigation, getPublicSiteIdentity } from '@/server/cms/public-readers';
+import { brandMetadata, resolveBrandLogos } from '@/server/cms/brand-assets';
+import { AdminBrandProvider } from '@/components/admin/branding';
 
-export const metadata: Metadata = {
+export async function generateMetadata(): Promise<Metadata> {
+  const identity = await getPublicSiteIdentity();
+  const branding = brandMetadata(identity.assets);
+  return {
+  ...branding,
+  ...(await getPreviewEditionId() ? { robots: { index: false, follow: false } } : {}),
   title: {
-    default: "PAMOKA Garut",
+    default: identity.title,
     template: "%s | MOKA Garut",
   },
-  description: "Official website Paguyuban Mojang Jajaka Kabupaten Garut",
-};
+  description: identity.description,
+  openGraph: { ...branding.openGraph, title: identity.title, description: identity.description },
+  };
+}
 
 export default async function RootLayout({
   children,
@@ -25,9 +38,11 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const navigation = await getPublicNavigation();
+  const identity = await getPublicSiteIdentity();
+  const logos = resolveBrandLogos(identity.assets, identity.edition);
 
   return (
-    <html lang="id" suppressHydrationWarning>
+    <html lang="id" data-edition-year={navigation.edition.year} style={identity.palette ? { '--palette-dark': identity.palette.dark, '--palette-light': identity.palette.light } as CSSProperties : undefined} suppressHydrationWarning>
       {/* Google Analytics Tag */}
       <Script
         async
@@ -47,24 +62,27 @@ export default async function RootLayout({
         }}
       />
       <body
-        className={`${montserrat.variable} ${inter.variable} antialiased font-inter`}
+        className={`${manrope.variable} ${inter.variable} antialiased font-inter`}
       >
+        {await getPreviewEditionId() ? <div className="fixed inset-x-0 bottom-0 z-50 flex flex-wrap items-center justify-center gap-4 bg-brand-900 p-3 text-sm text-canvas"><span>Pratinjau edisi {navigation.edition.year}, hanya untuk admin</span><form action={stopPreviewAction}><Button type="submit" size="sm">Tutup pratinjau</Button></form></div> : null}
+        <AdminBrandProvider value={{ title: identity.title, slogan: navigation.edition.slogan, logo: logos.mobile, background: identity.assets['site.profile.bg']?.url ?? null }}>
         <SiteChrome
           top={
             <>
-              <Navbar categories={navigation.categories} events={navigation.events} resultsVisible={navigation.resultsVisible} edition={navigation.edition} />
+              <Navbar participantKind={navigation.participantKind} registrationVisible={navigation.registrationVisible} categories={navigation.categories} events={navigation.events} resultsVisible={navigation.resultsVisible} edition={navigation.edition} desktopLogo={logos.desktop} mobileLogo={logos.mobile} />
               <Lenis />
             </>
           }
           bottom={
             <>
               <ScrollToTopButton />
-              <Footer categories={navigation.categories} events={navigation.events} edition={navigation.edition} aboutDescription={navigation.aboutDescription} resultsVisible={navigation.resultsVisible} />
+              <Footer participantKind={navigation.participantKind} registrationVisible={navigation.registrationVisible} categories={navigation.categories} events={navigation.events} edition={navigation.edition} logo={logos.footer} aboutDescription={navigation.aboutDescription} resultsVisible={navigation.resultsVisible} contacts={identity.contacts} signature={identity.signature} />
             </>
           }
         >
           {children}
         </SiteChrome>
+        </AdminBrandProvider>
         <Toaster />
       </body>
     </html>

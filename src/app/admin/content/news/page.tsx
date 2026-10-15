@@ -49,7 +49,6 @@ export default async function NewsPage() {
 
   return (
     <AdminPage
-      eyebrow="Konten"
       title="Berita"
       action={
         currentEdition ? (

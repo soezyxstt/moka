@@ -23,9 +23,9 @@
     "db:inspect": "tsx scripts/inspect-libsql.ts",
     "cms:import:2025": "tsx scripts/import-2025-cms.ts",
     "db:backup:turso": "tsx scripts/backup-turso.ts",
+    "db:verify:backup": "tsx scripts/verify-turso-backup.ts",
     "db:migrate:turso": "tsx scripts/migrate-turso.ts",
     "cms:upload:media": "tsx scripts/upload-public-media.ts",
-    "cms:apply:2025": "tsx scripts/apply-2025-content.ts",
     "cms:backfill:selection": "tsx scripts/backfill-selection-stages.ts",
     "cms:verify:production": "tsx scripts/verify-production-cms.ts"
   },

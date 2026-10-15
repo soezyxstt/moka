@@ -103,8 +103,8 @@ export function AdminMediaUploader({
   };
 
   const panelClass = variant === "library"
-    ? "border-dgb-100 bg-dgb-50/20"
-    : "border-dgb-200 bg-dgb-50/25";
+    ? "border-brand-100 bg-brand-50/20"
+    : "border-brand-200 bg-brand-50/25";
 
   return (
     <div
@@ -117,17 +117,17 @@ export function AdminMediaUploader({
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-2.5">
-          <span className="grid size-8 shrink-0 place-items-center rounded-md bg-dgb text-white">
+          <span className="grid size-8 shrink-0 place-items-center rounded-md bg-brand text-canvas">
             <UploadCloud size={15} />
           </span>
           <div className="min-w-0">
-            <p className="text-xs font-semibold text-dgb-900">Unggah media</p>
-            <p className="truncate text-[11px] text-muted-foreground">Folder tujuan: {folderName}</p>
+            <p className="text-xs font-semibold text-brand-900">Unggah media</p>
+            <p className="truncate text-xs text-muted-foreground">Folder tujuan: {folderName}</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {allowedKinds.length > 1 ? (
-            <div className="flex rounded-md border border-border bg-white p-0.5" aria-label="Tipe upload">
+            <div className="flex rounded-md border border-border bg-canvas p-0.5" aria-label="Tipe upload">
               {allowedKinds.map((kind) => (
                 <Button
                   key={kind}
@@ -140,8 +140,8 @@ export function AdminMediaUploader({
                     setFiles([]);
                   }}
                   className={cn(
-                    "h-auto rounded-sm px-2 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-dgb-200",
-                    uploadKind === kind ? "bg-dgb text-white" : "text-muted-foreground hover:text-dgb",
+                    "h-auto rounded-sm px-2 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-200",
+                    uploadKind === kind ? "bg-brand text-canvas" : "text-muted-foreground hover:text-brand",
                   )}
                 >
                   {uploadLabel(kind)}
@@ -155,7 +155,7 @@ export function AdminMediaUploader({
             variant="outline"
             size="sm"
             disabled={isUploading}
-            className="h-8 border-dgb-200 bg-white text-xs text-dgb hover:bg-dgb-50"
+            className="h-8 border-brand-200 bg-canvas text-xs text-brand hover:bg-brand-50"
             onClick={() => inputRef.current?.click()}
           >
             {uploadIcon(uploadKind)} Pilih file
@@ -163,17 +163,17 @@ export function AdminMediaUploader({
         </div>
       </div>
 
-      <div className={cn("mt-3 rounded-md border border-dashed px-3 py-3 text-center transition-colors", isDragging ? "border-fb-400 bg-fb-50" : "border-dgb-100 bg-white/70")}>
-        <p className="text-[11px] text-muted-foreground">
+      <div className={cn("mt-3 rounded-md border border-dashed px-3 py-3 text-center transition-colors", isDragging ? "border-highlight-400 bg-highlight-50" : "border-brand-100 bg-canvas/70")}>
+        <p className="text-xs text-muted-foreground">
           Tarik file ke area ini atau pilih dari perangkat. Maksimal {mediaPolicy[uploadKind].maxFileCount} file, {mediaSizeLabel(uploadKind)} per file.
         </p>
         {files.length > 0 ? (
           <div className="mt-2 flex flex-wrap justify-center gap-1.5">
             {files.map((file) => (
-              <span key={`${file.name}-${file.lastModified}`} className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-dgb-100 bg-dgb-50 px-2 py-1 text-[11px] font-medium text-dgb-800">
+              <span key={`${file.name}-${file.lastModified}`} className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-brand-100 bg-brand-50 px-2 py-1 text-xs font-medium text-brand-800">
                 {uploadIcon(uploadKind)}
                 <span className="max-w-40 truncate">{file.name}</span>
-                <Button type="button" variant="ghost" size="icon" disabled={isUploading} aria-label={`Hapus ${file.name}`} className="size-5 rounded-sm p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-dgb-200" onClick={() => setFiles((current) => current.filter((item) => item !== file))}>
+                <Button type="button" variant="ghost" size="icon" disabled={isUploading} aria-label={`Hapus ${file.name}`} className="size-5 rounded-sm p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-200" onClick={() => setFiles((current) => current.filter((item) => item !== file))}>
                   <X size={12} />
                 </Button>
               </span>
@@ -183,7 +183,7 @@ export function AdminMediaUploader({
         <Button
           type="button"
           disabled={files.length === 0 || isUploading}
-          className="mt-2 h-8 bg-dgb px-3 text-xs text-white hover:bg-dgb-600"
+          className="mt-2 h-8 bg-brand px-3 text-xs text-canvas hover:bg-brand-600"
           onClick={() => void startUpload(files, { folderId })}
         >
           {isUploading ? "Mengunggah..." : files.length > 0 ? `Unggah ${files.length} file` : "Pilih file dahulu"}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { ArrowUpRight, ChevronDown, ChevronRight, Menu } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, ChevronDown, ChevronRight, Menu } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -13,6 +13,7 @@ import { AdminScrollArea, adminNativeScrollbarClassName } from "./admin-scroll-a
 import { AdminIcon, type AdminIconName } from "./icons";
 import { AdminEditionSelector } from "./edition-selector";
 import type { AdminEditionContext } from "@/server/cms/context";
+import { useAdminBranding, type AdminBranding } from "./branding";
 
 export type AdminNavItem = {
   href: string;
@@ -72,18 +73,22 @@ const contentNavigationStore = {
 };
 
 export function AdminShell({
+  branding: editionBranding,
   children,
   links,
   user,
   currentEdition,
   allEditions = [],
 }: {
+  branding?: AdminBranding;
   children: React.ReactNode;
   links: AdminNavItem[];
   user: AdminUser;
   currentEdition: AdminEditionContext | null;
   allEditions?: AdminEditionContext[];
 }) {
+  const publicBranding = useAdminBranding();
+  const branding = editionBranding ?? publicBranding;
   const pathname = usePathname();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const isContentOpen = useSyncExternalStore(
@@ -132,14 +137,14 @@ export function AdminShell({
             aria-expanded={isContentOpen}
             variant="ghost"
             size="sm"
-            className="flex h-auto w-full justify-between rounded-md px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-white/45 hover:bg-white/6 hover:text-white/70"
+            className="flex h-auto w-full justify-between rounded-md px-3 py-1 text-xs font-medium text-muted-foreground hover:bg-brand-50 hover:text-brand"
           >
             <span>{group}</span>
-            <span className="flex items-center gap-1 text-[9px] font-normal lowercase tracking-normal text-white/35">
+            <span className="flex items-center gap-1 text-muted-foreground">
               {isContentOpen ? (
-                <ChevronDown size={14} className="text-white/60" />
+                <ChevronDown size={14} className="text-muted-foreground" />
               ) : (
-                <ChevronRight size={14} className="text-white/60" />
+                <ChevronRight size={14} className="text-muted-foreground" />
               )}
             </span>
           </Button>
@@ -154,15 +159,15 @@ export function AdminShell({
                     aria-current={active ? "page" : undefined}
                     onClick={() => setIsMobileOpen(false)}
                     className={cn(
-                      "group flex min-h-10 items-center gap-3 border-l-2 px-3 py-2 text-sm font-medium transition-colors",
+                      "group flex min-h-10 items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-brand",
                       active
-                        ? "border-fb bg-white/9 text-white font-semibold"
-                        : "border-transparent text-white/66 hover:border-white/20 hover:bg-white/6 hover:text-white",
+                        ? "bg-brand text-canvas font-semibold"
+                        : "text-brand-800 hover:bg-brand-50 hover:text-brand",
                     )}
                   >
                     <AdminIcon name={item.icon} size={15} strokeWidth={1.8} />
                     <span className="flex-1 truncate">{item.label}</span>
-                    {active ? <span className="size-1.5 bg-fb" aria-hidden="true" /> : null}
+                    {active ? <span className="size-1.5 bg-highlight" aria-hidden="true" /> : null}
                   </Link>
                 );
               })}
@@ -174,7 +179,7 @@ export function AdminShell({
 
     return (
       <div key={group}>
-        <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-white/38">
+        <p className="mb-2 px-3 text-xs font-medium text-muted-foreground">
           {group}
         </p>
         <div className="space-y-1">
@@ -187,15 +192,15 @@ export function AdminShell({
                 aria-current={active ? "page" : undefined}
                 onClick={() => setIsMobileOpen(false)}
                 className={cn(
-                  "group flex min-h-10 items-center gap-3 border-l-2 px-3 py-2 text-sm font-medium transition-colors",
+                  "group flex min-h-10 items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-brand",
                   active
-                    ? "border-fb bg-white/9 text-white"
-                    : "border-transparent text-white/66 hover:border-white/20 hover:bg-white/6 hover:text-white",
+                    ? "bg-brand text-canvas"
+                    : "text-brand-800 hover:bg-brand-50 hover:text-brand",
                 )}
               >
                 <AdminIcon name={item.icon} size={16} strokeWidth={1.8} />
                 <span className="flex-1 truncate">{item.label}</span>
-                {active ? <span className="size-1.5 bg-fb" aria-hidden="true" /> : null}
+                {active ? <span className="size-1.5 bg-highlight" aria-hidden="true" /> : null}
               </Link>
             );
           })}
@@ -213,30 +218,20 @@ export function AdminShell({
   return (
     <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
       <div className="min-h-screen bg-background text-foreground lg:flex">
-        <aside className="relative hidden w-64 shrink-0 overflow-hidden border-r border-white/10 bg-dgb-900 lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col">
-          <div className="flex h-16 shrink-0 items-center border-b border-white/8 px-5">
+        <aside className="relative hidden w-64 shrink-0 overflow-hidden border-r border-brand-100 bg-card lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col">
+          <div className="flex h-20 shrink-0 items-center border-b border-brand-100 px-5">
             <Link href="/admin" className="flex items-center gap-3" aria-label="Dashboard PAMOKA CMS">
-              <Image src="/logogram-gold.png" alt="" width={30} height={30} className="size-8 object-contain" />
-              <span>
-                <span className="block font-montserrat text-sm font-semibold tracking-wide text-white">PAMOKA CMS</span>
-                <span className="block text-[9px] uppercase tracking-[0.16em] text-fb-300">Ruang kerja admin</span>
-              </span>
+              {branding.logo ? <Image src={branding.logo.url} alt={branding.logo.alt || branding.title} width={150} height={57} className="h-auto w-36 object-contain" /> : <span className="font-manrope font-semibold text-brand-900">{branding.title}</span>}
             </Link>
           </div>
-          <AdminScrollArea surface="dark" className="min-h-0 flex-1">
+          <AdminScrollArea className="min-h-0 flex-1">
             <div className="px-4 py-5">{navigation}</div>
           </AdminScrollArea>
-          <div className="relative border-t border-white/8 p-4">
-            <div className="mb-2 border-l-2 border-fb px-3 py-1">
-              <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-fb-300">Edisi terpilih</p>
-              <p className="mt-1 truncate text-xs font-medium text-white/75">
-                {currentEdition ? `${currentEdition.name}, ${currentEdition.year}` : "Belum ditentukan"}
-              </p>
-            </div>
+          <div className="relative border-t border-brand-100 p-4">
             <Link
               href="/"
               target="_blank"
-              className="flex items-center justify-between border-l-2 border-transparent px-3 py-2 text-xs text-white/66 transition-colors hover:border-white/20 hover:bg-white/6 hover:text-white"
+              className="flex items-center justify-between rounded-md px-3 py-2 text-sm text-brand transition-colors hover:bg-brand-50"
             >
               Lihat situs publik <ArrowUpRight size={14} />
             </Link>
@@ -245,30 +240,29 @@ export function AdminShell({
 
         <SheetContent
           side="left"
-          className="w-[min(86vw,19rem)] gap-0 overflow-hidden border-white/10 bg-dgb-900 p-0 text-white sm:max-w-[19rem] [&>button]:text-white/70 [&>button]:hover:bg-white/8 [&>button]:hover:text-white"
+          className="w-[min(86vw,19rem)] gap-0 overflow-hidden border-brand-100 bg-card p-0 text-foreground sm:max-w-[19rem]"
         >
           <SheetTitle className="sr-only">Navigasi admin PAMOKA CMS</SheetTitle>
           <SheetDescription className="sr-only">Menu ruang kerja admin PAMOKA.</SheetDescription>
-          <div className="flex h-16 shrink-0 items-center border-b border-white/8 px-5 pr-14">
+          <div className="flex h-20 shrink-0 items-center border-b border-brand-100 px-5 pr-14">
             <Link href="/admin" onClick={() => setIsMobileOpen(false)} className="flex items-center gap-3" aria-label="Dashboard PAMOKA CMS">
-              <Image src="/logogram-gold.png" alt="" width={30} height={30} className="size-8 object-contain" />
-              <span className="font-montserrat text-sm font-semibold text-white">PAMOKA CMS</span>
+              {branding.logo ? <Image src={branding.logo.url} alt={branding.logo.alt || branding.title} width={150} height={57} className="h-auto w-36 object-contain" /> : <span className="font-manrope font-semibold text-brand-900">{branding.title}</span>}
             </Link>
           </div>
-          <AdminScrollArea surface="dark" className="min-h-0 flex-1">
+          <AdminScrollArea className="min-h-0 flex-1">
             <div className="px-4 py-5">{navigation}</div>
           </AdminScrollArea>
         </SheetContent>
 
         <div className={cn("h-screen min-w-0 flex-1 overflow-y-auto", adminNativeScrollbarClassName)}>
-          <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-dgb-100 bg-dgb-50/88 px-3 backdrop-blur-xl sm:px-6 lg:px-8">
+          <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-brand-100 bg-background/95 px-3 backdrop-blur-sm sm:px-6 lg:px-8">
             <div className="flex min-w-0 items-center gap-2 sm:gap-3">
               <SheetTrigger asChild>
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="size-10 shrink-0 border border-dgb-100 bg-dgb-50 text-dgb shadow-none hover:bg-dgb-100 hover:text-dgb lg:hidden"
+                  className="size-10 shrink-0 border border-brand-100 bg-brand-50 text-brand shadow-none hover:bg-brand-100 hover:text-brand lg:hidden"
                   aria-label="Buka navigasi"
                   aria-expanded={isMobileOpen}
                 >
@@ -276,9 +270,7 @@ export function AdminShell({
                 </Button>
               </SheetTrigger>
               <div className="hidden items-center gap-2 text-xs text-muted-foreground md:flex">
-                <span className="font-montserrat font-semibold text-dgb-900">PAMOKA CMS</span>
-                <ChevronRight size={13} />
-                <span>{currentEdition?.name ?? "Ruang kerja"}</span>
+                <span className="font-manrope font-semibold text-brand-900">Admin</span>
               </div>
             </div>
 
@@ -290,14 +282,14 @@ export function AdminShell({
 
               <Link
                 href="/admin/profile"
-                className="flex items-center gap-2.5 rounded-md p-1 transition-colors hover:bg-dgb-100/50"
+                className="flex items-center gap-2.5 rounded-md p-1 transition-colors hover:bg-brand-100/50"
                 aria-label={`Profil ${user.name}`}
               >
                 <div className="hidden text-right lg:block">
-                  <p className="text-xs font-semibold leading-tight text-dgb-900">{user.name}</p>
-                  <p className="max-w-[160px] truncate text-[11px] text-muted-foreground">{user.email}</p>
+                  <p className="text-xs font-semibold leading-tight text-brand-900">{user.name}</p>
+                  <p className="max-w-[160px] truncate text-xs text-muted-foreground">{user.email}</p>
                 </div>
-                <div className="grid size-9 place-items-center rounded-md bg-dgb text-xs font-bold text-white shadow-xs">
+                <div className="grid size-9 place-items-center rounded-md bg-brand text-xs font-semibold text-canvas">
                   {initials || "A"}
                 </div>
               </Link>
@@ -312,29 +304,37 @@ export function AdminShell({
 
 export function AdminAuthShell({
   children,
-  eyebrow,
   title,
   description,
 }: {
   children: React.ReactNode;
-  eyebrow: string;
   title: string;
   description: string;
 }) {
+  const branding = useAdminBranding();
   return (
-    <main className="relative grid min-h-screen place-items-center overflow-hidden bg-[url(/hero-about.webp)] bg-cover bg-center p-4 text-white sm:p-8">
-      <div className="absolute inset-0 bg-radial-[at_50%_50%] from-dgb-900/35 to-90% to-dgb-900" />
-      <section className="relative w-full max-w-xl rounded-xl border border-white/20 bg-dgb-900/58 px-6 py-8 shadow-2xl shadow-black/20 backdrop-blur-md sm:px-10 sm:py-10">
-        <div className="mx-auto w-full max-w-md [&_.text-dgb-900]:text-white [&_.text-muted-foreground]:text-white/70">
-          <Link href="/" className="mb-10 inline-flex">
-            <Image src="/logo-w.png" alt="PAMOKA Garut" width={190} height={72} className="h-auto w-44 object-contain object-left" />
-          </Link>
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-fb-600">{eyebrow}</p>
-          <h1 className="mt-3 font-montserrat text-3xl font-semibold leading-tight tracking-[-0.04em] text-white sm:text-4xl">{title}</h1>
-          <p className="mt-3 text-sm leading-6 text-white/70">{description}</p>
+    <main className="grid min-h-svh bg-background text-foreground lg:grid-cols-2">
+      <section className="flex min-w-0 flex-col px-6 py-6 sm:px-12 sm:py-10 lg:px-16">
+        <Link href="/" className="w-fit" aria-label="Beranda PAMOKA Garut">
+          {branding.logo ? <Image src={branding.logo.url} alt={branding.logo.alt || branding.title} width={190} height={72} className="h-auto w-36 object-contain sm:w-44" /> : <span className="font-manrope text-xl font-semibold text-brand-900">{branding.title}</span>}
+        </Link>
+        <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-16 lg:py-12">
+          <h1 className="font-manrope !text-3xl font-semibold leading-tight tracking-tight text-brand-900 sm:!text-4xl">{title}</h1>
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">{description}</p>
           <div className="mt-8">{children}</div>
         </div>
+        <Button asChild variant="link" className="w-fit px-0 text-sm text-brand hover:text-brand-700">
+          <Link href="/"><ArrowLeft className="size-4" /> Kembali ke situs</Link>
+        </Button>
       </section>
+      <aside className="relative m-4 ml-0 hidden overflow-hidden rounded-xl bg-brand-900 lg:block" aria-label="PAMOKA Garut">
+        {branding.background ? <Image src={branding.background} alt="" fill sizes="50vw" className="object-cover" preload /> : null}
+        <div className="absolute inset-0 bg-linear-to-t from-brand-900 via-brand-900/20 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 p-12 xl:p-16">
+          {branding.slogan ? <p className="max-w-lg font-manrope text-4xl font-semibold leading-tight text-canvas xl:text-5xl">{branding.slogan}</p> : null}
+          <p className="mt-5 text-sm text-canvas/80">{branding.title}</p>
+        </div>
+      </aside>
     </main>
   );
 }

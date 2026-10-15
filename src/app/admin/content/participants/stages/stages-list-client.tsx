@@ -403,7 +403,7 @@ export function StagesListClient({
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold text-dgb-900">
+          <p className="text-sm font-semibold text-brand-900">
             {stages.length} tahap terdaftar
           </p>
           <p className="text-xs text-muted-foreground">
@@ -419,8 +419,8 @@ export function StagesListClient({
       </div>
 
       {hasAnyEntries ? (
-        <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50/70 px-4 py-2.5 text-xs text-amber-800">
-          <Lock className="size-4 shrink-0 text-amber-700" />
+        <div className="flex items-center gap-2 rounded-md border border-warning-200 bg-warning-50/70 px-4 py-2.5 text-xs text-warning-800">
+          <Lock className="size-4 shrink-0 text-warning-700" />
           <span>
             Urutan tahap terkunci karena sudah ada peserta yang masuk dalam alur seleksi.
           </span>
@@ -446,33 +446,33 @@ export function StagesListClient({
               <AdminCard key={stage.id} className="relative overflow-hidden">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex items-start gap-3">
-                    <div className="grid size-9 shrink-0 place-items-center rounded-md border border-dgb-200 bg-dgb-50 font-montserrat text-sm font-bold text-dgb">
+                    <div className="grid size-9 shrink-0 place-items-center rounded-md border border-brand-200 bg-brand-50 font-manrope text-sm font-bold text-brand">
                       {index + 1}
                     </div>
 
                     <div className="space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="font-montserrat text-base font-semibold text-dgb-900">
+                        <h2 className="font-manrope text-base font-semibold text-brand-900">
                           {stage.name}
                         </h2>
                         <AdminBadge
                           value={stage.lifecycle}
                           className={
                             stage.lifecycle === "active"
-                              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                              ? "border-success-200 bg-success-50 text-success-700"
                               : stage.lifecycle === "closed"
                               ? "border-border bg-muted text-muted-foreground"
-                              : "border-amber-200 bg-amber-50 text-amber-800"
+                              : "border-warning-200 bg-warning-50 text-warning-800"
                           }
                         />
                         {stage.finalStage ? (
                           <AdminBadge
                             value="Tahap final"
-                            className="border-fb-200 bg-fb-50 text-fb-700"
+                            className="border-highlight-200 bg-highlight-50 text-highlight-700"
                           />
                         ) : null}
                         {stage.hasEntries ? (
-                          <span className="inline-flex items-center gap-1 rounded-sm border border-border bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                          <span className="inline-flex items-center gap-1 rounded-sm border border-border bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
                             <Lock className="size-3" />
                             Terkunci
                           </span>
@@ -503,29 +503,29 @@ export function StagesListClient({
 
                     {canEdit ? (
                       <>
-                        <div className="flex items-center rounded-md border border-dgb-100">
+                        <div className="flex items-center rounded-md border border-brand-100">
                           <Button
                             type="button"
                             variant="ghost"
                             size="icon"
                             onClick={() => handleReorder(index, "up")}
                             disabled={isFirst || hasAnyEntries || pending}
-                            className="size-9 rounded-none rounded-l-md hover:bg-dgb-50"
+                            className="size-9 rounded-none rounded-l-md hover:bg-brand-50"
                             aria-label={`Pindahkan tahap ${stage.name} ke atas`}
                           >
-                            <ArrowUp className="size-4 text-dgb-700" />
+                            <ArrowUp className="size-4 text-brand-700" />
                           </Button>
-                          <div className="h-4 w-px bg-dgb-100" />
+                          <div className="h-4 w-px bg-brand-100" />
                           <Button
                             type="button"
                             variant="ghost"
                             size="icon"
                             onClick={() => handleReorder(index, "down")}
                             disabled={isLast || hasAnyEntries || pending}
-                            className="size-9 rounded-none rounded-r-md hover:bg-dgb-50"
+                            className="size-9 rounded-none rounded-r-md hover:bg-brand-50"
                             aria-label={`Pindahkan tahap ${stage.name} ke bawah`}
                           >
-                            <ArrowDown className="size-4 text-dgb-700" />
+                            <ArrowDown className="size-4 text-brand-700" />
                           </Button>
                         </div>
 
@@ -593,28 +593,28 @@ export function StagesListClient({
                   </div>
                 </div>
 
-                <div className="mt-4 grid grid-cols-2 gap-3 border-t border-dgb-100 pt-3 sm:grid-cols-4">
-                  <div className="rounded-md border border-dgb-100 bg-dgb-50/40 p-2.5">
-                    <p className="text-[11px] font-medium text-muted-foreground">Total peserta</p>
-                    <p className="font-montserrat text-lg font-semibold text-dgb-900">
+                <div className="mt-4 grid grid-cols-2 gap-3 border-t border-brand-100 pt-3 sm:grid-cols-4">
+                  <div className="rounded-md border border-brand-100 bg-brand-50/40 p-2.5">
+                    <p className="text-xs font-medium text-muted-foreground">Total peserta</p>
+                    <p className="font-manrope text-lg font-semibold text-brand-900">
                       {stage.stats.total}
                     </p>
                   </div>
-                  <div className="rounded-md border border-amber-200 bg-amber-50/40 p-2.5">
-                    <p className="text-[11px] font-medium text-amber-700">Pending</p>
-                    <p className="font-montserrat text-lg font-semibold text-amber-900">
+                  <div className="rounded-md border border-warning-200 bg-warning-50/40 p-2.5">
+                    <p className="text-xs font-medium text-warning-700">Pending</p>
+                    <p className="font-manrope text-lg font-semibold text-warning-900">
                       {stage.stats.pending}
                     </p>
                   </div>
-                  <div className="rounded-md border border-emerald-200 bg-emerald-50/40 p-2.5">
-                    <p className="text-[11px] font-medium text-emerald-700">Lolos</p>
-                    <p className="font-montserrat text-lg font-semibold text-emerald-900">
+                  <div className="rounded-md border border-success-200 bg-success-50/40 p-2.5">
+                    <p className="text-xs font-medium text-success-700">Lolos</p>
+                    <p className="font-manrope text-lg font-semibold text-success-900">
                       {stage.stats.advanced}
                     </p>
                   </div>
-                  <div className="rounded-md border border-red-200 bg-red-50/40 p-2.5">
-                    <p className="text-[11px] font-medium text-red-700">Tidak lolos</p>
-                    <p className="font-montserrat text-lg font-semibold text-red-900">
+                  <div className="rounded-md border border-danger-200 bg-danger-50/40 p-2.5">
+                    <p className="text-xs font-medium text-danger-700">Tidak lolos</p>
+                    <p className="font-manrope text-lg font-semibold text-danger-900">
                       {stage.stats.eliminated}
                     </p>
                   </div>
@@ -794,7 +794,7 @@ export function StagesListClient({
           {closeTarget ? (
             <div className="space-y-3 py-2">
               {closeTarget.stats.pending > 0 ? (
-                <p className="rounded-md border border-red-200 bg-red-50 p-2.5 text-xs text-red-700">
+                <p className="rounded-md border border-danger-200 bg-danger-50 p-2.5 text-xs text-danger-700">
                   Masih ada {closeTarget.stats.pending} peserta dengan keputusan pending. Selesaikan
                   seluruh keputusan sebelum menutup tahap.
                 </p>
@@ -807,7 +807,7 @@ export function StagesListClient({
 
                 if (difference.over) {
                   return (
-                    <p className="rounded-md border border-red-200 bg-red-50 p-2.5 text-xs text-red-700">
+                    <p className="rounded-md border border-danger-200 bg-danger-50 p-2.5 text-xs text-danger-700">
                       Peserta lolos melebihi target tahap berikutnya: {difference.overText}. Kurangi jumlah peserta lolos.
                     </p>
                   );
@@ -815,8 +815,8 @@ export function StagesListClient({
 
                 if (difference.under) {
                   return (
-                    <div className="space-y-3 rounded-md border border-amber-200 bg-amber-50/70 p-3">
-                      <p className="text-xs text-amber-800">
+                    <div className="space-y-3 rounded-md border border-warning-200 bg-warning-50/70 p-3">
+                      <p className="text-xs text-warning-800">
                         Peserta lolos belum memenuhi target tahap berikutnya: {difference.underText}. Konfirmasi dan alasan diperlukan.
                       </p>
                       <label className="flex items-center gap-2 cursor-pointer">
@@ -824,7 +824,7 @@ export function StagesListClient({
                           checked={closeAllowUnderTarget}
                           onCheckedChange={(c) => setCloseAllowUnderTarget(Boolean(c))}
                         />
-                        <span className="text-xs font-semibold text-amber-900">
+                        <span className="text-xs font-semibold text-warning-900">
                           Konfirmasi tutup tahap di bawah target
                         </span>
                       </label>

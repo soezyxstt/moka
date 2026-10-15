@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { ProfileCard } from "./profile-card";
+import { Button } from "@/components/ui/button";
 
 type Profile = {
   imageUrl: string;
@@ -28,7 +29,7 @@ export default function ProfileGrid({
   const canExpand = data.length > Math.min(showOnMobile, showOnDesktop);
 
   if (!data.length) {
-    return <p className="relative rounded-xl border border-dashed border-dgb-200 bg-white/55 px-6 py-10 text-center font-montserrat text-sm text-[#505050]">Belum ada profil yang ditampilkan.</p>;
+    return <p className="relative rounded-xl border border-dashed border-brand-200 bg-canvas/55 px-6 py-10 text-center font-inter text-sm text-body">Belum ada profil yang ditampilkan.</p>;
   }
 
   return (
@@ -47,15 +48,16 @@ export default function ProfileGrid({
         ))}
       </div>
       {canExpand ? (
-        <button
+        <Button
+          variant="link"
           type="button"
           onClick={() => setShowAll((current) => !current)}
           aria-expanded={showAll}
-          className={cn("group mt-4 flex w-fit items-center gap-2 font-montserrat text-base font-semibold text-dgb transition-colors hover:text-dgb-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fb-400 focus-visible:ring-offset-4", isRight && "ml-auto")}
+          className={cn("group mt-4 flex h-auto w-fit items-center gap-2 p-0 font-inter text-base font-semibold text-brand transition-colors hover:text-brand-700 hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-highlight-400 focus-visible:ring-offset-4", isRight && "ml-auto")}
         >
           {showAll ? "Tampilkan lebih sedikit" : "Lihat semua"}
           <ArrowRight className={cn("size-5 transition-transform", showAll ? "-rotate-90" : "group-hover:translate-x-1")} />
-        </button>
+        </Button>
       ) : null}
     </div>
   );

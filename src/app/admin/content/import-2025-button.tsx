@@ -52,13 +52,13 @@ export function Import2025Button() {
       </AdminButton>
       {error ? <p role="alert" className="text-sm text-destructive">{error}</p> : null}
       {result ? (
-        <div aria-live="polite" className="space-y-3 rounded-xl border border-dgb-100 bg-dgb-50/50 p-4">
-          <h2 className="font-montserrat font-semibold text-dgb-900">Import selesai</h2>
+        <div aria-live="polite" className="space-y-3 rounded-xl border border-brand-100 bg-brand-50/50 p-4">
+          <h2 className="font-manrope font-semibold text-brand-900">Import selesai</h2>
           <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-3">
             {(Object.keys(countLabels) as (keyof Import2025Result["counts"])[]).map((key) => (
               <div key={key}>
                 <dt className="text-muted-foreground">{countLabels[key]}</dt>
-                <dd className="font-semibold text-dgb-900">{result.counts[key]}</dd>
+                <dd className="font-semibold text-brand-900">{result.counts[key]}</dd>
               </div>
             ))}
           </dl>

@@ -174,9 +174,9 @@ export function TitleWorkspace({ finalStage, finalists, initialTitles, finalists
   return (
     <div className="space-y-5">
       <div className="grid gap-3 sm:grid-cols-3">
-        <AdminCard><p className="text-xs text-muted-foreground">Tahap final</p><p className="mt-1 font-montserrat text-lg font-semibold text-dgb-900">{finalStage.name}</p></AdminCard>
-        <AdminCard><p className="text-xs text-muted-foreground">Peserta final</p><p className="mt-1 font-montserrat text-2xl font-semibold text-dgb-900">{finalists.length}</p></AdminCard>
-        <AdminCard><p className="text-xs text-muted-foreground">Belum menerima gelar</p><p className="mt-1 font-montserrat text-2xl font-semibold text-fb-700">{finalistsWithoutTitle}</p></AdminCard>
+        <AdminCard><p className="text-xs text-muted-foreground">Tahap final</p><p className="mt-1 font-manrope text-lg font-semibold text-brand-900">{finalStage.name}</p></AdminCard>
+        <AdminCard><p className="text-xs text-muted-foreground">Peserta final</p><p className="mt-1 font-manrope text-2xl font-semibold text-brand-900">{finalists.length}</p></AdminCard>
+        <AdminCard><p className="text-xs text-muted-foreground">Belum menerima gelar</p><p className="mt-1 font-manrope text-2xl font-semibold text-highlight-700">{finalistsWithoutTitle}</p></AdminCard>
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -195,8 +195,8 @@ export function TitleWorkspace({ finalStage, finalists, initialTitles, finalists
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="min-w-0 space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="grid size-9 place-items-center rounded-md bg-dgb-50 text-dgb"><Award className="size-4" /></span>
-                      <h2 className="font-montserrat text-lg font-semibold text-dgb-900">{title.name}</h2>
+                      <span className="grid size-9 place-items-center rounded-md bg-brand-50 text-brand"><Award className="size-4" /></span>
+                      <h2 className="font-manrope text-lg font-semibold text-brand-900">{title.name}</h2>
                       <AdminBadge value={title.active ? "Aktif" : "Nonaktif"} />
                       <AdminBadge value={`${title.participantIds.length}/${title.capacity} terisi`} />
                     </div>
@@ -219,10 +219,10 @@ export function TitleWorkspace({ finalStage, finalists, initialTitles, finalists
                   {finalists.length === 0 ? <p className="py-3 text-sm text-muted-foreground">Belum ada peserta pada tahap final.</p> : finalists.map((participant) => {
                     const checked = title.participantIds.includes(participant.id);
                     return (
-                      <label key={participant.id} className="flex items-center gap-3 rounded-md px-2 py-2 hover:bg-dgb-50/60">
+                      <label key={participant.id} className="flex items-center gap-3 rounded-md px-2 py-2 hover:bg-brand-50/60">
                         <Checkbox checked={checked} onCheckedChange={(value) => toggleAssignment(title, participant.id, Boolean(value))} disabled={!canEdit || pending || (!checked && (!title.active || full))} />
                         <span className="min-w-0 flex-1 text-sm text-foreground">{participant.number}. {participant.name}</span>
-                        <span className="text-xs font-semibold text-dgb-700">{participant.categoryCode}</span>
+                        <span className="text-xs font-semibold text-brand-700">{participant.categoryCode}</span>
                       </label>
                     );
                   })}

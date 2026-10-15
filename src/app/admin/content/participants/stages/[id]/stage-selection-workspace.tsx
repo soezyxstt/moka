@@ -406,7 +406,6 @@ export function StageSelectionWorkspace({
 
   return (
     <AdminPage
-      eyebrow="Seleksi"
       title={stage.name}
       action={
         <div className="flex flex-wrap items-center gap-2">
@@ -460,14 +459,14 @@ export function StageSelectionWorkspace({
             value={stage.lifecycle}
             className={
               stage.lifecycle === "active"
-                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                ? "border-success-200 bg-success-50 text-success-700"
                 : stage.lifecycle === "closed"
                 ? "border-border bg-muted text-muted-foreground"
-                : "border-amber-200 bg-amber-50 text-amber-800"
+                : "border-warning-200 bg-warning-50 text-warning-800"
             }
           />
           {stage.finalStage ? (
-            <AdminBadge value="Tahap final" className="border-fb-200 bg-fb-50 text-fb-700" />
+            <AdminBadge value="Tahap final" className="border-highlight-200 bg-highlight-50 text-highlight-700" />
           ) : null}
           {nextStage ? (
             <span className="text-xs text-muted-foreground">
@@ -484,29 +483,29 @@ export function StageSelectionWorkspace({
 
         {/* Statistics Banner */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-          <div className="rounded-xl border border-dgb-100 bg-card p-4">
+          <div className="rounded-xl border border-brand-100 bg-card p-4">
             <p className="text-xs font-medium text-muted-foreground">Target kategori</p>
-            <p className="mt-1 text-sm font-semibold text-dgb-900">
+            <p className="mt-1 text-sm font-semibold text-brand-900">
               {categoryTargets
                 ? categoryValues.map((code) => `${code} ${categoryTargets[code]}`).join(" · ")
                 : `${stage.targetParticipantCount} total; kuota kategori belum diatur`}
             </p>
           </div>
-          <div className="rounded-xl border border-dgb-100 bg-card p-4">
+          <div className="rounded-xl border border-brand-100 bg-card p-4">
             <p className="text-xs font-medium text-muted-foreground">Total peserta</p>
-            <p className="mt-1 font-montserrat text-2xl font-semibold text-dgb-900">{totalCount}</p>
+            <p className="mt-1 font-manrope text-2xl font-semibold text-brand-900">{totalCount}</p>
           </div>
-          <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-4">
-            <p className="text-xs font-medium text-amber-700">Pending</p>
-            <p className="mt-1 font-montserrat text-2xl font-semibold text-amber-900">{pendingCount}</p>
+          <div className="rounded-xl border border-warning-200 bg-warning-50/40 p-4">
+            <p className="text-xs font-medium text-warning-700">Pending</p>
+            <p className="mt-1 font-manrope text-2xl font-semibold text-warning-900">{pendingCount}</p>
           </div>
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-4">
-            <p className="text-xs font-medium text-emerald-700">Lolos</p>
-            <p className="mt-1 font-montserrat text-2xl font-semibold text-emerald-900">{advancedCount}</p>
+          <div className="rounded-xl border border-success-200 bg-success-50/40 p-4">
+            <p className="text-xs font-medium text-success-700">Lolos</p>
+            <p className="mt-1 font-manrope text-2xl font-semibold text-success-900">{advancedCount}</p>
           </div>
-          <div className="rounded-xl border border-red-200 bg-red-50/40 p-4">
-            <p className="text-xs font-medium text-red-700">Tidak lolos</p>
-            <p className="mt-1 font-montserrat text-2xl font-semibold text-red-900">{eliminatedCount}</p>
+          <div className="rounded-xl border border-danger-200 bg-danger-50/40 p-4">
+            <p className="text-xs font-medium text-danger-700">Tidak lolos</p>
+            <p className="mt-1 font-manrope text-2xl font-semibold text-danger-900">{eliminatedCount}</p>
           </div>
         </div>
 
@@ -543,7 +542,7 @@ export function StageSelectionWorkspace({
         </AdminCard>
 
         {/* Bulk Action Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dgb-100 bg-dgb-50/40 p-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-brand-100 bg-brand-50/40 p-3">
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-2 cursor-pointer">
               <Checkbox
@@ -551,7 +550,7 @@ export function StageSelectionWorkspace({
                 onCheckedChange={handleToggleAll}
                 aria-label="Pilih semua hasil filter"
               />
-              <span className="text-xs font-semibold text-dgb-900">
+              <span className="text-xs font-semibold text-brand-900">
                 Pilih semua ({filteredEntries.length})
               </span>
             </label>
@@ -594,12 +593,12 @@ export function StageSelectionWorkspace({
         ) : (
           <div
             className={cn(
-              "relative w-full overflow-x-auto rounded-xl border border-dgb-100 bg-card",
+              "relative w-full overflow-x-auto rounded-xl border border-brand-100 bg-card",
               adminNativeScrollbarClassName
             )}
           >
             <Table>
-              <TableHeader className="bg-dgb-50/60">
+              <TableHeader className="bg-brand-50/60">
                 <TableRow>
                   <TableHead className="w-12 text-center">
                     <Checkbox
@@ -624,7 +623,7 @@ export function StageSelectionWorkspace({
                   return (
                     <TableRow
                       key={entry.id}
-                      className={cn(isSelected && "bg-dgb-50/30", "transition-colors")}
+                      className={cn(isSelected && "bg-brand-50/30", "transition-colors")}
                     >
                       <TableCell className="text-center">
                         <Checkbox
@@ -633,13 +632,13 @@ export function StageSelectionWorkspace({
                           aria-label={`Pilih ${entry.participantName}`}
                         />
                       </TableCell>
-                      <TableCell className="font-montserrat font-semibold text-dgb-900">
+                      <TableCell className="font-manrope font-semibold text-brand-900">
                         {entry.participantNumber}
                       </TableCell>
                       <TableCell>
                         <Link
                           href={`/admin/content/participants/${entry.participantId}`}
-                          className="font-montserrat text-sm font-semibold text-dgb-900 hover:text-dgb"
+                          className="font-manrope text-sm font-semibold text-brand-900 hover:text-brand"
                         >
                           {entry.participantName}
                         </Link>
@@ -652,10 +651,10 @@ export function StageSelectionWorkspace({
                           value={decisionFilterLabels[entry.decision] ?? entry.decision}
                           className={
                             entry.decision === "advanced"
-                              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                              ? "border-success-200 bg-success-50 text-success-700"
                               : entry.decision === "eliminated"
-                              ? "border-red-200 bg-red-50 text-red-700"
-                              : "border-amber-200 bg-amber-50 text-amber-800"
+                              ? "border-danger-200 bg-danger-50 text-danger-700"
+                              : "border-warning-200 bg-warning-50 text-warning-800"
                           }
                         />
                       </TableCell>
@@ -798,21 +797,21 @@ export function StageSelectionWorkspace({
 
           <div className="space-y-3 py-2">
             {pendingCount > 0 ? (
-              <p className="rounded-md border border-red-200 bg-red-50 p-2.5 text-xs text-red-700">
+              <p className="rounded-md border border-danger-200 bg-danger-50 p-2.5 text-xs text-danger-700">
                 Masih ada {pendingCount} peserta berstatus pending. Selesaikan seluruh keputusan
                 sebelum menutup tahap.
               </p>
             ) : null}
 
             {nextStageDifference?.over ? (
-              <p className="rounded-md border border-red-200 bg-red-50 p-2.5 text-xs text-red-700">
+              <p className="rounded-md border border-danger-200 bg-danger-50 p-2.5 text-xs text-danger-700">
                 Peserta lolos melebihi target tahap berikutnya: {nextStageDifference.overText}. Kurangi peserta lolos sebelum menutup tahap.
               </p>
             ) : null}
 
             {nextStageDifference?.under ? (
-              <div className="space-y-3 rounded-md border border-amber-200 bg-amber-50/70 p-3">
-                <p className="text-xs text-amber-800">
+              <div className="space-y-3 rounded-md border border-warning-200 bg-warning-50/70 p-3">
+                <p className="text-xs text-warning-800">
                   Peserta lolos belum memenuhi target tahap berikutnya: {nextStageDifference.underText}. Konfirmasi dan alasan tertulis diperlukan.
                 </p>
                 <label className="flex items-center gap-2 cursor-pointer">
@@ -820,7 +819,7 @@ export function StageSelectionWorkspace({
                     checked={closeAllowUnderTarget}
                     onCheckedChange={(c) => setCloseAllowUnderTarget(Boolean(c))}
                   />
-                  <span className="text-xs font-semibold text-amber-900">
+                  <span className="text-xs font-semibold text-warning-900">
                     Konfirmasi menutup tahap di bawah target
                   </span>
                 </label>

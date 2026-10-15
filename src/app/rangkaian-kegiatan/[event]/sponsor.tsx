@@ -13,7 +13,7 @@ export default function SponsorItem({
   className?: string
 }) {
   return (
-    <div className="p-4 backdrop-blur-lg bg-white/20 rounded-lg grid place-items-center">
+    <div className="p-4 backdrop-blur-lg bg-canvas/20 rounded-lg grid place-items-center">
       <Image
         className={cn(
           'object-contain',

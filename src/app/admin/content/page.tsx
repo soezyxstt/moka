@@ -11,6 +11,7 @@ import { Import2025Button } from "./import-2025-button";
 export const metadata = { title: "Ikhtisar konten" };
 
 const modules: { slug: string; label: string; description: string; icon: AdminIconName }[] = [
+  { slug: "pages", label: "Teks dan kontak", description: "Identitas, kontak, teks halaman, dan PDF legalitas.", icon: "layout" },
   { slug: "editions", label: "Kelola edisi", description: "Periode, kategori, dan status edisi.", icon: "calendar" },
   { slug: "edition-settings", label: "Identitas edisi", description: "Logo, slogan, dan program unggulan.", icon: "award" },
   { slug: "site-assets", label: "Aset situs", description: "Gambar untuk bagian situs yang tetap.", icon: "images" },
@@ -32,20 +33,19 @@ export default async function ContentPage() {
 
   return (
     <AdminPage
-      eyebrow="Konten"
       title="Kelola konten"
       action={currentEdition ? <AdminBadge value={currentEdition.lifecycle} /> : null}
     >
-      <div className="divide-y divide-dgb-100 border-y border-dgb-100">
+      <div className="divide-y divide-brand-100 border-y border-brand-100">
         {modules.map((module) => (
           <AdminListRow
             key={module.slug}
             title={
               <span className="flex items-center gap-3">
-                <span className="grid size-9 shrink-0 place-items-center rounded-md bg-dgb-50 text-dgb">
+                <span className="grid size-9 shrink-0 place-items-center rounded-md bg-brand-50 text-brand">
                   <AdminIcon name={module.icon} size={18} strokeWidth={1.8} />
                 </span>
-                <span className="font-montserrat">{module.label}</span>
+                <span className="font-manrope">{module.label}</span>
               </span>
             }
             meta={module.description}
@@ -60,7 +60,6 @@ export default async function ContentPage() {
       {canImport2025 ? (
         <AdminCard className="mt-6">
           <AdminCardHeader
-            eyebrow="Database lokal"
             title="Import konten 2025"
             description="Menyalin konten sumber 2025 ke file:local.db. Import hanya berjalan sekali agar perubahan CMS tidak tertimpa."
           />

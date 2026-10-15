@@ -87,13 +87,13 @@ export function getSponsorTierLabel(tier: SponsorTier) {
 export function getTierBadgeStyle(tier: SponsorTier) {
   switch (tier) {
     case "utama":
-      return "border-amber-400 bg-amber-50 text-amber-900";
+      return "border-warning-400 bg-warning-50 text-warning-900";
     case "pendukung":
-      return "border-emerald-400 bg-emerald-50 text-emerald-900";
+      return "border-success-400 bg-success-50 text-success-900";
     case "pendamping":
-      return "border-sky-400 bg-sky-50 text-sky-900";
+      return "border-info-400 bg-info-50 text-info-900";
     case "pelengkap":
-      return "border-stone-400 bg-stone-100 text-stone-800";
+      return "border-neutral-400 bg-neutral-100 text-neutral-800";
     default:
       return "border-border bg-muted text-muted-foreground";
   }
@@ -258,7 +258,7 @@ export function SponsorsClient({
         <div className="space-y-4 p-4 sm:p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="font-montserrat text-lg font-semibold text-dgb-900">Daftar sponsor</h2>
+              <h2 className="font-manrope text-lg font-semibold text-brand-900">Daftar sponsor</h2>
               <p className="mt-1 text-xs text-muted-foreground">
                 {filteredSponsors.length} dari {sponsors.length} sponsor tampil
               </p>
@@ -315,7 +315,7 @@ export function SponsorsClient({
         </AdminCard>
       ) : (
         <AdminCard padding="none">
-          <div className="hidden border-b border-border bg-dgb-50/40 px-4 py-3 font-montserrat text-[11px] font-semibold uppercase tracking-[0.12em] text-dgb-800 lg:grid lg:grid-cols-[4.5rem_minmax(12rem,1.6fr)_minmax(6.5rem,0.8fr)_minmax(10rem,1fr)_4rem_6rem_auto] lg:items-center lg:gap-3 sm:px-5">
+          <div className="hidden border-b border-border bg-brand-50/40 px-4 py-3 font-manrope text-xs font-semibold uppercase tracking-[0.12em] text-brand-800 lg:grid lg:grid-cols-[4.5rem_minmax(12rem,1.6fr)_minmax(6.5rem,0.8fr)_minmax(10rem,1fr)_4rem_6rem_auto] lg:items-center lg:gap-3 sm:px-5">
             <span>Logo</span>
             <span>Nama</span>
             <span>Tingkat</span>
@@ -332,10 +332,10 @@ export function SponsorsClient({
                 <article
                   key={sponsor.id}
                   role="listitem"
-                  className="grid grid-cols-[3.25rem_minmax(0,1fr)] gap-x-3 gap-y-3 p-4 transition-colors hover:bg-dgb-50/25 sm:p-5 lg:grid-cols-[4.5rem_minmax(12rem,1.6fr)_minmax(6.5rem,0.8fr)_minmax(10rem,1fr)_4rem_6rem_auto] lg:items-center lg:gap-3"
+                  className="grid grid-cols-[3.25rem_minmax(0,1fr)] gap-x-3 gap-y-3 p-4 transition-colors hover:bg-brand-50/25 sm:p-5 lg:grid-cols-[4.5rem_minmax(12rem,1.6fr)_minmax(6.5rem,0.8fr)_minmax(10rem,1fr)_4rem_6rem_auto] lg:items-center lg:gap-3"
                 >
                   <div className="col-span-2 flex items-center gap-3 lg:contents">
-                    <div className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-dgb-100 bg-white p-1.5">
+                    <div className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-brand-100 bg-canvas p-1.5">
                       {sponsor.logoAsset?.url ? (
                         <Image
                           src={sponsor.logoAsset.url}
@@ -345,12 +345,12 @@ export function SponsorsClient({
                           className="size-full object-contain"
                         />
                       ) : (
-                        <Building2 className="size-5 text-dgb-300" aria-hidden="true" />
+                        <Building2 className="size-5 text-brand-300" aria-hidden="true" />
                       )}
                     </div>
                     <div className="min-w-0">
-                      <h3 className="truncate font-montserrat text-sm font-semibold text-dgb-900">{sponsor.name}</h3>
-                      {!sponsor.logoAsset ? <p className="mt-0.5 text-[11px] text-muted-foreground">Belum ada logo</p> : null}
+                      <h3 className="truncate font-manrope text-sm font-semibold text-brand-900">{sponsor.name}</h3>
+                      {!sponsor.logoAsset ? <p className="mt-0.5 text-xs text-muted-foreground">Belum ada logo</p> : null}
                     </div>
                   </div>
 
@@ -364,7 +364,7 @@ export function SponsorsClient({
                           href={sponsor.website}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex max-w-full items-center gap-1 text-dgb hover:underline"
+                          className="inline-flex max-w-full items-center gap-1 text-brand hover:underline"
                           title={sponsor.website}
                         >
                           <Globe className="size-3.5 shrink-0" aria-hidden="true" />
@@ -383,8 +383,8 @@ export function SponsorsClient({
                       className={cn(
                         "inline-flex w-fit rounded-md border-l-2 px-2 py-1 font-medium",
                         sponsor.active
-                          ? "border-emerald-500 bg-emerald-50 text-emerald-800"
-                          : "border-stone-400 bg-stone-100 text-stone-700",
+                          ? "border-success-500 bg-success-50 text-success-800"
+                          : "border-neutral-400 bg-neutral-100 text-neutral-700",
                       )}
                     >
                       {sponsor.active ? "Aktif" : "Nonaktif"}
@@ -399,7 +399,7 @@ export function SponsorsClient({
                         size="sm"
                         onClick={() => openEditSheet(sponsor)}
                         disabled={isPending}
-                        className="h-8 border-dgb-100 px-2.5 text-xs text-dgb-800 hover:bg-dgb-50"
+                        className="h-8 border-brand-100 px-2.5 text-xs text-brand-800 hover:bg-brand-50"
                       >
                         <Pencil className="size-3.5" aria-hidden="true" /> Ubah
                       </Button>
@@ -414,8 +414,8 @@ export function SponsorsClient({
                         className={cn(
                           "h-8 px-2.5 text-xs",
                           sponsor.active
-                            ? "border-amber-200 text-amber-800 hover:bg-amber-50"
-                            : "border-emerald-200 text-emerald-800 hover:bg-emerald-50",
+                            ? "border-warning-200 text-warning-800 hover:bg-warning-50"
+                            : "border-success-200 text-success-800 hover:bg-success-50",
                         )}
                       >
                         {sponsor.active ? (
@@ -437,7 +437,7 @@ export function SponsorsClient({
                         onClick={() => setDeletingSponsor(sponsor)}
                         disabled={isPending}
                         aria-label={`Hapus sponsor ${sponsor.name}`}
-                        className="size-8 border-rose-200 text-destructive hover:bg-rose-50"
+                        className="size-8 border-danger-200 text-destructive hover:bg-danger-50"
                       >
                         <Trash2 className="size-3.5" aria-hidden="true" />
                       </Button>
@@ -452,8 +452,8 @@ export function SponsorsClient({
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetContent className="flex w-[min(100%,34rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-xl">
-          <SheetHeader className="border-b border-border bg-dgb-50/35 px-5 py-5 pr-14">
-            <SheetTitle className="font-montserrat text-lg font-semibold text-dgb-900">
+          <SheetHeader className="border-b border-border bg-brand-50/35 px-5 py-5 pr-14">
+            <SheetTitle className="font-manrope text-lg font-semibold text-brand-900">
               {editingSponsor ? "Ubah sponsor" : "Tambah sponsor"}
             </SheetTitle>
             <SheetDescription className="text-xs leading-5 text-muted-foreground">
@@ -518,7 +518,7 @@ export function SponsorsClient({
                   />
                 </AdminField>
 
-                <div className="rounded-lg border border-dgb-100 bg-dgb-50/40 p-3">
+                <div className="rounded-lg border border-brand-100 bg-brand-50/40 p-3">
                   <div className="flex items-start gap-3">
                     <Checkbox
                       name="active"
@@ -528,7 +528,7 @@ export function SponsorsClient({
                       aria-label="Aktifkan sponsor"
                     />
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-dgb-900">Aktif</p>
+                      <p className="text-sm font-semibold text-brand-900">Aktif</p>
                       <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
                         {editingSponsor
                           ? canPublish
@@ -542,17 +542,17 @@ export function SponsorsClient({
 
                 <section className="space-y-2 border-t border-border pt-5" aria-labelledby="sponsor-preview-title">
                   <div className="flex items-center justify-between gap-3">
-                    <h3 id="sponsor-preview-title" className="font-montserrat text-xs font-semibold uppercase tracking-[0.12em] text-dgb-800">
+                    <h3 id="sponsor-preview-title" className="font-manrope text-xs font-semibold uppercase tracking-[0.12em] text-brand-800">
                       Pratinjau kartu
                     </h3>
-                    <span className={cn("rounded-md border-l-2 px-2 py-1 text-[11px] font-medium", getTierBadgeStyle(formTier))}>
+                    <span className={cn("rounded-md border-l-2 px-2 py-1 text-xs font-medium", getTierBadgeStyle(formTier))}>
                       {getSponsorTierLabel(formTier)}
                     </span>
                   </div>
 
-                  <div className="rounded-lg border border-dgb-100 bg-white/80 p-4">
+                  <div className="rounded-lg border border-brand-100 bg-canvas/80 p-4">
                     <div className="flex items-center gap-3">
-                      <div className="relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-dgb-100 bg-white p-2">
+                      <div className="relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-brand-100 bg-canvas p-2">
                         {formLogoAsset?.url ? (
                           <Image
                             src={formLogoAsset.url}
@@ -562,15 +562,15 @@ export function SponsorsClient({
                             className="size-full object-contain"
                           />
                         ) : (
-                          <Handshake className="size-6 text-dgb-300" aria-hidden="true" />
+                          <Handshake className="size-6 text-brand-300" aria-hidden="true" />
                         )}
                       </div>
                       <div className="min-w-0">
-                        <p className="truncate font-montserrat text-sm font-semibold text-dgb-900">
+                        <p className="truncate font-manrope text-sm font-semibold text-brand-900">
                           {formName.trim() || "Nama sponsor"}
                         </p>
                         {formWebsite.trim() ? (
-                          <p className="mt-1 inline-flex max-w-full items-center gap-1 text-xs text-dgb">
+                          <p className="mt-1 inline-flex max-w-full items-center gap-1 text-xs text-brand">
                             <Globe className="size-3.5 shrink-0" aria-hidden="true" />
                             <span className="truncate">{websiteLabel(formWebsite.trim())}</span>
                           </p>
@@ -605,7 +605,7 @@ export function SponsorsClient({
       <AlertDialog open={Boolean(deletingSponsor)} onOpenChange={(open) => !open && setDeletingSponsor(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-montserrat">Hapus sponsor {deletingSponsor?.name}?</AlertDialogTitle>
+            <AlertDialogTitle className="font-manrope">Hapus sponsor {deletingSponsor?.name}?</AlertDialogTitle>
             <AlertDialogDescription>
               Data sponsor dihapus permanen. Logo tetap tersimpan di pustaka media.
             </AlertDialogDescription>
@@ -615,7 +615,7 @@ export function SponsorsClient({
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isPending}
-              className="bg-destructive text-white hover:bg-destructive/90"
+              className="bg-destructive text-canvas hover:bg-destructive/90"
             >
               {isPending ? "Menghapus" : "Hapus sponsor"}
             </AlertDialogAction>

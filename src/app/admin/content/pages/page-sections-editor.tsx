@@ -1,12 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { AdminMediaField, type MediaAssetSummary } from "@/components/admin/media-picker";
 import { toast } from "sonner";
 
 import { AdminBadge, AdminButton, AdminCard, AdminCardHeader, AdminField, AdminInput, AdminTextarea } from "@/components/admin/primitives";
 import { publishPageSectionAction, savePageSectionDraftAction } from "./actions";
+import { REGISTRATION_2026 } from "./registration-2026";
 
 export type PageSectionCopy = {
+  documentMediaId: string | null;
+  documentTitle: string | null;
   title: string | null;
   eyebrow: string | null;
   body: string | null;
@@ -16,7 +20,7 @@ export type PageSectionCopy = {
 
 export type PageSectionEditorItem = {
   slotKey: string;
-  pageKey: "home" | "tentang";
+  pageKey: "site" | "home" | "tentang" | "galeri" | "voting" | "pendaftaran";
   sectionKey: string;
   label: string;
   version: number | null;
@@ -31,17 +35,25 @@ function clean(value: string) {
 }
 
 function sameCopy(left: PageSectionCopy, right: PageSectionCopy) {
-  return left.title === right.title && left.eyebrow === right.eyebrow && left.body === right.body && left.actionLabel === right.actionLabel && left.actionHref === right.actionHref;
+  return left.documentMediaId === right.documentMediaId && left.documentTitle === right.documentTitle && left.title === right.title && left.eyebrow === right.eyebrow && left.body === right.body && left.actionLabel === right.actionLabel && left.actionHref === right.actionHref;
 }
 
 export function PageSectionsEditor({
   initialSections,
   canEdit,
   canPublish,
+  documentAssets,
+  organizationPeriod,
+  editionId,
+  editionYear,
 }: {
   initialSections: PageSectionEditorItem[];
   canEdit: boolean;
   canPublish: boolean;
+  documentAssets: MediaAssetSummary[];
+  organizationPeriod: { label: string; vision: string | null; missionJson: string } | null;
+  editionId: string;
+  editionYear: number;
 }) {
   const [sections, setSections] = useState(initialSections);
   const [pending, setPending] = useState<string | null>(null);
@@ -55,6 +67,8 @@ export function PageSectionsEditor({
   async function save(section: PageSectionEditorItem) {
     setPending(`${section.slotKey}:save`);
     const copy: PageSectionCopy = {
+      documentMediaId: section.value.documentMediaId,
+      documentTitle: clean(section.value.documentTitle ?? ""),
       title: clean(section.value.title ?? ""),
       eyebrow: clean(section.value.eyebrow ?? ""),
       body: clean(section.value.body ?? ""),
@@ -63,12 +77,14 @@ export function PageSectionsEditor({
     };
     try {
       const result = await savePageSectionDraftAction({
+        expectedEditionId: editionId,
         slotKey: section.slotKey,
         expectedVersion: section.version,
-        patch: section.slotKey === "home/ajakan"
+        patch: section.slotKey === "home/ajakan" || section.slotKey === "pendaftaran/hero"
           ? copy
-          : { title: copy.title, eyebrow: copy.eyebrow, body: copy.body },
+          : { title: copy.title, eyebrow: copy.eyebrow, body: copy.body, ...(section.slotKey === "tentang/legalitas" ? { documentMediaId: copy.documentMediaId, documentTitle: copy.documentTitle } : {}) },
       });
+      if (result.error || result.version === null) throw new Error(result.error ?? "Draf gagal disimpan");
       setSections((current) => current.map((item) => item.slotKey === section.slotKey
         ? { ...item, version: result.version, value: copy, draft: copy }
         : item));
@@ -83,7 +99,8 @@ export function PageSectionsEditor({
   async function publish(section: PageSectionEditorItem) {
     setPending(`${section.slotKey}:publish`);
     try {
-      const result = await publishPageSectionAction({ slotKey: section.slotKey });
+      const result = await publishPageSectionAction({ slotKey: section.slotKey, expectedEditionId: editionId });
+      if (result.error || result.version === null) throw new Error(result.error ?? "Teks gagal diterbitkan");
       setSections((current) => current.map((item) => item.slotKey === section.slotKey
         ? { ...item, version: result.version, status: "published", published: { ...item.value }, draft: null }
         : item));
@@ -97,26 +114,31 @@ export function PageSectionsEditor({
 
   return (
     <div className="space-y-8">
-      {(["home", "tentang"] as const).map((pageKey) => (
+      {(["site", "home", "tentang", "galeri", "voting", "pendaftaran"] as const).filter((pageKey) => sections.some((section) => section.pageKey === pageKey)).map((pageKey) => (
         <section key={pageKey} aria-labelledby={`${pageKey}-sections-title`} className="space-y-4">
           <div className="border-b border-border pb-2">
-            <h2 id={`${pageKey}-sections-title`} className="font-montserrat text-lg font-semibold text-dgb-900">
-              {pageKey === "home" ? "Beranda" : "Tentang"}
+            <h2 id={`${pageKey}-sections-title`} className="font-manrope text-lg font-semibold text-brand-900">
+              {{ site: "Identitas dan kontak", home: "Beranda", tentang: "Tentang", galeri: "Galeri", voting: "Voting", pendaftaran: "Pendaftaran" }[pageKey]}
             </h2>
+            {pageKey === "pendaftaran" && editionYear === 2026 && canEdit ? <AdminButton type="button" variant="secondary" disabled={Boolean(pending) || !sections.some((section) => section.pageKey === "pendaftaran" && !section.value.title && !section.value.body)} onClick={() => setSections((current) => current.map((section) => {
+              const preset = section.pageKey === "pendaftaran" && !section.value.title && !section.value.body ? REGISTRATION_2026[section.sectionKey] : null;
+              return preset ? { ...section, value: { ...section.value, ...preset } } : section;
+            }))}>Isi materi 2026</AdminButton> : null}
           </div>
           <div className="grid gap-4 xl:grid-cols-2">
             {sections.filter((section) => section.pageKey === pageKey).map((section) => {
               const hasUnpublishedChanges = section.draft !== null && !sameCopy(section.value, section.draft);
-              const missionHint = section.slotKey === "tentang/misi" ? "Tulis satu misi per baris." : undefined;
+              const missionHint = section.pageKey === "pendaftaran" ? section.sectionKey === "timeline" ? "Satu agenda per baris: tanggal | agenda | keterangan opsional. Urutan baris mengikuti tampilan publik." : section.sectionKey === "usia" ? "Satu kategori per baris: kategori | rentang usia | keterangan opsional." : "Satu poin per baris. Simpan draf, lalu tinjau melalui pratinjau edisi." : section.slotKey === "tentang/misi" ? "Tulis satu misi per baris." : undefined;
+              const fromPeriod = Boolean(organizationPeriod && ["tentang/visi", "tentang/misi"].includes(section.slotKey));
+              const isContact = section.pageKey === "site" && section.sectionKey !== "identity";
               return (
                 <AdminCard key={section.slotKey} className="space-y-4">
                   <AdminCardHeader
-                    eyebrow={`${section.pageKey}/${section.sectionKey}`}
                     title={section.label}
                     action={<AdminBadge value={section.draft ? "draft" : section.status ?? "draft"} />}
                   />
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <AdminField label="Label kecil">
+                    {!isContact && section.pageKey !== "pendaftaran" ? <AdminField label={section.slotKey === "site/identity" ? "Baris identitas dan tagar" : "Label kecil"}>
                       <AdminInput
                         value={section.value.eyebrow ?? ""}
                         onChange={(event) => updateValue(section.slotKey, "eyebrow", event.target.value)}
@@ -124,8 +146,8 @@ export function PageSectionsEditor({
                         readOnly={!canEdit}
                         disabled={Boolean(pending)}
                       />
-                    </AdminField>
-                    <AdminField label="Judul">
+                    </AdminField> : null}
+                    <AdminField label={isContact ? "Nama tautan" : "Judul"}>
                       <AdminInput
                         value={section.value.title ?? ""}
                         onChange={(event) => updateValue(section.slotKey, "title", event.target.value)}
@@ -135,7 +157,7 @@ export function PageSectionsEditor({
                       />
                     </AdminField>
                   </div>
-                  <AdminField label="Teks" hint={missionHint}>
+                  {fromPeriod ? <p className="text-sm text-muted-foreground">Isi mengikuti {organizationPeriod?.label}. Ubah visi dan misi melalui menu Kepengurusan. Judul bagian tetap dapat diubah di sini.</p> : <AdminField label={isContact ? (section.sectionKey === "email" ? "Alamat email" : "Tautan lengkap") : section.slotKey === "site/identity" ? "Deskripsi pencarian" : "Teks"} hint={isContact ? "Kosongkan lalu terbitkan untuk menyembunyikan kontak ini." : missionHint}>
                     <AdminTextarea
                       value={section.value.body ?? ""}
                       onChange={(event) => updateValue(section.slotKey, "body", event.target.value)}
@@ -144,8 +166,12 @@ export function PageSectionsEditor({
                       readOnly={!canEdit}
                       disabled={Boolean(pending)}
                     />
-                  </AdminField>
-                  {section.slotKey === "home/ajakan" ? <div className="grid gap-4 sm:grid-cols-2">
+                  </AdminField>}
+                  {section.slotKey === "tentang/legalitas" ? <div className="space-y-4">
+                    <AdminMediaField name="documentMediaId" label="Dokumen legalitas" acceptType="pdf" value={section.value.documentMediaId} initialAsset={documentAssets.find((asset) => asset.id === section.value.documentMediaId)} canManageMedia={canEdit && !pending} onChange={(asset) => updateValue(section.slotKey, "documentMediaId", asset?.id ?? "")} />
+                    <AdminField label="Nama dokumen"><AdminInput value={section.value.documentTitle ?? ""} onChange={(event) => updateValue(section.slotKey, "documentTitle", event.target.value)} disabled={!canEdit || Boolean(pending)} /></AdminField>
+                  </div> : null}
+                  {section.slotKey === "home/ajakan" || section.slotKey === "pendaftaran/hero" ? <div className="grid gap-4 sm:grid-cols-2">
                     <AdminField label="Label tombol">
                       <AdminInput
                         value={section.value.actionLabel ?? ""}

@@ -31,13 +31,9 @@ const ImageMaskFade: React.FC<ImageMaskFadeProps> = ({
 
   // Construct the mask-image style dynamically
   // For 'to left': opacity 100% on the right (0% of gradient) to 0% on the left (100% of gradient)
-  const maskStyle: React.CSSProperties = isMobile ? {
-    maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0) 100%)',
-    WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0) 100%)',
-  }  : {
-    maskImage: 'linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0) 100%)',
-    WebkitMaskImage: 'linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0) 100%)',
-  };
+  const maskStyle: React.CSSProperties = isMobile
+    ? { maskImage: 'var(--portrait-mask-mobile)', WebkitMaskImage: 'var(--portrait-mask-mobile)' }
+    : { maskImage: 'var(--portrait-mask-desktop)', WebkitMaskImage: 'var(--portrait-mask-desktop)' };
 
   return (
     <div className={`relative ${className || ''} z-0`}>

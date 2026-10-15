@@ -97,6 +97,7 @@ export type ParticipantDetail = {
 };
 
 type Props = {
+  signature: string | null;
   edition: EditionInfo;
   categories: CategoryOption[];
   participant: ParticipantDetail;
@@ -116,15 +117,16 @@ const SOCIAL_PLATFORMS: { value: SocialPlatform; label: string }[] = [
 ];
 
 const MEDIA_ROLES: { value: ParticipantMediaRole; label: string; description: string }[] = [
-  { value: "closeup", label: "Closeup", description: "Foto wajah/portrait utama (sinkron ke kartu publik)" },
-  { value: "full_body", label: "Full Body", description: "Foto seluruh badan dengan busana resmi" },
-  { value: "detail", label: "Detail Busana", description: "Detail ornamen batik, bordir, atau aksesoris" },
+  { value: "closeup", label: "Foto wajah", description: "Foto utama pada kartu publik" },
+  { value: "full_body", label: "Seluruh badan", description: "Foto seluruh badan dengan busana resmi" },
+  { value: "detail", label: "Detail busana", description: "Detail ornamen batik, bordir, atau aksesoris" },
   { value: "karantina", label: "Karantina", description: "Dokumentasi kegiatan dan pembekalan karantina" },
   { value: "other", label: "Lainnya", description: "Foto pendukung dan kegiatan lainnya" },
   { value: "profile_video", label: "Video profil", description: "Video untuk profil finalis" },
 ];
 
 export function ParticipantDetailWorkspace({
+  signature,
   edition,
   categories,
   participant: initialParticipant,
@@ -512,7 +514,7 @@ export function ParticipantDetailWorkspace({
           </Button>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-montserrat text-xs font-semibold uppercase text-fb-500">
+              <span className="font-inter text-sm font-semibold uppercase text-highlight-500">
                 Peserta #{String(participant.number).padStart(2, "0")}
               </span>
               <span className="text-muted-foreground">·</span>
@@ -520,22 +522,22 @@ export function ParticipantDetailWorkspace({
               <span className="text-muted-foreground">·</span>
               <span className="text-xs text-muted-foreground">{edition.name}</span>
             </div>
-            <h1 className="font-montserrat text-xl font-bold text-dgb-900 sm:text-2xl">
+            <h1 className="font-manrope text-xl font-bold text-brand-900 sm:text-2xl">
               {participant.name}
             </h1>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-md border border-dgb-200 bg-dgb-50 px-2.5 py-1 font-mono text-xs font-semibold text-dgb-900">
+          <span className="rounded-md border border-brand-200 bg-brand-50 px-2.5 py-1 font-inter text-xs font-semibold text-brand-900">
             v{participant.version}
           </span>
           <AdminBadge value={participant.currentStageName ?? "Tahap belum terhubung"} />
           <span
             className={`rounded-md border px-2.5 py-1 text-xs font-semibold ${
               participant.active
-                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                : "border-rose-200 bg-rose-50 text-rose-800"
+                ? "border-success-200 bg-success-50 text-success-800"
+                : "border-danger-200 bg-danger-50 text-danger-800"
             }`}
           >
             {participant.active ? "Aktif" : "Nonaktif"}
@@ -544,9 +546,9 @@ export function ParticipantDetailWorkspace({
       </div>
 
       {/* 2. Main Content Grid: Tabs in Left (60-65%) + Live Preview in Right (35-40%) */}
-      <div className="grid gap-6 lg:grid-cols-12">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* Left Column: Editor Tabs */}
-        <div className="space-y-6 lg:col-span-7 xl:col-span-8">
+        <div className="min-w-0 space-y-6 lg:col-span-7 xl:col-span-8">
           {/* Tab Navigation */}
           <div className="flex flex-wrap gap-1 rounded-lg border border-border bg-muted/40 p-1">
             <Button
@@ -554,10 +556,11 @@ export function ParticipantDetailWorkspace({
               variant="ghost"
               size="sm"
               onClick={() => setActiveTab("identity")}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-2 font-montserrat text-xs font-semibold transition-all ${
+              aria-pressed={activeTab === "identity"}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-2 font-inter text-sm font-semibold transition-all ${
                 activeTab === "identity"
-                  ? "bg-white text-dgb-900 shadow-xs"
-                  : "text-muted-foreground hover:bg-white/50 hover:text-foreground"
+                  ? "bg-canvas text-brand-900 shadow-xs"
+                  : "text-muted-foreground hover:bg-canvas/50 hover:text-foreground"
               }`}
             >
               <User size={14} /> Identitas
@@ -567,10 +570,11 @@ export function ParticipantDetailWorkspace({
               variant="ghost"
               size="sm"
               onClick={() => setActiveTab("achievements")}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-2 font-montserrat text-xs font-semibold transition-all ${
+              aria-pressed={activeTab === "achievements"}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-2 font-inter text-sm font-semibold transition-all ${
                 activeTab === "achievements"
-                  ? "bg-white text-dgb-900 shadow-xs"
-                  : "text-muted-foreground hover:bg-white/50 hover:text-foreground"
+                  ? "bg-canvas text-brand-900 shadow-xs"
+                  : "text-muted-foreground hover:bg-canvas/50 hover:text-foreground"
               }`}
             >
               <Award size={14} /> Prestasi ({achievements.length})
@@ -580,36 +584,39 @@ export function ParticipantDetailWorkspace({
               variant="ghost"
               size="sm"
               onClick={() => setActiveTab("social")}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-2 font-montserrat text-xs font-semibold transition-all ${
+              aria-pressed={activeTab === "social"}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-2 font-inter text-sm font-semibold transition-all ${
                 activeTab === "social"
-                  ? "bg-white text-dgb-900 shadow-xs"
-                  : "text-muted-foreground hover:bg-white/50 hover:text-foreground"
+                  ? "bg-canvas text-brand-900 shadow-xs"
+                  : "text-muted-foreground hover:bg-canvas/50 hover:text-foreground"
               }`}
             >
-              <Share2 size={14} /> Sosial Media ({socialLinks.length})
+              <Share2 size={14} /> Media sosial ({socialLinks.length})
             </Button>
             <Button
               type="button"
               variant="ghost"
               size="sm"
               onClick={() => setActiveTab("media")}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-2 font-montserrat text-xs font-semibold transition-all ${
+              aria-pressed={activeTab === "media"}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-2 font-inter text-sm font-semibold transition-all ${
                 activeTab === "media"
-                  ? "bg-white text-dgb-900 shadow-xs"
-                  : "text-muted-foreground hover:bg-white/50 hover:text-foreground"
+                  ? "bg-canvas text-brand-900 shadow-xs"
+                  : "text-muted-foreground hover:bg-canvas/50 hover:text-foreground"
               }`}
             >
-              <Camera size={14} /> Galeri Foto ({mediaItems.length})
+              <Camera size={14} /> Galeri foto ({mediaItems.length})
             </Button>
             <Button
               type="button"
               variant="ghost"
               size="sm"
               onClick={() => setActiveTab("qris")}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-2 font-montserrat text-xs font-semibold transition-all ${
+              aria-pressed={activeTab === "qris"}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-2 font-inter text-sm font-semibold transition-all ${
                 activeTab === "qris"
-                  ? "bg-white text-dgb-900 shadow-xs"
-                  : "text-muted-foreground hover:bg-white/50 hover:text-foreground"
+                  ? "bg-canvas text-brand-900 shadow-xs"
+                  : "text-muted-foreground hover:bg-canvas/50 hover:text-foreground"
               }`}
             >
               <QrCode size={14} /> QRIS
@@ -620,8 +627,7 @@ export function ParticipantDetailWorkspace({
           {activeTab === "identity" ? (
             <AdminCard className="p-4 sm:p-5">
               <AdminCardHeader
-                eyebrow="Identitas"
-                title="Informasi Dasar & Biodata"
+                title="Identitas dan biodata"
               />
               <form onSubmit={handleSaveIdentity} className="space-y-4 pt-2">
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -679,7 +685,7 @@ export function ParticipantDetailWorkspace({
                       onCheckedChange={(checked) => setActive(checked === true)}
                     />
                     <label htmlFor="participant-active-toggle" className="cursor-pointer text-xs">
-                      <span className="font-semibold text-foreground">Status Aktif</span>
+                      <span className="font-semibold text-foreground">Status aktif</span>
                       <p className="text-muted-foreground">
                         Peserta aktif akan muncul dalam daftar seleksi dan halaman profil publik.
                       </p>
@@ -708,7 +714,7 @@ export function ParticipantDetailWorkspace({
                   <Button
                     type="submit"
                     disabled={!canEdit || isPending}
-                    className="bg-dgb font-montserrat text-xs font-semibold text-white hover:bg-dgb/90"
+                    className="bg-brand font-inter text-sm font-semibold text-canvas hover:bg-brand/90"
                   >
                     <Save size={14} className="mr-1.5" />
                     {isPending ? "Menyimpan..." : "Simpan identitas"}
@@ -722,7 +728,6 @@ export function ParticipantDetailWorkspace({
           {activeTab === "achievements" ? (
             <AdminCard className="p-4 sm:p-5">
               <AdminCardHeader
-                eyebrow="Prestasi & Penghargaan"
                 title={`Daftar Prestasi (${achievements.length})`}
               />
               <form onSubmit={handleSaveAchievements} className="space-y-4 pt-2">
@@ -743,7 +748,7 @@ export function ParticipantDetailWorkspace({
                     type="button"
                     onClick={handleAddAchievement}
                     disabled={!newAchievementText.trim()}
-                    className="shrink-0 bg-dgb text-xs font-semibold text-white hover:bg-dgb/90"
+                    className="shrink-0 bg-brand text-xs font-semibold text-canvas hover:bg-brand/90"
                   >
                     <Plus size={14} className="mr-1" /> Tambah
                   </Button>
@@ -759,9 +764,9 @@ export function ParticipantDetailWorkspace({
                     {achievements.map((item, index) => (
                       <div
                         key={item.id ?? index}
-                        className="flex items-center gap-2 rounded-lg border border-border bg-white p-2.5 shadow-xs"
+                        className="flex items-center gap-2 rounded-lg border border-border bg-canvas p-2.5 shadow-xs"
                       >
-                        <span className="grid size-6 shrink-0 place-items-center rounded-md bg-dgb-50 text-[11px] font-bold text-dgb">
+                        <span className="grid size-6 shrink-0 place-items-center rounded-md bg-brand-50 text-xs font-bold text-brand">
                           {index + 1}
                         </span>
                         <AdminInput
@@ -802,7 +807,7 @@ export function ParticipantDetailWorkspace({
                             variant="outline"
                             size="sm"
                             onClick={() => handleDeleteAchievement(index)}
-                            className="size-8 p-0 text-destructive hover:bg-rose-50"
+                            className="size-8 p-0 text-destructive hover:bg-danger-50"
                             title="Hapus"
                           >
                             <Trash2 size={13} />
@@ -825,7 +830,7 @@ export function ParticipantDetailWorkspace({
                   <Button
                     type="submit"
                     disabled={!canEdit || isPending}
-                    className="bg-dgb font-montserrat text-xs font-semibold text-white hover:bg-dgb/90"
+                    className="bg-brand font-inter text-sm font-semibold text-canvas hover:bg-brand/90"
                   >
                     <Save size={14} className="mr-1.5" />
                     {isPending ? "Menyimpan..." : "Simpan daftar prestasi"}
@@ -839,8 +844,7 @@ export function ParticipantDetailWorkspace({
           {activeTab === "social" ? (
             <AdminCard className="p-4 sm:p-5">
               <AdminCardHeader
-                eyebrow="Media sosial"
-                title={`Akun Sosial Media (${socialLinks.length})`}
+                title={`Akun Media sosial (${socialLinks.length})`}
               />
               <form onSubmit={handleSaveSocialLinks} className="space-y-4 pt-2">
                 <div className="flex justify-between items-center">
@@ -852,7 +856,7 @@ export function ParticipantDetailWorkspace({
                     variant="outline"
                     size="sm"
                     onClick={handleAddSocialLink}
-                    className="text-xs border-dgb-200 text-dgb hover:bg-dgb-50"
+                    className="text-xs border-brand-200 text-brand hover:bg-brand-50"
                   >
                     <Plus size={14} className="mr-1" /> Tambah akun
                   </Button>
@@ -867,7 +871,7 @@ export function ParticipantDetailWorkspace({
                     {socialLinks.map((item, index) => (
                       <div
                         key={item.id ?? index}
-                        className="grid gap-2 rounded-lg border border-border bg-white p-3 shadow-xs sm:grid-cols-12 sm:items-center"
+                        className="grid gap-2 rounded-lg border border-border bg-canvas p-3 shadow-xs sm:grid-cols-12 sm:items-center"
                       >
                         <div className="sm:col-span-3">
                           <AdminSelect
@@ -942,7 +946,7 @@ export function ParticipantDetailWorkspace({
                             variant="outline"
                             size="sm"
                             onClick={() => handleDeleteSocialLink(index)}
-                            className="size-8 p-0 text-destructive hover:bg-rose-50"
+                            className="size-8 p-0 text-destructive hover:bg-danger-50"
                           >
                             <Trash2 size={13} />
                           </Button>
@@ -964,7 +968,7 @@ export function ParticipantDetailWorkspace({
                   <Button
                     type="submit"
                     disabled={!canEdit || isPending}
-                    className="bg-dgb font-montserrat text-xs font-semibold text-white hover:bg-dgb/90"
+                    className="bg-brand font-inter text-sm font-semibold text-canvas hover:bg-brand/90"
                   >
                     <Save size={14} className="mr-1.5" />
                     {isPending ? "Menyimpan..." : "Simpan sosial media"}
@@ -978,18 +982,17 @@ export function ParticipantDetailWorkspace({
           {activeTab === "media" ? (
             <AdminCard className="p-4 sm:p-5">
               <AdminCardHeader
-                eyebrow="Galeri"
                 title={`Media Peserta (${mediaItems.length})`}
               />
               <form onSubmit={handleSaveMedia} className="space-y-4 pt-2">
                 {/* Actions & Role Picker */}
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dgb-100 bg-dgb-50/30 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-brand-100 bg-brand-50/30 p-3">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-dgb-900">Jenis media:</span>
+                    <span className="text-xs font-semibold text-brand-900">Jenis media:</span>
                     <AdminSelect
                       value={targetRoleForNewMedia}
                       onValueChange={(nextRole) => setTargetRoleForNewMedia(nextRole as ParticipantMediaRole)}
-                      className="h-8 text-xs w-36 bg-white"
+                      className="h-8 text-xs w-36 bg-canvas"
                       options={MEDIA_ROLES.map((r) => ({ value: r.value, label: r.label }))}
                     />
                   </div>
@@ -997,7 +1000,7 @@ export function ParticipantDetailWorkspace({
                   <Button
                     type="button"
                     onClick={() => setMediaPickerOpen(true)}
-                    className="h-8 bg-dgb text-xs font-semibold text-white hover:bg-dgb/90"
+                    className="h-8 bg-brand text-xs font-semibold text-canvas hover:bg-brand/90"
                   >
                     <Plus size={14} className="mr-1" /> Tambah {targetRoleForNewMedia === "profile_video" ? "video profil" : "foto"}
                   </Button>
@@ -1024,7 +1027,7 @@ export function ParticipantDetailWorkspace({
                         <div
                           key={item.id ?? index}
                           className={`flex flex-col gap-3 rounded-lg border p-3.5 transition-colors sm:flex-row sm:items-center sm:justify-between ${
-                            item.active ? "border-border bg-white" : "border-border/60 bg-muted/40 opacity-75"
+                            item.active ? "border-border bg-canvas" : "border-border/60 bg-muted/40 opacity-75"
                           }`}
                         >
                           {/* Image Thumbnail & Details */}
@@ -1039,7 +1042,7 @@ export function ParticipantDetailWorkspace({
                                   className="object-cover"
                                 />
                               ) : isVideo && asset?.mimeType.startsWith("video/") ? (
-                                <div className="grid size-full place-items-center bg-fb-50 text-fb-700">
+                                <div className="grid size-full place-items-center bg-highlight-50 text-highlight-700">
                                   <Video size={22} />
                                 </div>
                               ) : (
@@ -1048,7 +1051,7 @@ export function ParticipantDetailWorkspace({
                                 </div>
                               )}
                               {isCloseup && item.active ? (
-                                <span className="absolute top-0 right-0 rounded-bl-sm bg-dgb px-1 py-0.2 text-[9px] font-bold text-white">
+                                <span className="absolute top-0 right-0 rounded-bl-sm bg-brand px-1 py-0.2 text-xs font-bold text-canvas">
                                   UTAMA
                                 </span>
                               ) : null}
@@ -1067,11 +1070,11 @@ export function ParticipantDetailWorkspace({
                                         : m;
                                     }));
                                   }}
-                                  className="h-7 text-[11px] font-semibold w-32"
+                                  className="h-7 text-xs font-semibold w-32"
                                   options={roleOptions.map((r) => ({ value: r.value, label: r.label }))}
                                 />
 
-                                <span className="truncate text-xs font-semibold text-dgb-900 max-w-44" title={asset?.filename}>
+                                <span className="truncate text-xs font-semibold text-brand-900 max-w-44" title={asset?.filename}>
                                   {asset?.filename ?? item.mediaId}
                                 </span>
                               </div>
@@ -1097,9 +1100,9 @@ export function ParticipantDetailWorkspace({
                               variant="outline"
                               size="sm"
                               onClick={() => handleToggleMediaActive(index)}
-                              className={`h-7 text-[11px] ${
+                              className={`h-7 text-xs ${
                                 item.active
-                                  ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                                  ? "border-success-200 bg-success-50 text-success-800"
                                   : "border-border text-muted-foreground"
                               }`}
                             >
@@ -1111,7 +1114,7 @@ export function ParticipantDetailWorkspace({
                               variant="outline"
                               size="sm"
                               onClick={() => handleDeleteMedia(index)}
-                              className="h-7 text-[11px] text-destructive hover:bg-rose-50"
+                              className="h-7 text-xs text-destructive hover:bg-danger-50"
                             >
                               <Trash2 size={13} />
                             </Button>
@@ -1134,7 +1137,7 @@ export function ParticipantDetailWorkspace({
                   <Button
                     type="submit"
                     disabled={!canEdit || isPending}
-                    className="bg-dgb font-montserrat text-xs font-semibold text-white hover:bg-dgb/90"
+                    className="bg-brand font-inter text-sm font-semibold text-canvas hover:bg-brand/90"
                   >
                     <Save size={14} className="mr-1.5" />
                     {isPending ? "Menyimpan..." : "Simpan galeri foto"}
@@ -1148,14 +1151,13 @@ export function ParticipantDetailWorkspace({
           {activeTab === "qris" ? (
             <AdminCard className="p-4 sm:p-5">
               <AdminCardHeader
-                eyebrow="Voting"
                 title="Gambar QRIS"
                 description="Unggah atau pilih gambar QRIS yang dibuat di luar website."
               />
               <form onSubmit={handleSaveQris} className="space-y-4 pt-2">
                 <AdminMediaField
                   name="qrisMediaId"
-                  label="Gambar QRIS Peserta"
+                  label="Gambar QRIS"
                   hint="Gunakan gambar siap pakai dari pustaka media."
                   aspectRatioHint="1:1"
                   initialAsset={
@@ -1206,7 +1208,7 @@ export function ParticipantDetailWorkspace({
                   <Button
                     type="submit"
                     disabled={!canEdit || isPending}
-                    className="bg-dgb font-montserrat text-xs font-semibold text-white hover:bg-dgb/90"
+                    className="bg-brand font-inter text-sm font-semibold text-canvas hover:bg-brand/90"
                   >
                     <Save size={14} className="mr-1.5" />
                     {isPending ? "Menyimpan..." : "Simpan QRIS peserta"}
@@ -1220,14 +1222,14 @@ export function ParticipantDetailWorkspace({
         {/* Right Column: Live Preview Card */}
         <div className="space-y-6 lg:col-span-5 xl:col-span-4">
           <div className="sticky top-20 space-y-4">
-            <h3 className="font-montserrat text-sm font-bold text-dgb-900 flex items-center gap-2">
-              <Eye size={16} className="text-fb" /> Live Preview Profil
+            <h3 className="font-manrope text-sm font-bold text-brand-900 flex items-center gap-2">
+              <Eye size={16} className="text-highlight-700" /> Pratinjau profil
             </h3>
 
             {/* Public Card Mockup */}
-            <div className="overflow-hidden rounded-xl border border-dgb-200/80 bg-white shadow-md">
+            <div className="overflow-hidden rounded-xl border border-brand-200/80 bg-canvas shadow-md">
               {/* Image Box */}
-              <div className="relative aspect-[3/4] w-full overflow-hidden bg-dgb-900">
+              <div className="relative aspect-[3/4] w-full overflow-hidden bg-brand-900">
                 {liveCloseupUrl ? (
                   <Image
                     src={liveCloseupUrl}
@@ -1237,48 +1239,44 @@ export function ParticipantDetailWorkspace({
                     className="object-cover object-top"
                   />
                 ) : (
-                  <div className="grid size-full place-items-center text-dgb-300">
+                  <div className="grid size-full place-items-center text-brand-300">
                     <User size={64} />
-                    <p className="absolute bottom-6 text-xs text-white/70">Foto closeup belum diatur</p>
+                    <p className="absolute bottom-6 text-xs text-canvas/70">Foto closeup belum diatur</p>
                   </div>
                 )}
 
                 {/* Card Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/20 to-transparent pointer-events-none" />
 
                 {/* Top badges */}
                 <div className="absolute top-3 inset-x-3 flex items-center justify-between">
-                  <span className="rounded-md bg-black/60 px-2 py-1 font-montserrat text-xs font-bold text-white backdrop-blur-xs">
+                  <span className="rounded-md bg-ink/60 px-2 py-1 font-manrope text-xs font-bold text-canvas backdrop-blur-xs">
                     #{String(number).padStart(2, "0")}
                   </span>
-                  <span className="rounded-md bg-fb px-2.5 py-1 font-montserrat text-xs font-bold text-black shadow-xs">
+                  <span className="rounded-md bg-highlight px-2.5 py-1 font-manrope text-xs font-bold text-ink shadow-xs">
                     {categories.find((c) => c.id === categoryId)?.label ?? participant.categoryLabel}
                   </span>
                 </div>
 
                 {/* Bottom Card Content */}
-                <div className="absolute bottom-0 inset-x-0 p-4 text-white">
-                  <p className="font-montserrat text-lg font-bold leading-snug drop-shadow-xs">
+                <div className="absolute bottom-0 inset-x-0 p-4 text-canvas">
+                  <p className="font-manrope text-lg font-bold leading-snug drop-shadow-xs">
                     {name || "Nama Peserta"}
                   </p>
-                  <p className="mt-0.5 text-xs text-white/80">
+                  <p className="mt-0.5 text-xs text-canvas/80">
                     {edition.name} · {participant.currentStageName ?? "Tahap belum terhubung"}
                   </p>
                 </div>
               </div>
 
               {/* Brand strip */}
-              <div className="flex h-6 items-center justify-center gap-4 bg-gradient-to-r from-fb via-fb-200 to-fb px-3 text-[10px] font-bold text-black uppercase">
-                <span>mokagarut</span>
-                <span>#nyundaturnyakola</span>
-                <span>#kayakarya</span>
-              </div>
+              {signature ? <div className="min-h-6 bg-gradient-to-r from-highlight via-highlight-200 to-highlight px-3 py-1 text-center text-xs font-bold leading-4 text-ink"><span>{signature}</span></div> : null}
 
               {/* Card Body Details */}
               <div className="p-4 space-y-3 text-xs">
                 {bio ? (
                   <div>
-                    <span className="text-[10px] font-semibold uppercase text-muted-foreground">Bio</span>
+                    <span className="text-xs font-semibold uppercase text-muted-foreground">Bio</span>
                     <p className="text-xs text-foreground/90 line-clamp-3 mt-0.5">{bio}</p>
                   </div>
                 ) : null}
@@ -1286,16 +1284,16 @@ export function ParticipantDetailWorkspace({
                 {/* Achievements Chips */}
                 {achievements.length > 0 ? (
                   <div>
-                    <span className="text-[10px] font-semibold uppercase text-muted-foreground">Prestasi</span>
+                    <span className="text-xs font-semibold uppercase text-muted-foreground">Prestasi</span>
                     <ul className="mt-1 space-y-1">
                       {achievements.slice(0, 3).map((a, i) => (
-                        <li key={i} className="flex items-start gap-1.5 text-[11px] text-foreground">
-                          <Award size={12} className="shrink-0 text-fb-500 mt-0.5" />
+                        <li key={i} className="flex items-start gap-1.5 text-xs text-foreground">
+                          <Award size={12} className="shrink-0 text-highlight-500 mt-0.5" />
                           <span className="truncate">{a.text}</span>
                         </li>
                       ))}
                       {achievements.length > 3 ? (
-                        <li className="text-[10px] text-muted-foreground font-medium">
+                        <li className="text-xs text-muted-foreground font-medium">
                           +{achievements.length - 3} prestasi lainnya
                         </li>
                       ) : null}
@@ -1305,8 +1303,8 @@ export function ParticipantDetailWorkspace({
 
                 {participant.titles.length > 0 ? (
                   <div>
-                    <span className="text-[10px] font-semibold uppercase text-muted-foreground">Gelar</span>
-                    <p className="mt-0.5 text-xs font-semibold text-dgb-900">
+                    <span className="text-xs font-semibold uppercase text-muted-foreground">Gelar</span>
+                    <p className="mt-0.5 text-xs font-semibold text-brand-900">
                       {participant.titles.map((title) => title.name).join(", ")}
                     </p>
                   </div>
@@ -1315,7 +1313,7 @@ export function ParticipantDetailWorkspace({
                 {/* Social Icons */}
                 {socialLinks.length > 0 ? (
                   <div>
-                    <span className="text-[10px] font-semibold uppercase text-muted-foreground">Sosial Media</span>
+                    <span className="text-xs font-semibold uppercase text-muted-foreground">Media sosial</span>
                     <div className="mt-1 flex flex-wrap gap-1.5">
                       {socialLinks.map((s, i) => (
                         <a
@@ -1323,7 +1321,7 @@ export function ParticipantDetailWorkspace({
                           href={s.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center gap-1 rounded-sm border border-dgb-100 bg-dgb-50/50 px-2 py-0.5 text-[10px] font-medium text-dgb-900 hover:bg-dgb-100"
+                          className="inline-flex items-center gap-1 rounded-sm border border-brand-100 bg-brand-50/50 px-2 py-0.5 text-xs font-medium text-brand-900 hover:bg-brand-100"
                         >
                           <ExternalLink size={10} />
                           {s.label || s.platform}
@@ -1336,8 +1334,8 @@ export function ParticipantDetailWorkspace({
                 {/* QRIS Status */}
                 <div className="border-t border-border pt-2 flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
-                    <QrCode size={14} className={qrisAsset ? "text-emerald-600" : "text-destructive"} />
-                    <span className="text-[11px] font-medium">
+                    <QrCode size={14} className={qrisAsset ? "text-success-600" : "text-destructive"} />
+                    <span className="text-xs font-medium">
                       {qrisAsset ? "QRIS Terpasang" : "QRIS Belum Ada"}
                     </span>
                   </div>
@@ -1347,24 +1345,24 @@ export function ParticipantDetailWorkspace({
 
             {/* Profile Checklist */}
             <AdminCard className="space-y-2 p-4 sm:p-4">
-              <h4 className="font-montserrat text-xs font-bold text-dgb-900">Kelengkapan Profil</h4>
+              <h4 className="font-manrope text-xs font-bold text-brand-900">Kelengkapan profil</h4>
               <ul className="space-y-1.5 text-xs">
                 <li className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Foto Closeup Utama</span>
+                  <span className="text-muted-foreground">Foto wajah utama</span>
                   {liveCloseupUrl ? (
-                    <span className="flex items-center gap-1 font-semibold text-emerald-600">
+                    <span className="flex items-center gap-1 font-semibold text-success-600">
                       <Check size={13} /> Siap
                     </span>
                   ) : (
-                    <span className="flex items-center gap-1 font-semibold text-amber-600">
+                    <span className="flex items-center gap-1 font-semibold text-warning-600">
                       <AlertCircle size={13} /> Belum ada
                     </span>
                   )}
                 </li>
                 <li className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Biodata Singkat</span>
+                  <span className="text-muted-foreground">Biodata singkat</span>
                   {bio ? (
-                    <span className="flex items-center gap-1 font-semibold text-emerald-600">
+                    <span className="flex items-center gap-1 font-semibold text-success-600">
                       <Check size={13} /> Terisi
                     </span>
                   ) : (
@@ -1374,13 +1372,13 @@ export function ParticipantDetailWorkspace({
                   )}
                 </li>
                 <li className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Prestasi Tercatat</span>
+                  <span className="text-muted-foreground">Prestasi tercatat</span>
                   <span className="font-semibold text-foreground">{achievements.length} butir</span>
                 </li>
                 <li className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Aset QRIS Voting</span>
+                  <span className="text-muted-foreground">QRIS voting</span>
                   {qrisAsset ? (
-                    <span className="flex items-center gap-1 font-semibold text-emerald-600">
+                    <span className="flex items-center gap-1 font-semibold text-success-600">
                       <Check size={13} /> Siap
                     </span>
                   ) : (

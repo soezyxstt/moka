@@ -1,6 +1,50 @@
 "use server";import { eq } from "drizzle-orm";import { revalidatePath } from "next/cache";import { requirePermission } from "@/server/auth/authorization";import { appendAuditLog } from "@/server/auth/audit";import { database } from "@/server/db/client";import { categories, editions } from "@/server/db/schema";
-export async function createEditionAction(formData:FormData){const actor=await requirePermission("settings.manage");const year=Number(formData.get("year"));const name=String(formData.get("name")??"").trim();if(!Number.isInteger(year)||year<2020||year>2100||!name)throw new Error("Edisi tidak valid");const id=crypto.randomUUID(),slug=String(year);await database.transaction(async tx=>{await tx.insert(editions).values({id,year,slug,name,lifecycle:"draft"});await appendAuditLog(tx,{actorUserId:actor.session.user.id,actorLabel:actor.session.user.email,action:"edition.create",resourceType:"edition",resourceId:id,resourceLabel:name,after:{year,slug,name,lifecycle:"draft"},changedFields:["year","slug","name","lifecycle"],source:"admin-content"})});revalidatePath("/admin/content/editions")}
+import { DEFAULT_CATEGORIES, getEditionReadiness } from "@/server/cms/edition-readiness";
+export async function createEditionAction(formData: FormData) {
+  const actor = await requirePermission("settings.manage");
+  const year = Number(formData.get("year"));
+  const name = String(formData.get("name") ?? "").trim();
+  if (!Number.isInteger(year) || year < 2020 || year > 2100 || !name || name.length > 200) throw new Error("Edisi tidak valid");
+  const id = crypto.randomUUID();
+  await database.transaction(async (tx) => {
+    await tx.insert(editions).values({ id, year, slug: String(year), name, lifecycle: "draft" });
+    await tx.insert(categories).values(DEFAULT_CATEGORIES.map((category, index) => ({ ...category, editionId: id, displayOrder: index })));
+    await appendAuditLog(tx, { actorUserId: actor.session.user.id, actorLabel: actor.session.user.email, action: "edition.create", resourceType: "edition", resourceId: id, resourceLabel: name, after: { year, name, lifecycle: "draft", categories: DEFAULT_CATEGORIES }, changedFields: ["year", "name", "lifecycle", "categories"], source: "admin-content" });
+  });
+  revalidatePath("/admin", "layout");
+}
 
-export async function createCategoryAction(formData: FormData) {const actor=await requirePermission("participants.manage");const editionId=String(formData.get("editionId")??"");const code=String(formData.get("code")??"").trim().toUpperCase();const slug=String(formData.get("slug")??"").trim().toLowerCase();const label=String(formData.get("label")??"").trim();if(!editionId||!label||!/^[A-Z0-9]{2,8}$/.test(code)||!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug))throw new Error("Kategori tidak valid");const id=crypto.randomUUID();await database.transaction(async tx=>{await tx.insert(categories).values({id,editionId,code,slug,label});await appendAuditLog(tx,{actorUserId:actor.session.user.id,actorLabel:actor.session.user.email,action:"category.create",resourceType:"category",resourceId:id,resourceLabel:label,after:{editionId,code,slug,label},changedFields:["editionId","code","slug","label"],source:"admin-content"})});revalidatePath("/admin/content/editions")}
+export async function createCategoryAction(formData: FormData) {
+  const actor = await requirePermission("participants.manage");
+  const editionId = String(formData.get("editionId") ?? "");
+  const category = DEFAULT_CATEGORIES.find((item) => item.code === formData.get("code"));
+  if (!category) throw new Error("Pilih kategori JD, MD, JR, atau MR");
+  await database.transaction(async (tx) => {
+    const [edition] = await tx.select().from(editions).where(eq(editions.id, editionId)).limit(1);
+    if (!edition || edition.lifecycle === "archived") throw new Error("Edisi tidak dapat diubah");
+    const existing = await tx.select().from(categories).where(eq(categories.editionId, editionId));
+    if (existing.some((row) => row.code === category.code)) throw new Error("Kategori sudah tersedia");
+    const [created] = await tx.insert(categories).values({ ...category, editionId }).returning();
+    await appendAuditLog(tx, { actorUserId: actor.session.user.id, actorLabel: actor.session.user.email, action: "category.create", resourceType: "category", resourceId: created.id, resourceLabel: category.label, after: created, changedFields: ["editionId", "code", "slug", "label"], source: "admin-content" });
+  });
+  revalidatePath("/admin/content/editions");
+}
 
-export async function activateEditionAction(formData: FormData) {const actor=await requirePermission("settings.manage");const editionId=String(formData.get("editionId")??"");const reason=String(formData.get("reason")??"").trim();if(!editionId||reason.length<8)throw new Error("Alasan aktivasi minimal 8 karakter");await database.transaction(async tx=>{const [edition]=await tx.select().from(editions).where(eq(editions.id,editionId)).limit(1);if(!edition)throw new Error("Edisi tidak ditemukan");const categoryRows=await tx.select().from(categories).where(eq(categories.editionId,editionId));if(categoryRows.length===0)throw new Error("Edisi harus memiliki setidaknya satu kategori");await tx.update(editions).set({lifecycle:"archived",updatedAt:new Date()}).where(eq(editions.lifecycle,"active"));await tx.update(editions).set({lifecycle:"active",updatedAt:new Date()}).where(eq(editions.id,editionId));await appendAuditLog(tx,{actorUserId:actor.session.user.id,actorLabel:actor.session.user.email,action:"edition.activate",resourceType:"edition",resourceId:editionId,resourceLabel:edition.name,before:{lifecycle:edition.lifecycle},after:{lifecycle:"active"},changedFields:["lifecycle"],source:"admin-content",reason})});revalidatePath("/admin/content/editions")}
+export async function activateEditionAction(formData: FormData) {
+  const actor = await requirePermission("settings.manage");
+  const editionId = String(formData.get("editionId") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim();
+  const version = Number(formData.get("version"));
+  if (!editionId || reason.length < 8 || reason.length > 1000 || !Number.isInteger(version)) throw new Error("Alasan aktivasi minimal 8 karakter");
+  await database.transaction(async (tx) => {
+    const [edition] = await tx.select().from(editions).where(eq(editions.id, editionId)).limit(1);
+    if (!edition || edition.lifecycle !== "draft" || edition.version !== version) throw new Error("Edisi berubah atau bukan draf. Muat ulang halaman.");
+    const missing = (await getEditionReadiness(tx, editionId)).filter((item) => !item.ready);
+    if (missing.length) throw new Error(`Lengkapi sebelum aktivasi: ${missing.map((item) => item.label).join(", ")}`);
+    const previous = await tx.select().from(editions).where(eq(editions.lifecycle, "active"));
+    for (const current of previous) await tx.update(editions).set({ lifecycle: "archived", version: current.version + 1, updatedAt: new Date() }).where(eq(editions.id, current.id));
+    await tx.update(editions).set({ lifecycle: "active", version: version + 1, updatedAt: new Date() }).where(eq(editions.id, editionId));
+    await appendAuditLog(tx, { actorUserId: actor.session.user.id, actorLabel: actor.session.user.email, action: "edition.activate", resourceType: "edition", resourceId: editionId, resourceLabel: edition.name, before: { edition, previous }, after: { lifecycle: "active", archivedEditionIds: previous.map((item) => item.id) }, changedFields: ["lifecycle", "version"], source: "admin-content", reason });
+  });
+  revalidatePath("/", "layout");
+}

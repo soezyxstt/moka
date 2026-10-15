@@ -36,6 +36,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { calculateVotesFromAmount } from "@/lib/voting";
 import { cn } from "@/lib/utils";
 import type { AdminEditionContext } from "@/server/cms/context";
@@ -150,6 +151,11 @@ export function VotingConsole({
   const [selectedCampaignId, setSelectedCampaignId] = useState(initialCampaigns[0]?.id ?? "");
   const selectedCampaign =
     campaigns.find((campaign) => campaign.id === selectedCampaignId) ?? campaigns[0];
+  const selectedResultIsVisible = selectedCampaign?.resultVisibility === "visible";
+  const selectedResultVisibilityIsLegacy =
+    selectedCampaign !== undefined &&
+    selectedCampaign.resultVisibility !== "hidden" &&
+    !selectedResultIsVisible;
   const snapshotParticipants = useMemo(
     () => participants.filter((participant) => participant.campaignId === selectedCampaign?.id),
     [participants, selectedCampaign?.id],
@@ -278,7 +284,9 @@ export function VotingConsole({
 
   async function toggleVisibility() {
     if (!selectedCampaign) return;
-    const visibility = selectedCampaign.resultVisibility === "visible" ? "hidden" : "visible";
+    const currentVisibility = selectedCampaign.resultVisibility;
+    const normalizeLegacyValue = currentVisibility !== "visible" && currentVisibility !== "hidden";
+    const visibility = currentVisibility === "hidden" ? "visible" : "hidden";
     setPending(true);
     try {
       const result = await setResultVisibilityAction({
@@ -289,7 +297,13 @@ export function VotingConsole({
       });
       replaceCampaign({ version: result.version, resultVisibility: visibility });
       setVisibilityReason("");
-      toast.success(visibility === "visible" ? "Hasil ditampilkan" : "Hasil disembunyikan");
+      toast.success(
+        normalizeLegacyValue
+          ? "Nilai lama dinormalkan menjadi tersembunyi"
+          : visibility === "visible"
+            ? "Hasil ditampilkan"
+            : "Hasil disembunyikan",
+      );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Visibilitas hasil gagal diubah");
     } finally {
@@ -315,14 +329,12 @@ export function VotingConsole({
   return (
     <div className="space-y-6">
       {canManage ? (
-        <details className="rounded-xl border border-border bg-card">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 marker:content-none">
-            <div>
-              <h2 className="font-montserrat text-base font-semibold text-foreground">Kampanye baru</h2>
-              <p className="mt-1 text-xs text-muted-foreground">Edisi {currentEdition.year}</p>
-            </div>
-            <CalendarPlus className="size-5 text-fb-600" />
-          </summary>
+        <Accordion type="single" collapsible className="rounded-xl border border-border bg-card">
+          <AccordionItem value="create-campaign">
+          <AccordionTrigger className="items-center p-4 font-manrope text-base font-semibold text-brand-900 hover:no-underline">
+            <span className="flex items-center gap-2"><CalendarPlus className="size-5 text-brand" />Kampanye baru</span>
+          </AccordionTrigger>
+          <AccordionContent className="pb-0">
           <form action={createCampaign} className="grid gap-4 border-t border-border p-4 sm:grid-cols-2 xl:grid-cols-3">
             <AdminField label="Nama kampanye">
               <AdminInput name="name" placeholder={`Voting favorit ${currentEdition.year}`} required />
@@ -351,13 +363,15 @@ export function VotingConsole({
               <CalendarPlus className="size-4" /> Buat draf
             </AdminButton>
           </form>
-        </details>
+          </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       ) : null}
 
       {selectedCampaign ? (
         <div className="grid gap-6 xl:grid-cols-[16rem_minmax(0,1fr)]">
           <AdminCard className="h-fit p-3 sm:p-3">
-            <p className="px-2 pb-2 font-montserrat text-sm font-semibold">Kampanye</p>
+            <p className="px-2 pb-2 font-manrope text-sm font-semibold">Kampanye</p>
             {campaigns.map((campaign) => (
               <Button
                 key={campaign.id}
@@ -366,11 +380,11 @@ export function VotingConsole({
                 onClick={() => chooseCampaign(campaign.id)}
                 className={cn(
                   "h-auto w-full justify-start rounded-md px-2 py-3 text-left",
-                  campaign.id === selectedCampaign.id && "bg-dgb-50 text-dgb-900",
+                  campaign.id === selectedCampaign.id && "bg-brand-50 text-brand-900",
                 )}
               >
                 <span>
-                  <span className="block font-montserrat text-sm font-semibold">{campaign.name}</span>
+                  <span className="block font-manrope text-sm font-semibold">{campaign.name}</span>
                   <span className="mt-1 block text-xs text-muted-foreground">{statusLabel(campaign.status)}</span>
                 </span>
               </Button>
@@ -381,8 +395,8 @@ export function VotingConsole({
             <AdminCard className="space-y-5 p-5 sm:p-5">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-medium text-fb-700">{selectedCampaign.stageName ?? "Tahap belum dipilih"}</p>
-                  <h2 className="mt-1 font-montserrat text-2xl font-semibold">{selectedCampaign.name}</h2>
+                  <p className="text-xs font-medium text-highlight-700">{selectedCampaign.stageName ?? "Tahap belum dipilih"}</p>
+                  <h2 className="mt-1 font-manrope text-2xl font-semibold">{selectedCampaign.name}</h2>
                   <p className="mt-2 text-xs text-muted-foreground">
                     {date.format(new Date(selectedCampaign.startsAt))} sampai {date.format(new Date(selectedCampaign.endsAt))}
                   </p>
@@ -393,16 +407,20 @@ export function VotingConsole({
               <div className="grid gap-3 sm:grid-cols-3">
                 <div className="rounded-lg bg-muted p-3">
                   <p className="text-xs text-muted-foreground">Snapshot peserta</p>
-                  <p className="mt-1 font-montserrat text-xl font-semibold">{snapshotParticipants.length}</p>
+                  <p className="mt-1 font-manrope text-xl font-semibold">{snapshotParticipants.length}</p>
                 </div>
                 <div className="rounded-lg bg-muted p-3">
                   <p className="text-xs text-muted-foreground">QRIS siap</p>
-                  <p className="mt-1 font-montserrat text-xl font-semibold">{tallyReadyParticipants.length}</p>
+                  <p className="mt-1 font-manrope text-xl font-semibold">{tallyReadyParticipants.length}</p>
                 </div>
                 <div className="rounded-lg bg-muted p-3">
                   <p className="text-xs text-muted-foreground">Hasil</p>
-                  <p className="mt-1 font-montserrat text-sm font-semibold">
-                    {selectedCampaign.resultVisibility === "visible" ? "Ditampilkan" : "Disembunyikan"}
+                  <p className="mt-1 font-manrope text-sm font-semibold">
+                    {selectedCampaign.resultVisibility === "visible"
+                      ? "Ditampilkan"
+                      : selectedCampaign.resultVisibility === "hidden"
+                        ? "Disembunyikan"
+                        : "Nilai lama, diperlakukan tersembunyi"}
                   </p>
                 </div>
               </div>
@@ -443,8 +461,16 @@ export function VotingConsole({
                       />
                     </AdminField>
                     <AdminButton type="button" variant="secondary" onClick={toggleVisibility} disabled={pending || !visibilityReason.trim()}>
-                      {selectedCampaign.resultVisibility === "visible" ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                      {selectedCampaign.resultVisibility === "visible" ? "Sembunyikan hasil" : "Tampilkan hasil"}
+                      {selectedResultIsVisible || selectedResultVisibilityIsLegacy ? (
+                        <EyeOff className="size-4" />
+                      ) : (
+                        <Eye className="size-4" />
+                      )}
+                      {selectedResultIsVisible
+                        ? "Sembunyikan hasil"
+                        : selectedCampaign.resultVisibility === "hidden"
+                          ? "Tampilkan hasil"
+                          : "Tetapkan hasil ke tersembunyi"}
                     </AdminButton>
                   </div>
                 </div>
@@ -453,7 +479,7 @@ export function VotingConsole({
 
             {selectedCampaign.status === "active" && canTally && selectedParticipant ? (
               <AdminCard className="space-y-4 p-5 sm:p-5">
-                <h3 className="font-montserrat text-lg font-semibold">Tally harian</h3>
+                <h3 className="font-manrope text-lg font-semibold">Tally harian</h3>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <AdminField label="Peserta">
                     <AdminSelect
@@ -497,15 +523,15 @@ export function VotingConsole({
               </AdminCard>
             ) : selectedCampaign.status === "active" && canTally ? (
               <AdminCard>
-                <AdminEmptyState icon="gallery" title="QRIS belum siap" description="Tambahkan gambar QRIS pada peserta snapshot." />
+                <AdminEmptyState icon="gallery" title="QRIS belum siap" description="Tambahkan gambar QRIS pada peserta kampanye." />
               </AdminCard>
             ) : null}
 
             <AdminCard className="space-y-4 p-5 sm:p-5">
               <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
-                  <h3 className="font-montserrat text-lg font-semibold">Rekap peserta</h3>
-                  <p className="mt-1 text-xs text-muted-foreground">Berdasarkan snapshot kampanye</p>
+                  <h3 className="font-manrope text-lg font-semibold">Rekap peserta</h3>
+                  <p className="mt-1 text-xs text-muted-foreground">Peserta terkunci saat voting dimulai</p>
                 </div>
                 <label className="relative block w-full sm:w-64">
                   <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -513,22 +539,22 @@ export function VotingConsole({
                 </label>
               </div>
               {standings.length === 0 ? (
-                <AdminEmptyState icon="users" title="Snapshot belum tersedia" description="Mulai voting untuk membuat snapshot peserta." />
+                <AdminEmptyState icon="users" title="Peserta belum tersedia" description="Mulai voting untuk menetapkan peserta kampanye." />
               ) : (
                 <div className="divide-y divide-border">
                   {standings.map((participant, index) => (
                     <div key={participant.id} className="grid gap-2 py-3 sm:grid-cols-[2rem_minmax(0,1fr)_auto_auto] sm:items-center">
-                      <span className="text-xs font-semibold text-fb-700">{index + 1}</span>
+                      <span className="text-xs font-semibold text-highlight-700">{index + 1}</span>
                       <div>
-                        <p className="font-montserrat text-sm font-semibold">{participant.name}</p>
+                        <p className="font-manrope text-sm font-semibold">{participant.name}</p>
                         <p className="text-xs text-muted-foreground">{participant.categoryCode} {participant.number}</p>
                       </div>
                       <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <QrCode className={cn("size-4", participant.qrisReady ? "text-dgb" : "text-destructive")} />
+                        <QrCode className={cn("size-4", participant.qrisReady ? "text-brand" : "text-destructive")} />
                         {participant.qrisReady ? "Siap" : "Belum"}
                       </span>
                       <div className="sm:text-right">
-                        <p className="font-montserrat text-base font-semibold">{participant.votes.toLocaleString("id-ID")}</p>
+                        <p className="font-manrope text-base font-semibold">{participant.votes.toLocaleString("id-ID")}</p>
                         <p className="text-xs text-muted-foreground">{currency.format(participant.amount)}</p>
                       </div>
                     </div>

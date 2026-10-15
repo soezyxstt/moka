@@ -17,9 +17,8 @@ export default async function RequestAccessPage() {
 
   return (
     <AdminAuthShell
-      eyebrow="Permintaan akses"
-      title="Buka ruang kerja Anda."
-      description="Akun Google Anda sudah tercatat. Ceritakan area yang perlu Anda kelola agar Role Administrator dapat menetapkan akses yang tepat."
+      title="Minta akses"
+      description="Pilih area yang perlu Anda kelola. Admin akan meninjau permintaan Anda."
     >
       <form action={requestAccessAction} className="space-y-6">
         <AdminField label="Alasan kebutuhan akses" hint="Minimal 10 karakter, maksimal 500 karakter.">
@@ -34,7 +33,7 @@ export default async function RequestAccessPage() {
               ["users", "Pengguna"],
             ].map(([value, label]) => (
               <label
-                className="flex cursor-pointer items-center gap-2 rounded-md border border-border bg-white px-3 py-3 text-sm text-foreground transition-colors has-[[data-state=checked]]:border-fb-300 has-[[data-state=checked]]:bg-fb-50"
+                className="flex cursor-pointer items-center gap-2 rounded-md border border-border bg-canvas px-3 py-3 text-sm text-foreground transition-colors has-[[data-state=checked]]:border-highlight-300 has-[[data-state=checked]]:bg-highlight-50"
                 htmlFor={`area-${value}`}
                 key={value}
               >
@@ -42,7 +41,7 @@ export default async function RequestAccessPage() {
                   id={`area-${value}`}
                   name="areas"
                   value={value}
-                  className="border-fb-300 data-[state=checked]:border-fb data-[state=checked]:bg-fb data-[state=checked]:text-white"
+                  className="border-highlight-300 data-[state=checked]:border-highlight data-[state=checked]:bg-highlight data-[state=checked]:text-ink"
                 />
                 {label}
               </label>
@@ -53,8 +52,8 @@ export default async function RequestAccessPage() {
           <Send size={16} /> Kirim permintaan akses
         </AdminButton>
         <div className="flex items-start gap-2 text-xs leading-5 text-muted-foreground">
-          <Clock3 size={15} className="mt-0.5 shrink-0 text-fb-500" />
-          Permintaan akan ditinjau oleh Role Administrator dan seluruh keputusan tercatat di audit log.
+          <Clock3 size={15} className="mt-0.5 shrink-0 text-highlight-500" />
+          Anda dapat masuk ke admin setelah permintaan disetujui.
         </div>
       </form>
     </AdminAuthShell>

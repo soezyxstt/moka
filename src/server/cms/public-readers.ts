@@ -1,30 +1,21 @@
 import { and, asc, desc, eq, gte, inArray, lte } from 'drizzle-orm';
 import { connection } from 'next/server';
 import { cache } from 'react';
-import { getSlotsByGroup } from '@/server/cms/site-asset-manifest';
-import { parseCategory, categories as dbCategories, editions, editionPrograms, events, galleries, galleryItems, mediaAssets, newsArticles, organizationMemberships, organizationPeriods, organizationUnits, pageSections, participantAchievements, participantMedia, participants, people, siteAssetBindings, sponsors as dbSponsors, voteDailyTallies, votingCampaignParticipants, votingCampaigns } from '@/server/db/schema';
+import { readEditionPalette } from '@/server/cms/edition-palette';
+import type { SiteAssetGroup } from '@/server/cms/site-asset-manifest';
+import { readEditionSiteAssets } from '@/server/cms/site-assets';
+import { contactHref, organizationCopy, type SiteContact } from '@/server/cms/site-copy';
+import { getPreviewEditionId } from '@/server/cms/preview';
+import { readFallbackEditionIds } from '@/server/cms/edition-fallback';
+import { getPublicParticipantStage } from '@/server/cms/participant-stage';
+import { contentDrafts } from '@/server/db/schema';
+import { contentRevisions } from '@/server/db/schema';
+import { archivedIdentity } from '@/server/organization/profile-history';
+import { parsePublicDocument, publicPdfUrl } from '@/server/cms/public-document';
+import { parseCategory, categories as dbCategories, editions, editionPrograms, events, galleries, galleryItems, mediaAssets, newsArticles, organizationMemberships, organizationPeriods, organizationUnits, pageSections, participantAchievements, participantMedia, participants, people, sponsors as dbSponsors, voteDailyTallies, votingCampaignParticipants, votingCampaigns } from '@/server/db/schema';
 import { database } from '@/server/db/client';
-import { getFinalistsWithIncome } from '@/server/db/queries';
+import { REGISTRATION_SECTIONS, registrationEditionEligible, registrationVisible } from '@/server/cms/registration';
 
-export type PublicParticipant = {
-  id: string;
-  number: number;
-  name: string;
-  slug: string;
-  bio: string;
-  imageUrl: string;
-  paymentUrl: string | null;
-  achievements: string[];
-};
-
-export type PublicCategory = {
-  id: string;
-  name: string;
-  slug: string;
-  abrev: ReturnType<typeof parseCategory>;
-  list: PublicParticipant[];
-  finalist: PublicParticipant[];
-};
 
 export type PublicEvent = {
   slug: string;
@@ -110,6 +101,7 @@ type PublicPerson = {
 };
 
 export type PublicAboutContent = {
+  legalDocument: { url: string; title: string } | null;
   vision: string | null;
   mission: string[];
   sections: Record<string, PublicPageSection>;
@@ -185,37 +177,60 @@ export type PublicEdition = {
   organizationPeriodId: string | null;
   logoUrl: string | null;
   logoAlt: string | null;
+  logoMimeType: string | null;
   slogan: string | null;
 };
 
-export const FALLBACK_GALLERY_VIDEO_IDS = [
-  '5w0ORZ0XUkE',
-  'PEx2wVwReX4',
-  'Str4439U-OM',
-  'f6rmvU8o6CI',
-  'I-R_T7cULcI',
-  '05GxYCSbhg4',
-  'qG8qy-QUxKY',
-  'pWTQEm_gCaY',
-  'S4NanSPqf00',
-] as const;
+const getContentEditionIds = cache((editionId: string) => readFallbackEditionIds(database, editionId));
+
+async function firstAvailableList<T>(editionIds: string[], read: (editionId: string) => Promise<T[]>) {
+  for (const editionId of editionIds) {
+    const rows = await read(editionId);
+    if (rows.length) return rows;
+  }
+  return [];
+}
 
 async function getPublishedPageSections(editionId: string, pageKey: string, sectionKeys: string[]) {
+  if (pageKey === 'pendaftaran') return readPageSections(editionId, pageKey, sectionKeys);
+  const editionIds = await getContentEditionIds(editionId);
+  const sections = await Promise.all(editionIds.map((id) => readPageSections(id, pageKey, id === editionId ? sectionKeys : sectionKeys.filter((key) => pageKey !== 'site' || key !== 'identity'))));
+  return Object.assign({}, ...sections.reverse()) as Record<string, PublicPageSection>;
+}
+
+async function readPageSections(editionId: string, pageKey: string, sectionKeys: string[]) {
+  if (!sectionKeys.length) return {};
+  const preview = (await getPreviewEditionId()) === editionId;
   const rows = await database
-    .select({ sectionKey: pageSections.sectionKey, title: pageSections.title, eyebrow: pageSections.eyebrow, body: pageSections.body, presentationJson: pageSections.presentationJson })
+    .select({ id: pageSections.id, sectionKey: pageSections.sectionKey, title: pageSections.title, eyebrow: pageSections.eyebrow, body: pageSections.body, presentationJson: pageSections.presentationJson })
     .from(pageSections)
     .where(and(
       eq(pageSections.editionId, editionId),
       eq(pageSections.pageKey, pageKey),
-      eq(pageSections.status, 'published'),
+      preview ? undefined : eq(pageSections.status, 'published'),
       inArray(pageSections.sectionKey, sectionKeys),
     ));
+  if (preview && rows.length) {
+    const drafts = await database.select().from(contentDrafts).where(and(eq(contentDrafts.resourceType, 'pageSection'), inArray(contentDrafts.resourceId, rows.map((row) => row.id))));
+    for (const row of rows) {
+      const draft = drafts.find((item) => item.resourceId === row.id);
+      if (!draft) continue;
+      try {
+        const value: unknown = JSON.parse(draft.snapshotJson);
+        if (typeof value !== 'object' || value === null) continue;
+        const copy = value as Record<string, unknown>;
+        for (const key of ['title', 'eyebrow', 'body'] as const) if (typeof copy[key] === 'string' || copy[key] === null) row[key] = copy[key];
+        if (typeof copy.presentationJson === 'string') row.presentationJson = copy.presentationJson;
+      } catch { /* Malformed legacy drafts do not replace published copy. */ }
+    }
+  }
 
   return Object.fromEntries(rows.flatMap(({ sectionKey, title, eyebrow, body, presentationJson }) => {
-    const action = pageKey === 'home' && sectionKey === 'ajakan' ? parsePublicActionPresentation(presentationJson) : null;
+    const action = (pageKey === 'home' && sectionKey === 'ajakan') || (pageKey === 'pendaftaran' && sectionKey === 'hero') ? parsePublicActionPresentation(presentationJson) : null;
     const hasCopy = [title, eyebrow, body].some((value) => value?.trim());
     const hasAction = Boolean(action?.actionLabel && action.actionHref);
-    return hasCopy || hasAction
+    const hasDocument = pageKey === 'tentang' && sectionKey === 'legalitas' && Boolean(parsePublicDocument(presentationJson));
+    return (pageKey === 'site' && sectionKey === 'identity') || hasCopy || hasAction || hasDocument
       ? [[sectionKey, { title, eyebrow, body, presentationJson, ...(action ?? {}) }]]
       : [];
   }));
@@ -246,22 +261,10 @@ function parsePublicActionPresentation(value: string) {
   }
 }
 
-async function getPublishedSiteAssets(editionId: string, group: 'home' | 'about' | 'category') {
-  const slotKeys = getSlotsByGroup(group).map((slot) => slot.slotKey);
-  const rows = await database
-    .select({ slotKey: siteAssetBindings.slotKey, url: mediaAssets.url, alt: siteAssetBindings.altOverride, assetAlt: mediaAssets.alt, mimeType: mediaAssets.mimeType })
-    .from(siteAssetBindings)
-    .innerJoin(mediaAssets, eq(siteAssetBindings.mediaId, mediaAssets.id))
-    .where(and(
-      eq(siteAssetBindings.editionId, editionId),
-      eq(mediaAssets.lifecycle, 'ready'),
-      inArray(siteAssetBindings.slotKey, slotKeys),
-    ));
-
-  return Object.fromEntries(rows.flatMap(({ slotKey, url, alt, assetAlt, mimeType }) => {
-    const remoteUrl = toRemoteUrl(url);
-    return remoteUrl ? [[slotKey, { url: remoteUrl, alt: alt?.trim() || assetAlt, mimeType }]] : [];
-  }));
+async function getPublishedSiteAssets(editionId: string, group: SiteAssetGroup) {
+  if (!['home', 'about', 'site', 'brand'].includes(group)) return readEditionSiteAssets(database, editionId, group);
+  const assets = await Promise.all((await getContentEditionIds(editionId)).map((id) => readEditionSiteAssets(database, id, group)));
+  return Object.assign({}, ...assets.reverse()) as Record<string, PublicSiteAsset>;
 }
 
 export async function getPublicHomeContent(): Promise<PublicHomeContent> {
@@ -269,18 +272,55 @@ export async function getPublicHomeContent(): Promise<PublicHomeContent> {
   const [sections, assets, programs] = await Promise.all([
     getPublishedPageSections(editionId, 'home', ['hero', 'program', 'berita', 'ajakan']),
     getPublishedSiteAssets(editionId, 'home'),
-    database
+    firstAvailableList(await getContentEditionIds(editionId), (id) => database
       .select({ title: editionPrograms.title, description: editionPrograms.description })
       .from(editionPrograms)
-      .where(and(eq(editionPrograms.editionId, editionId), eq(editionPrograms.active, true)))
-      .orderBy(asc(editionPrograms.displayOrder), asc(editionPrograms.title)),
+      .where(and(eq(editionPrograms.editionId, id), eq(editionPrograms.active, true)))
+      .orderBy(asc(editionPrograms.displayOrder), asc(editionPrograms.title))),
   ]);
 
   return { sections, assets, programs };
 }
 
+export async function getPublicPageIntro(page: 'galeri' | 'voting') {
+  const sections = await getPublishedPageSections(await getCurrentEditionId(), page, ['hero']);
+  return sections.hero ?? null;
+}
+
+export const getPublicRegistration = cache(async () => {
+  const edition = await getCurrentEdition();
+  if (!registrationEditionEligible(edition.year)) return null;
+  const sections = await getPublishedPageSections(edition.id, 'pendaftaran', [...REGISTRATION_SECTIONS]);
+  return registrationVisible(edition.year, sections.hero) ? { edition, sections } : null;
+});
+
+export const getPublicSiteIdentity = cache(async () => {
+  const edition = await getCurrentEdition();
+  const [sections, siteAssets, brandAssets, storedPalette] = await Promise.all([
+    getPublishedPageSections(edition.id, 'site', ['identity', 'instagram', 'youtube', 'email']),
+    getPublishedSiteAssets(edition.id, 'site'),
+    getPublishedSiteAssets(edition.id, 'brand'),
+    readEditionPalette(database, edition.id),
+  ]);
+  const contacts: SiteContact[] = [];
+  for (const kind of ['instagram', 'youtube', 'email'] as const) {
+    const section = sections[kind];
+    const href = contactHref(kind, section?.body);
+    if (href) contacts.push({ kind, href, label: section?.title || kind });
+  }
+  const identity = sections.identity;
+  return { title: identity?.title || 'PAMOKA Garut', description: identity?.body || '', signature: identity?.eyebrow || '', contacts, edition, palette: storedPalette.palette, assets: { ...siteAssets, ...brandAssets } };
+});
+
+export async function getPublicEventSharingMetadata() {
+  const { assets } = await getPublicSiteIdentity();
+  const image = assets['brand.social.event'] ?? assets['site.social.image'];
+  return { openGraph: { images: image ? [image.url] : [] }, twitter: { card: 'summary_large_image' as const, images: image ? [image.url] : [] } };
+}
+
 export const getCurrentEdition = cache(async (): Promise<PublicEdition> => {
   await connection();
+  const previewEditionId = await getPreviewEditionId();
 
   const editionSelection = {
     id: editions.id,
@@ -291,6 +331,7 @@ export const getCurrentEdition = cache(async (): Promise<PublicEdition> => {
     organizationPeriodId: editions.organizationPeriodId,
     logoUrl: mediaAssets.url,
     logoAlt: mediaAssets.alt,
+    logoMimeType: mediaAssets.mimeType,
     logoLifecycle: mediaAssets.lifecycle,
     slogan: editions.slogan,
   };
@@ -298,7 +339,7 @@ export const getCurrentEdition = cache(async (): Promise<PublicEdition> => {
     .select(editionSelection)
     .from(editions)
     .leftJoin(mediaAssets, eq(editions.logoMediaId, mediaAssets.id))
-    .where(eq(editions.lifecycle, 'active'))
+    .where(previewEditionId ? eq(editions.id, previewEditionId) : eq(editions.lifecycle, 'active'))
     .orderBy(desc(editions.year))
     .limit(1);
 
@@ -311,6 +352,7 @@ export const getCurrentEdition = cache(async (): Promise<PublicEdition> => {
     organizationPeriodId: edition.organizationPeriodId,
     logoUrl: edition.logoLifecycle === 'ready' ? toRemoteUrl(edition.logoUrl) : null,
     logoAlt: edition.logoLifecycle === 'ready' ? edition.logoAlt : null,
+    logoMimeType: edition.logoLifecycle === 'ready' ? edition.logoMimeType : null,
     slogan: edition.slogan?.trim() || null,
   }) : null;
 
@@ -326,119 +368,11 @@ function toRemoteUrl(url: string | null | undefined) {
   return url && /^https?:\/\//i.test(url) ? url : null;
 }
 
-async function getPublicParticipants(editionId: string) {
-  const rows = await database
-    .select({
-      participant: participants,
-      categoryCode: dbCategories.code,
-      categorySlug: dbCategories.slug,
-      categoryName: dbCategories.label,
-      categoryOrder: dbCategories.displayOrder,
-      imageUrl: mediaAssets.url,
-    })
-    .from(participants)
-    .innerJoin(dbCategories, eq(participants.categoryId, dbCategories.id))
-    .leftJoin(mediaAssets, eq(participants.portraitMediaId, mediaAssets.id))
-    .where(
-      and(
-        eq(participants.editionId, editionId),
-        eq(participants.active, true),
-        eq(dbCategories.active, true),
-        inArray(participants.stage, ['semifinalis', 'finalis']),
-      ),
-    )
-    .orderBy(
-      asc(dbCategories.displayOrder),
-      asc(participants.stage),
-      asc(participants.displayOrder),
-      asc(participants.number),
-      asc(participants.name),
-    );
-
-  const participantIds = rows.map(({ participant }) => participant.id);
-  const achievementRows = participantIds.length
-    ? await database
-      .select({
-        participantId: participantAchievements.participantId,
-        text: participantAchievements.text,
-      })
-      .from(participantAchievements)
-      .where(inArray(participantAchievements.participantId, participantIds))
-      .orderBy(asc(participantAchievements.displayOrder), asc(participantAchievements.text))
-    : [];
-
-  const achievementsByParticipant = new Map<string, string[]>();
-  for (const achievement of achievementRows) {
-    const current = achievementsByParticipant.get(achievement.participantId) ?? [];
-    current.push(achievement.text);
-    achievementsByParticipant.set(achievement.participantId, current);
-  }
-
-  return rows.map(({ participant, categoryCode, categorySlug, categoryName, categoryOrder, imageUrl }) => {
-    const remoteImageUrl = toRemoteUrl(imageUrl);
-    if (!remoteImageUrl) {
-      throw new Error(`Turso participant ${participant.id} has no remote portrait`);
-    }
-
-    return {
-      participant: {
-        id: participant.id,
-        number: participant.number,
-        name: participant.name,
-        slug: participant.slug,
-        bio: participant.bio ?? '',
-        imageUrl: remoteImageUrl,
-        paymentUrl: participant.paymentUrl,
-        achievements: achievementsByParticipant.get(participant.id) ?? [],
-      } satisfies PublicParticipant,
-      categoryCode: parseCategory(categoryCode),
-      categorySlug,
-      categoryName,
-      categoryOrder,
-      stage: participant.stage,
-    };
-  });
-}
-
-export async function getPublicCategories(): Promise<PublicCategory[]> {
-  const editionId = await getCurrentEditionId();
-  const rows = await getPublicParticipants(editionId);
-  const categoryRows = await database
-    .select({
-      id: dbCategories.id,
-      code: dbCategories.code,
-      slug: dbCategories.slug,
-      label: dbCategories.label,
-    })
-    .from(dbCategories)
-    .where(and(eq(dbCategories.editionId, editionId), eq(dbCategories.active, true)))
-    .orderBy(asc(dbCategories.displayOrder), asc(dbCategories.label));
-
-  return categoryRows.map((category) => ({
-    id: category.id,
-    name: category.label,
-    slug: category.slug,
-    abrev: parseCategory(category.code),
-    list: rows
-      .filter((row) => row.categorySlug === category.slug && row.stage === 'semifinalis')
-      .map((row) => row.participant),
-    finalist: rows
-      .filter((row) => row.categorySlug === category.slug && row.stage === 'finalis')
-      .map((row) => row.participant),
-  }));
-}
-
-export async function getPublicCategoryBySlug(slug: string) {
-  const category = (await getPublicCategories()).find((item) => item.slug === slug);
-  if (!category) {
-    throw new Error(`Turso category not found: ${slug}`);
-  }
-  return category;
-}
 
 export async function getPublicNavigation() {
   const edition = await getCurrentEdition();
-  const [categories, events, resultCampaign, aboutSections] = await Promise.all([
+  const registration = await getPublicRegistration();
+  const [categories, events, resultCampaign, aboutSections, finalStage, semifinalStage] = await Promise.all([
     database
       .select({ slug: dbCategories.slug, name: dbCategories.label })
       .from(dbCategories)
@@ -455,11 +389,15 @@ export async function getPublicNavigation() {
       .orderBy(desc(votingCampaigns.startsAt))
       .limit(1),
     getPublishedPageSections(edition.id, 'tentang', ['hero']),
+    getPublicParticipantStage(database, edition.id, 'finalis'),
+    getPublicParticipantStage(database, edition.id, 'semifinalis'),
   ]);
   return {
     categories,
     events,
     edition,
+    participantKind: !finalStage && semifinalStage ? 'semifinalis' as const : 'finalis' as const,
+    registrationVisible: Boolean(registration),
     resultsVisible: resultCampaign[0]?.resultVisibility === 'visible',
     aboutDescription: aboutSections.hero?.body?.trim() || null,
   };
@@ -508,7 +446,7 @@ export async function getPublicVotingCategoryBySlug(slug: string): Promise<Publi
   ]);
   const prefix = `category.${category.code.toLowerCase()}`;
   const candidates = campaign
-    ? await getPublicVotingCandidates(campaign.id, category.id)
+    ? await getPublicVotingCandidates(campaign.id, category.id, edition.id)
     : [];
 
   return {
@@ -524,7 +462,7 @@ export async function getPublicVotingCategoryBySlug(slug: string): Promise<Publi
   };
 }
 
-async function getPublicVotingCandidates(campaignId: string, categoryId: string): Promise<PublicVotingCandidate[]> {
+async function getPublicVotingCandidates(campaignId: string, categoryId: string, editionId: string): Promise<PublicVotingCandidate[]> {
   const rows = await database
     .select({
       id: participants.id,
@@ -540,6 +478,7 @@ async function getPublicVotingCandidates(campaignId: string, categoryId: string)
     .where(and(
       eq(votingCampaignParticipants.campaignId, campaignId),
       eq(participants.categoryId, categoryId),
+      eq(participants.editionId, editionId),
     ))
     .orderBy(asc(participants.displayOrder), asc(participants.number), asc(participants.name));
   if (!rows.length) return [];
@@ -621,6 +560,7 @@ export async function getPublicVotingResults(categorySlug: string): Promise<Publ
     .where(and(
       eq(votingCampaignParticipants.campaignId, campaign.id),
       eq(participants.categoryId, category.id),
+      eq(participants.editionId, edition.id),
     ))
     .orderBy(asc(participants.displayOrder), asc(participants.number), asc(participants.name));
   const tallies = candidates.length
@@ -647,44 +587,48 @@ export async function getPublicVotingResults(categorySlug: string): Promise<Publ
   };
 }
 
-export async function getPublicEvents(): Promise<PublicEvent[]> {
-  const editionId = await getCurrentEditionId();
+async function readPublicEvents() {
+  const editionIds = await getContentEditionIds(await getCurrentEditionId());
   const rows = await database
-    .select({ slug: events.slug, label: events.label, description: events.description, heroImageUrl: mediaAssets.url, heroLifecycle: mediaAssets.lifecycle })
+    .select({ id: events.id, editionId: events.editionId, slug: events.slug, label: events.label, description: events.description, heroImageUrl: mediaAssets.url, heroLifecycle: mediaAssets.lifecycle })
     .from(events)
     .leftJoin(mediaAssets, eq(events.heroMediaId, mediaAssets.id))
-    .where(and(eq(events.editionId, editionId), eq(events.active, true)))
+    .where(and(inArray(events.editionId, editionIds), eq(events.active, true)))
     .orderBy(asc(events.displayOrder), asc(events.label));
+  return editionIds.flatMap((id) => rows.filter((row) => row.editionId === id));
+}
 
-  return rows.map((event) => ({
+function publicEvent(rows: Awaited<ReturnType<typeof readPublicEvents>>): PublicEvent {
+  const event = rows[0];
+  return {
     slug: event.slug,
     label: event.label,
     desc: event.description ?? '',
-    heroImageUrl: event.heroLifecycle === 'ready' ? toRemoteUrl(event.heroImageUrl) : null,
+    heroImageUrl: rows.map((row) => row.heroLifecycle === 'ready' ? toRemoteUrl(row.heroImageUrl) : null).find(Boolean) ?? null,
     images: [],
-  }));
+  };
+}
+
+export async function getPublicEvents(): Promise<PublicEvent[]> {
+  const rows = await readPublicEvents();
+  return [...new Set(rows.map((row) => row.slug))].map((slug) => publicEvent(rows.filter((row) => row.slug === slug)));
 }
 
 export async function getPublicEventBySlug(slug: string): Promise<PublicEvent | null> {
-  const editionId = await getCurrentEditionId();
-  const [eventRow] = await database
-    .select({ id: events.id, slug: events.slug, label: events.label, description: events.description, heroImageUrl: mediaAssets.url, heroLifecycle: mediaAssets.lifecycle })
-    .from(events)
-    .leftJoin(mediaAssets, eq(events.heroMediaId, mediaAssets.id))
-    .where(and(eq(events.editionId, editionId), eq(events.slug, slug), eq(events.active, true)))
-    .limit(1);
+  const eventRows = (await readPublicEvents()).filter((row) => row.slug === slug);
+  if (!eventRows.length) return null;
 
-  if (!eventRow) return null;
-
-  const imageRows = await database
+  const images = await firstAvailableList(eventRows.map((row) => row.id), async (eventId) => {
+    const eventRow = eventRows.find((row) => row.id === eventId)!;
+    const imageRows = await database
     .select({ url: mediaAssets.url, lifecycle: mediaAssets.lifecycle })
     .from(galleries)
     .innerJoin(galleryItems, eq(galleryItems.galleryId, galleries.id))
     .innerJoin(mediaAssets, eq(galleryItems.mediaId, mediaAssets.id))
     .where(and(
-      eq(galleries.editionId, editionId),
+      eq(galleries.editionId, eventRow.editionId),
       eq(galleries.ownerType, 'event'),
-      eq(galleries.ownerId, eventRow.id),
+      eq(galleries.ownerId, eventId),
       eq(galleries.status, 'published'),
       eq(galleries.active, true),
       eq(galleryItems.active, true),
@@ -692,20 +636,20 @@ export async function getPublicEventBySlug(slug: string): Promise<PublicEvent | 
     ))
     .orderBy(asc(galleryItems.displayOrder));
 
-  const images = imageRows.map((item) => item.lifecycle === 'ready' ? toRemoteUrl(item.url) : null).filter((item): item is string => Boolean(item));
-
-  const event = {
-    slug: eventRow.slug,
-    label: eventRow.label,
-    desc: eventRow.description ?? '',
-    heroImageUrl: eventRow.heroLifecycle === 'ready' ? toRemoteUrl(eventRow.heroImageUrl) : null,
-    images,
-  } satisfies PublicEvent;
-  return event;
+    return imageRows.map((item) => item.lifecycle === 'ready' ? toRemoteUrl(item.url) : null).filter((item): item is string => Boolean(item));
+  });
+  return { ...publicEvent(eventRows), images };
 }
 
 export async function getPublicGalleryAlbums(editionId?: string): Promise<PublicGalleryAlbum[]> {
   const currentEditionId = editionId ?? await getCurrentEditionId();
+  const albums = await Promise.all((await getContentEditionIds(currentEditionId)).map(readGalleryAlbums));
+  const bySlug = new Map<string, PublicGalleryAlbum>();
+  for (const list of albums) for (const album of list) if (!bySlug.has(album.slug)) bySlug.set(album.slug, album);
+  return [...bySlug.values()];
+}
+
+async function readGalleryAlbums(currentEditionId: string): Promise<PublicGalleryAlbum[]> {
   const galleryRows = await database
     .select({
       id: galleries.id,
@@ -772,37 +716,24 @@ export async function getPublicGalleryAlbums(editionId?: string): Promise<Public
 
 export async function getPublicSponsors(): Promise<PublicSponsor[]> {
   const editionId = await getCurrentEditionId();
+  return firstAvailableList(await getContentEditionIds(editionId), async (id) => {
   const rows = await database
     .select({ name: dbSponsors.name, imageUrl: mediaAssets.url })
     .from(dbSponsors)
     .leftJoin(mediaAssets, eq(dbSponsors.logoMediaId, mediaAssets.id))
-    .where(and(eq(dbSponsors.editionId, editionId), eq(dbSponsors.active, true)))
+    .where(and(eq(dbSponsors.editionId, id), eq(dbSponsors.active, true), eq(mediaAssets.lifecycle, 'ready')))
     .orderBy(asc(dbSponsors.displayOrder), asc(dbSponsors.name));
 
-  return rows.map((sponsor) => {
+  return rows.flatMap((sponsor) => {
     const src = toRemoteUrl(sponsor.imageUrl);
     if (!src) {
-      throw new Error(`Turso sponsor ${sponsor.name} has no remote logo`);
+      return [];
     }
-    return { name: sponsor.name, src };
+    return [{ name: sponsor.name, src }];
+  });
   });
 }
 
-export async function getPublicLegacyPageData() {
-  const [finalistRows, sponsorRows] = await Promise.all([
-    getFinalistsWithIncome(),
-    getPublicSponsors(),
-  ]);
-
-  return {
-    finalists: finalistRows.map((finalist) => ({
-      id: finalist.id,
-      name: finalist.name,
-      title: `Finalis ${finalist.category}`,
-    })),
-    sponsors: sponsorRows,
-  };
-}
 
 function parsePresentationItems(value: string | null | undefined) {
   if (!value) return [];
@@ -843,6 +774,12 @@ export async function getPublicAboutContent(): Promise<PublicAboutContent> {
   const activePeriod = edition.organizationPeriodId
     ? periodRows.find((period) => period.id === edition.organizationPeriodId) ?? null
     : null;
+  const document = parsePublicDocument(sections.legalitas?.presentationJson);
+  const [documentMedia] = document
+    ? await database.select({ url: mediaAssets.url, mimeType: mediaAssets.mimeType, lifecycle: mediaAssets.lifecycle })
+      .from(mediaAssets).where(eq(mediaAssets.id, document.documentMediaId)).limit(1)
+    : [];
+  const documentUrl = publicPdfUrl(documentMedia);
   const historyPeriods = periodRows.filter((period) => period.lifecycle === 'archived');
   const periodIds = [...new Set([activePeriod?.id, ...historyPeriods.map((period) => period.id)].filter((id): id is string => Boolean(id)))];
   const membershipRows = periodIds.length
@@ -881,6 +818,8 @@ export async function getPublicAboutContent(): Promise<PublicAboutContent> {
   const sectionVision = sections.visi?.body?.trim();
   const periodVision = activePeriod?.vision?.trim();
 
+  const historicIds = membershipRows.filter((row) => historyPeriods.some((period) => period.id === row.periodId)).map((row) => row.id);
+  const snapshots = historicIds.length ? await database.select().from(contentRevisions).where(and(eq(contentRevisions.resourceType, 'organizationPerson'), inArray(contentRevisions.resourceId, historicIds))) : [];
   const history = historyPeriods.map((period) => ({
     id: period.id,
     label: period.label,
@@ -892,30 +831,37 @@ export async function getPublicAboutContent(): Promise<PublicAboutContent> {
       .filter((row) => row.periodId === period.id)
       .map((row) => ({
         id: row.id,
-        imageUrl: row.imageLifecycle === 'ready' ? toRemoteUrl(row.imageUrl) : null,
-        name: row.name,
+        ...archivedIdentity(snapshots.find((snapshot) => snapshot.resourceId === row.id)?.snapshotJson, { imageUrl: row.imageLifecycle === 'ready' ? toRemoteUrl(row.imageUrl) : null, name: row.name }),
         position: row.position,
       })),
   }));
 
   return {
-    vision: sectionVision || (useActivePeriod ? periodVision : null) || null,
-    mission,
+    vision: organizationCopy(activePeriod, { vision: sectionVision || periodVision || null, mission }).vision,
+    legalDocument: document && documentUrl ? { url: documentUrl, title: document.documentTitle } : null,
+    mission: organizationCopy(activePeriod, { vision: sectionVision || periodVision || null, mission }).mission,
     sections,
     assets,
     galleries,
     organizationPeriodLabel: activePeriod?.label ?? null,
     pengurus: membershipRows.filter((row) => row.periodId === activePeriod?.id).map((row) => ({
-      imageUrl: row.imageLifecycle === 'ready' ? toRemoteUrl(row.imageUrl) : null,
-      name: row.name,
+      ...archivedIdentity(snapshots.find((snapshot) => snapshot.resourceId === row.id)?.snapshotJson, { imageUrl: row.imageLifecycle === 'ready' ? toRemoteUrl(row.imageUrl) : null, name: row.name }),
       position: row.position,
     })),
     history,
   };
 }
 
+const getNewsEditionId = cache(async () => {
+  const editionIds = await getContentEditionIds(await getCurrentEditionId());
+  const rows = await database.selectDistinct({ editionId: newsArticles.editionId }).from(newsArticles)
+    .where(and(inArray(newsArticles.editionId, editionIds), eq(newsArticles.status, 'published')));
+  return editionIds.find((id) => rows.some((row) => row.editionId === id)) ?? null;
+});
+
 export async function getPublicNews(): Promise<PublicNewsItem[]> {
-  const editionId = await getCurrentEditionId();
+  const editionId = await getNewsEditionId();
+  if (!editionId) return [];
   const rows = await database
     .select({
       slug: newsArticles.slug,
@@ -946,7 +892,8 @@ export async function getPublicNews(): Promise<PublicNewsItem[]> {
 }
 
 export async function getPublicNewsBySlug(slug: string): Promise<PublicNewsArticle | null> {
-  const editionId = await getCurrentEditionId();
+  const editionId = await getNewsEditionId();
+  if (!editionId) return null;
   const [article] = await database
     .select({
       id: newsArticles.id,

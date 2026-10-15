@@ -21,6 +21,7 @@ import { toast } from "sonner";
 
 import { AdminButton, AdminInput, AdminSelect } from "@/components/admin/primitives";
 import { Button } from "@/components/ui/button";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { useUploadThing } from "@/lib/uploadthing";
@@ -114,7 +115,7 @@ function MediaUploader({ folderId, folderName }: { folderId: string | null; fold
       router.refresh();
     },
     onUploadError: (error) => {
-      toast.error(error.message || "Upload media gagal");
+      toast.error(error.message || "Media gagal diunggah");
     },
   });
 
@@ -132,27 +133,26 @@ function MediaUploader({ folderId, folderName }: { folderId: string | null; fold
   };
 
   return (
-    <details className="group border-y border-dgb-100 bg-white/55">
-      <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 marker:content-none sm:px-5">
-        <span className="grid size-9 shrink-0 place-items-center rounded-md bg-dgb text-white">
+    <Accordion type="single" collapsible className="border-y border-border bg-card">
+      <AccordionItem value="upload">
+      <AccordionTrigger className="items-center px-4 py-3.5 hover:no-underline sm:px-5">
+        <span className="grid size-9 shrink-0 place-items-center rounded-md bg-brand text-canvas">
           <UploadCloud size={16} />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block font-montserrat text-sm font-semibold text-dgb-900">Unggah media</span>
+          <span className="block font-manrope text-sm font-semibold text-brand-900">Unggah media</span>
           <span className="block truncate text-xs text-muted-foreground">Folder tujuan: {folderName}</span>
         </span>
-        <span className="text-xs font-semibold text-dgb group-open:hidden">Buka panel</span>
-        <span className="hidden text-xs font-semibold text-dgb group-open:inline">Tutup panel</span>
-      </summary>
-      <div className="grid gap-4 border-t border-dgb-100 bg-[linear-gradient(120deg,var(--color-dgb-50),white_60%,var(--color-fb-50))] p-4 sm:p-5 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.8fr)] lg:items-center">
+      </AccordionTrigger>
+      <AccordionContent className="pb-0">
+      <div className="grid gap-4 border-t border-brand-100 bg-[linear-gradient(120deg,var(--color-brand-50),var(--canvas)_60%,var(--color-highlight-50))] p-4 sm:p-5 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.8fr)] lg:items-center">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fb-700">Upload media</p>
-          <h2 className="mt-1 font-montserrat text-base font-semibold text-dgb-900">Tambahkan ke {folderName}</h2>
+          <h2 className="mt-1 font-manrope text-base font-semibold text-brand-900">Tambahkan ke {folderName}</h2>
           <p className="mt-1 text-xs leading-5 text-muted-foreground">JPEG, PNG, WebP, atau AVIF. Maksimal 20 MB per gambar.</p>
           <Button
             type="button"
             variant="outline"
-            className="mt-3 h-9 rounded-md border-dgb-200 bg-white text-dgb-700 hover:bg-dgb-50"
+            className="mt-3 h-9 rounded-md border-brand-200 bg-canvas text-brand-700 hover:bg-brand-50"
             onClick={() => inputRef.current?.click()}
           >
             <UploadCloud size={15} /> Pilih file
@@ -165,12 +165,12 @@ function MediaUploader({ folderId, folderName }: { folderId: string | null; fold
           onDrop={handleDrop}
           className={cn(
             "rounded-lg border border-dashed px-4 py-4 text-center transition-colors",
-            isDragging ? "border-fb-400 bg-fb-50" : "border-dgb-200 bg-white/70"
+            isDragging ? "border-highlight-400 bg-highlight-50" : "border-brand-200 bg-canvas/70"
           )}
         >
           <input ref={inputRef} className="hidden" type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple onChange={handleInput} />
-          <UploadCloud size={20} className="mx-auto text-dgb" />
-          <p className="mt-2 text-sm font-semibold text-dgb-900">Tarik gambar ke area ini</p>
+          <UploadCloud size={20} className="mx-auto text-brand" />
+          <p className="mt-2 text-sm font-semibold text-brand-900">Tarik gambar ke area ini</p>
           <p className="mt-1 text-xs text-muted-foreground">
             {files.length ? `${files.length} file siap diunggah` : "File baru akan masuk ke folder aktif"}
           </p>
@@ -179,7 +179,7 @@ function MediaUploader({ folderId, folderName }: { folderId: string | null; fold
               {files.map((file) => (
                 <span
                   key={`${file.name}-${file.lastModified}`}
-                  className="inline-flex max-w-full items-center gap-2 rounded-md bg-dgb-50 px-2.5 py-1.5 text-xs font-medium text-dgb-700"
+                  className="inline-flex max-w-full items-center gap-2 rounded-md bg-brand-50 px-2.5 py-1.5 text-xs font-medium text-brand-700"
                 >
                   <FileImage size={13} />
                   <span className="max-w-36 truncate">{file.name}</span>
@@ -193,14 +193,16 @@ function MediaUploader({ folderId, folderName }: { folderId: string | null; fold
           <Button
             type="button"
             disabled={!files.length || isUploading}
-            className="mt-3 h-9 rounded-md bg-dgb px-4 text-xs hover:bg-dgb-600"
+            className="mt-3 h-9 rounded-md bg-brand px-4 text-xs hover:bg-brand-600"
             onClick={() => startUpload(files, { folderId })}
           >
             {isUploading ? "Mengunggah..." : files.length ? `Unggah ${files.length} file` : "Pilih file dahulu"}
           </Button>
         </div>
       </div>
-    </details>
+      </AccordionContent>
+      </AccordionItem>
+    </Accordion>
   );
 }
 
@@ -278,20 +280,20 @@ export function MediaExplorer({
         <MediaUploader folderId={currentFolderId} folderName={currentFolder?.name ?? "Root media"} />
       ) : null}
 
-      <div className="grid min-h-[38rem] overflow-hidden border-y border-dgb-100 bg-card xl:grid-cols-[240px_minmax(0,1fr)_320px]">
-        <aside className="border-b border-border bg-dgb-50/35 p-3 xl:border-b-0 xl:border-r">
+      <div className="grid min-h-[38rem] overflow-hidden border-y border-brand-100 bg-card xl:grid-cols-[240px_minmax(0,1fr)_320px]">
+        <aside className="border-b border-border bg-brand-50/35 p-3 xl:border-b-0 xl:border-r">
           <div className="flex items-center justify-between px-2 py-2">
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-dgb-700">Folder media</p>
-            <FolderOpen size={15} className="text-fb-600" />
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-700">Folder media</p>
+            <FolderOpen size={15} className="text-highlight-600" />
           </div>
 
-          <div className="mb-2 flex rounded-md border border-border bg-white p-0.5 text-xs">
+          <div className="mb-2 flex rounded-md border border-border bg-canvas p-0.5 text-xs">
             <Button
               type="button"
               variant="ghost"
               size="sm"
               onClick={() => setFolderScope("all")}
-              className={cn("h-auto flex-1 rounded-xs px-2 py-1 font-medium text-center", folderScope === "all" ? "bg-dgb text-white" : "text-muted-foreground hover:text-foreground")}
+              className={cn("h-auto flex-1 rounded-xs px-2 py-1 font-medium text-center", folderScope === "all" ? "bg-brand text-canvas" : "text-muted-foreground hover:text-foreground")}
             >
               Semua
             </Button>
@@ -301,7 +303,7 @@ export function MediaExplorer({
                 variant="ghost"
                 size="sm"
                 onClick={() => setFolderScope("edition")}
-                className={cn("h-auto flex-1 rounded-xs px-2 py-1 font-medium text-center", folderScope === "edition" ? "bg-dgb text-white" : "text-muted-foreground hover:text-foreground")}
+                className={cn("h-auto flex-1 rounded-xs px-2 py-1 font-medium text-center", folderScope === "edition" ? "bg-brand text-canvas" : "text-muted-foreground hover:text-foreground")}
               >
                 Edisi
               </Button>
@@ -311,7 +313,7 @@ export function MediaExplorer({
               variant="ghost"
               size="sm"
               onClick={() => setFolderScope("global")}
-              className={cn("h-auto flex-1 rounded-xs px-2 py-1 font-medium text-center", folderScope === "global" ? "bg-dgb text-white" : "text-muted-foreground hover:text-foreground")}
+              className={cn("h-auto flex-1 rounded-xs px-2 py-1 font-medium text-center", folderScope === "global" ? "bg-brand text-canvas" : "text-muted-foreground hover:text-foreground")}
             >
               Global
             </Button>
@@ -324,7 +326,7 @@ export function MediaExplorer({
             onClick={() => openFolder(null)}
             className={cn(
               "mt-1 flex h-auto w-full items-center gap-2 rounded-md px-3 py-2.5 text-left text-sm font-medium transition-colors",
-              currentFolderId === null ? "bg-dgb text-white" : "text-dgb-800 hover:bg-dgb-50"
+              currentFolderId === null ? "bg-brand text-canvas" : "text-brand-800 hover:bg-brand-50"
             )}
           >
             <FolderOpen size={16} /> Root media <span className="ml-auto text-xs opacity-65">{assets.length}</span>
@@ -341,18 +343,18 @@ export function MediaExplorer({
                   onClick={() => openFolder(folder.id)}
                   className={cn(
                     "flex h-auto w-full items-center gap-2 rounded-md py-2 pr-2 text-left text-sm transition-colors",
-                    currentFolderId === folder.id ? "bg-white font-semibold text-dgb shadow-sm" : "text-dgb-800/75 hover:bg-white/75 hover:text-dgb",
+                    currentFolderId === folder.id ? "bg-canvas font-semibold text-brand shadow-sm" : "text-brand-800/75 hover:bg-canvas/75 hover:text-brand",
                     folder.depth === 0 ? "pl-3" : folder.depth === 1 ? "pl-7" : "pl-10"
                   )}
                 >
                   <Folder size={15} className="shrink-0" />
                   <span className="truncate">{folder.name}</span>
                   {folderEdition ? (
-                    <span className="rounded-xs border border-dgb-200 bg-dgb-50 px-1 text-[9px] font-semibold text-dgb">
+                    <span className="rounded-xs border border-brand-200 bg-brand-50 px-1 text-xs font-semibold text-brand">
                       {folderEdition.year}
                     </span>
                   ) : null}
-                  <span className="ml-auto text-[11px] opacity-55">{folderCount(folder.id)}</span>
+                  <span className="ml-auto text-xs opacity-55">{folderCount(folder.id)}</span>
                 </Button>
               );
             })}
@@ -367,13 +369,13 @@ export function MediaExplorer({
         <section className="min-w-0 p-4 sm:p-5">
           <div className="flex flex-col gap-4 border-b border-border pb-4">
             <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-              <Button type="button" variant="ghost" size="sm" className="h-auto rounded-none px-0 py-0 font-semibold text-dgb hover:underline" onClick={() => openFolder(null)}>
+              <Button type="button" variant="ghost" size="sm" className="h-auto rounded-none px-0 py-0 font-semibold text-brand hover:underline" onClick={() => openFolder(null)}>
                 Media
               </Button>
               {folderPath.map((folder) => (
                 <span key={folder.id} className="flex items-center gap-1.5">
                   <span>/</span>
-                  <Button type="button" variant="ghost" size="sm" className="h-auto rounded-none px-0 py-0 hover:text-dgb hover:underline" onClick={() => openFolder(folder.id)}>
+                  <Button type="button" variant="ghost" size="sm" className="h-auto rounded-none px-0 py-0 hover:text-brand hover:underline" onClick={() => openFolder(folder.id)}>
                     {folder.name}
                   </Button>
                 </span>
@@ -381,7 +383,7 @@ export function MediaExplorer({
             </div>
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <h2 className="font-montserrat text-xl font-semibold text-dgb-900">{currentFolder?.name ?? "Root media"}</h2>
+                <h2 className="font-manrope text-xl font-semibold text-brand-900">{currentFolder?.name ?? "Root media"}</h2>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {normalizedQuery
                     ? `${visibleAssets.length} hasil pencarian`
@@ -404,7 +406,7 @@ export function MediaExplorer({
                     variant="ghost"
                     size="icon"
                     aria-label="Tampilan grid"
-                    className={cn("size-8 rounded-sm p-0", viewMode === "grid" ? "bg-white text-dgb shadow-sm" : "text-muted-foreground")}
+                    className={cn("size-8 rounded-sm p-0", viewMode === "grid" ? "bg-canvas text-brand shadow-sm" : "text-muted-foreground")}
                     onClick={() => setViewMode("grid")}
                   >
                     <Grid2X2 size={15} />
@@ -414,7 +416,7 @@ export function MediaExplorer({
                     variant="ghost"
                     size="icon"
                     aria-label="Tampilan list"
-                    className={cn("size-8 rounded-sm p-0", viewMode === "list" ? "bg-white text-dgb shadow-sm" : "text-muted-foreground")}
+                    className={cn("size-8 rounded-sm p-0", viewMode === "list" ? "bg-canvas text-brand shadow-sm" : "text-muted-foreground")}
                     onClick={() => setViewMode("list")}
                   >
                     <List size={15} />
@@ -423,7 +425,7 @@ export function MediaExplorer({
               </div>
             </div>
             {canManage ? (
-              <form action={createMediaFolderAction} className="flex flex-col gap-2 rounded-lg border border-dashed border-dgb-200 bg-dgb-50/35 p-3 sm:flex-row sm:items-center">
+              <form action={createMediaFolderAction} className="flex flex-col gap-2 rounded-lg border border-dashed border-brand-200 bg-brand-50/35 p-3 sm:flex-row sm:items-center">
                 <input type="hidden" name="parentId" value={currentFolderId ?? ""} />
                 <AdminInput name="name" required maxLength={80} placeholder={currentFolder ? `Folder baru di ${currentFolder.name}` : "Nama folder baru"} className="flex-1" />
                 <AdminSelect
@@ -454,13 +456,13 @@ export function MediaExplorer({
                     size="default"
                     key={folder.id}
                     onClick={() => openFolder(folder.id)}
-                    className="flex h-auto w-full items-center gap-3 rounded-lg border border-border p-3 text-left whitespace-normal transition-colors hover:border-fb-300 hover:bg-fb-50"
+                    className="flex h-auto w-full items-center gap-3 rounded-lg border border-border p-3 text-left whitespace-normal transition-colors hover:border-highlight-300 hover:bg-highlight-50"
                   >
-                    <span className="grid size-9 place-items-center rounded-md bg-fb-50 text-fb-700">
+                    <span className="grid size-9 place-items-center rounded-md bg-highlight-50 text-highlight-700">
                       <Folder size={17} />
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-semibold text-dgb-900">{folder.name}</span>
+                      <span className="block truncate text-sm font-semibold text-brand-900">{folder.name}</span>
                       <span className="block text-xs text-muted-foreground">
                         {folderCount(folder.id)} file {folderEdition ? `· Edisi ${folderEdition.year}` : "· Global"}
                       </span>
@@ -476,7 +478,7 @@ export function MediaExplorer({
               <span className="mx-auto grid size-11 place-items-center rounded-md bg-muted text-muted-foreground">
                 <FileImage size={19} />
               </span>
-              <h3 className="mt-3 font-montserrat text-base font-semibold text-dgb-900">File tidak ditemukan</h3>
+              <h3 className="mt-3 font-manrope text-base font-semibold text-brand-900">File tidak ditemukan</h3>
               <p className="mt-1 text-sm text-muted-foreground">Unggah file atau pilih folder lain.</p>
             </div>
           ) : (
@@ -493,12 +495,12 @@ export function MediaExplorer({
                       ? cn(
                           "group flex h-auto w-full flex-col items-stretch gap-0 overflow-hidden rounded-lg border p-0 text-left whitespace-normal transition-colors",
                           selectedId === asset.id
-                            ? "border-fb-400 bg-fb-50/45 ring-2 ring-fb-100"
-                            : "border-border bg-white hover:border-dgb-200"
+                            ? "border-highlight-400 bg-highlight-50/45 ring-2 ring-highlight-100"
+                            : "border-border bg-canvas hover:border-brand-200"
                         )
                       : cn(
                           "flex h-auto w-full items-center gap-3 rounded-md border p-2 text-left whitespace-normal transition-colors",
-                          selectedId === asset.id ? "border-fb-400 bg-fb-50/45" : "border-border hover:border-dgb-200"
+                          selectedId === asset.id ? "border-highlight-400 bg-highlight-50/45" : "border-border hover:border-brand-200"
                         )
                   }
                 >
@@ -518,7 +520,7 @@ export function MediaExplorer({
                         )}
                       </div>
                       <div className="p-3">
-                        <p className="truncate text-sm font-semibold text-dgb-900">{asset.filename}</p>
+                        <p className="truncate text-sm font-semibold text-brand-900">{asset.filename}</p>
                         <p className="mt-1 text-xs text-muted-foreground">
                           {formatBytes(asset.bytes)} · {asset.lifecycle}
                         </p>
@@ -534,12 +536,12 @@ export function MediaExplorer({
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-dgb-900">{asset.filename}</p>
+                        <p className="truncate text-sm font-semibold text-brand-900">{asset.filename}</p>
                         <p className="mt-1 text-xs text-muted-foreground">
                           {formatBytes(asset.bytes)} · {asset.lifecycle}
                         </p>
                       </div>
-                      {selectedId === asset.id ? <Check size={15} className="mr-2 text-fb-600" /> : null}
+                      {selectedId === asset.id ? <Check size={15} className="mr-2 text-highlight-600" /> : null}
                     </>
                   )}
                 </Button>
@@ -551,7 +553,7 @@ export function MediaExplorer({
         <aside className="border-t border-border bg-muted/35 p-4 xl:border-l xl:border-t-0 space-y-5">
           {selectedAsset ? (
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fb-700">Detail file</p>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-highlight-700">Detail file</p>
               <div className="relative mt-3 aspect-square overflow-hidden rounded-lg bg-muted border border-border">
                 {selectedAsset.mimeType.startsWith("image/") ? (
                   <Image
@@ -565,7 +567,7 @@ export function MediaExplorer({
                   <FileImage size={28} className="absolute inset-0 m-auto text-muted-foreground" />
                 )}
               </div>
-              <h3 className="mt-4 break-words font-montserrat text-base font-semibold text-dgb-900">{selectedAsset.filename}</h3>
+              <h3 className="mt-4 break-words font-manrope text-base font-semibold text-brand-900">{selectedAsset.filename}</h3>
               <dl className="mt-3 space-y-2 text-xs">
                 <div className="flex justify-between gap-4">
                   <dt className="text-muted-foreground">Ukuran</dt>
@@ -577,7 +579,7 @@ export function MediaExplorer({
                 </div>
                 <div className="flex justify-between gap-4">
                   <dt className="text-muted-foreground">Status</dt>
-                  <dd className="font-medium text-emerald-700">{selectedAsset.lifecycle}</dd>
+                  <dd className="font-medium text-success-700">{selectedAsset.lifecycle}</dd>
                 </div>
               </dl>
 
@@ -635,7 +637,7 @@ export function MediaExplorer({
                 <Button type="button" variant="outline" className="h-9 rounded-md text-xs" onClick={copyUrl}>
                   <Clipboard size={14} /> Salin URL
                 </Button>
-                <Button asChild className="h-9 rounded-md bg-dgb text-xs hover:bg-dgb-600">
+                <Button asChild className="h-9 rounded-md bg-brand text-xs hover:bg-brand-600">
                   <a href={selectedAsset.url} target="_blank" rel="noreferrer">
                     Buka <ArrowUpRight size={14} />
                   </a>
@@ -644,11 +646,11 @@ export function MediaExplorer({
             </div>
           ) : currentFolder ? (
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fb-700">Detail folder</p>
-              <span className="mt-4 grid size-12 place-items-center rounded-md bg-fb-50 text-fb-700">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-highlight-700">Detail folder</p>
+              <span className="mt-4 grid size-12 place-items-center rounded-md bg-highlight-50 text-highlight-700">
                 <FolderOpen size={21} />
               </span>
-              <h3 className="mt-3 font-montserrat text-lg font-semibold text-dgb-900">{currentFolder.name}</h3>
+              <h3 className="mt-3 font-manrope text-lg font-semibold text-brand-900">{currentFolder.name}</h3>
               <p className="mt-1 text-xs text-muted-foreground">{folderCount(currentFolder.id)} file di dalam struktur ini</p>
               {canManage ? (
                 <form action={renameMediaFolderAction} className="mt-5 space-y-2 border-t border-border pt-4">
@@ -674,11 +676,11 @@ export function MediaExplorer({
             </div>
           ) : (
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-fb-700">Informasi</p>
-              <span className="mt-4 grid size-12 place-items-center rounded-md bg-dgb-50 text-dgb">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-highlight-700">Informasi</p>
+              <span className="mt-4 grid size-12 place-items-center rounded-md bg-brand-50 text-brand">
                 <FolderOpen size={21} />
               </span>
-              <h3 className="mt-3 font-montserrat text-base font-semibold text-dgb-900">Pilih file atau folder</h3>
+              <h3 className="mt-3 font-manrope text-base font-semibold text-brand-900">Pilih file atau folder</h3>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
                 Detail dan tindakan pengelolaan akan tersedia di panel ini.
               </p>

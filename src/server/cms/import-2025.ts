@@ -149,6 +149,84 @@ function getSourceParticipants() {
   });
 }
 
+export type StageNumberingSourceEntry = {
+  participantId: string;
+  categoryId: string;
+  stageSlug: "semifinalis" | "finalis";
+  number: number;
+  displayOrder: number;
+};
+
+export function get2025StageNumberingSourceEntries(): StageNumberingSourceEntry[] {
+  const entries = getSourceParticipants().flatMap(({ category, semifinalists, finalists }) => {
+    const categoryId = stableId(`category:2025:${category.abrev}`);
+    const makeEntries = (people: SourceParticipant[], stageSlug: StageNumberingSourceEntry["stageSlug"]) =>
+      people.map((person, displayOrder) => {
+        const number = Number(person.no);
+        if (!Number.isSafeInteger(number) || number < 1) {
+          throw new Error(`Nomor tahap ${stageSlug} tidak valid: ${category.abrev}`);
+        }
+        return {
+          participantId: stableId(`participant:2025:${category.abrev}:${slugify(person.name)}`),
+          categoryId,
+          stageSlug,
+          number,
+          displayOrder,
+        };
+      });
+    const semifinalEntries = makeEntries(semifinalists, "semifinalis");
+    const finalEntries = makeEntries(finalists, "finalis");
+    for (const stageEntries of [semifinalEntries, finalEntries]) {
+      if (new Set(stageEntries.map((entry) => entry.number)).size !== stageEntries.length) {
+        throw new Error(`Nomor sumber peserta duplikat pada kategori ${category.abrev}`);
+      }
+    }
+    return [...semifinalEntries, ...finalEntries];
+  });
+  return entries;
+}
+
+export function get2025EditionId() {
+  return editionId;
+}
+
+export type StageNumberingRepairStatus = "ready" | "complete" | "incompatible";
+
+export function get2025StageNumberingRepairStatus(input: {
+  edition: { id: string; year: number; slug: string };
+  stages: Array<{ slug: string; finalStage: boolean }>;
+  participants: Array<{ id: string; categoryId: string }>;
+  entries: Array<{ participantId: string; stageSlug: string; number: number | null; displayOrder: number | null }>;
+}): StageNumberingRepairStatus {
+  if (input.edition.id !== editionId || input.edition.year !== 2025 || input.edition.slug !== "2025") {
+    return "incompatible";
+  }
+
+  const semifinalStage = input.stages.find((stage) => stage.slug === "semifinalis");
+  const finalStage = input.stages.find((stage) => stage.slug === "finalis");
+  if (!semifinalStage || semifinalStage.finalStage || !finalStage?.finalStage) return "incompatible";
+
+  const participantsById = new Map(input.participants.map((participant) => [participant.id, participant.categoryId]));
+  const entriesByKey = new Map<string, (typeof input.entries)[number]>();
+  for (const entry of input.entries) {
+    const key = `${entry.participantId}:${entry.stageSlug}`;
+    if (entriesByKey.has(key)) return "incompatible";
+    entriesByKey.set(key, entry);
+  }
+
+  let hasMissingValue = false;
+  for (const expected of get2025StageNumberingSourceEntries()) {
+    if (participantsById.get(expected.participantId) !== expected.categoryId) return "incompatible";
+    const entry = entriesByKey.get(`${expected.participantId}:${expected.stageSlug}`);
+    if (!entry) return "incompatible";
+    if (entry.number !== null && entry.number !== expected.number) return "incompatible";
+    if (entry.displayOrder !== null && entry.displayOrder !== expected.displayOrder) return "incompatible";
+    if (entry.number === null || entry.displayOrder === null) hasMissingValue = true;
+  }
+
+  return hasMissingValue ? "ready" : "complete";
+}
+
 export type Import2025Result = {
   counts: {
     editions: number;
@@ -513,11 +591,11 @@ export async function repair2025StageNumbers(
   tx: Transaction,
   actor: { userId: string; label: string },
 ) {
-  const [edition] = await tx.select({ id: editions.id, year: editions.year, name: editions.name })
+  const [edition] = await tx.select({ id: editions.id, year: editions.year, slug: editions.slug, name: editions.name })
     .from(editions)
     .where(eq(editions.id, editionId))
     .limit(1);
-  if (!edition || edition.year !== 2025) throw new Error("Edisi sumber 2025 tidak ditemukan");
+  if (!edition || edition.year !== 2025 || edition.slug !== "2025") throw new Error("Edisi sumber 2025 tidak ditemukan");
 
   const stageRows = await tx.select({ id: selectionStages.id, slug: selectionStages.slug, finalStage: selectionStages.finalStage })
     .from(selectionStages)
@@ -528,31 +606,13 @@ export async function repair2025StageNumbers(
     throw new Error("Tahap semifinalis atau finalis edisi 2025 tidak cocok dengan data sumber");
   }
 
-  const expected: Array<{ participantId: string; categoryId: string; stageId: string; stage: "semifinalis" | "finalis"; number: number; displayOrder: number }> = [];
-  const participantIds = new Set<string>();
-  for (const { category, semifinalists, finalists } of getSourceParticipants()) {
-    if (
-      new Set(semifinalists.map((person) => Number(person.no))).size !== semifinalists.length
-      || new Set(finalists.map((person) => Number(person.no))).size !== finalists.length
-    ) {
-      throw new Error(`Nomor sumber peserta duplikat pada kategori ${category.abrev}`);
-    }
-    const categoryId = stableId(`category:2025:${category.abrev}`);
-    for (const [displayOrder, person] of semifinalists.entries()) {
-      const number = Number(person.no);
-      if (!Number.isSafeInteger(number) || number < 1) throw new Error(`Nomor semifinalis tidak valid: ${category.abrev}`);
-      const participantId = stableId(`participant:2025:${category.abrev}:${slugify(person.name)}`);
-      participantIds.add(participantId);
-      expected.push({ participantId, categoryId, stageId: semifinalStage.id, stage: "semifinalis", number, displayOrder });
-    }
-    for (const [displayOrder, person] of finalists.entries()) {
-      const number = Number(person.no);
-      if (!Number.isSafeInteger(number) || number < 1) throw new Error(`Nomor finalis tidak valid: ${category.abrev}`);
-      const participantId = stableId(`participant:2025:${category.abrev}:${slugify(person.name)}`);
-      participantIds.add(participantId);
-      expected.push({ participantId, categoryId, stageId: finalStage.id, stage: "finalis", number, displayOrder });
-    }
-  }
+  const stageIdBySlug = new Map([["semifinalis", semifinalStage.id], ["finalis", finalStage.id]]);
+  const expected = get2025StageNumberingSourceEntries().map((entry) => {
+    const stageId = stageIdBySlug.get(entry.stageSlug);
+    if (!stageId) throw new Error(`Tahap ${entry.stageSlug} tidak ditemukan`);
+    return { ...entry, stageId, stage: entry.stageSlug };
+  });
+  const participantIds = new Set(expected.map((entry) => entry.participantId));
 
   const participantRows = await tx.select({ id: participants.id, categoryId: participants.categoryId })
     .from(participants)
@@ -566,7 +626,25 @@ export async function repair2025StageNumbers(
       version: participantStageEntries.version,
     })
     .from(participantStageEntries)
-    .where(inArray(participantStageEntries.participantId, [...participantIds]));
+    .where(and(
+      inArray(participantStageEntries.participantId, [...participantIds]),
+      inArray(participantStageEntries.stageId, [semifinalStage.id, finalStage.id]),
+    ));
+  const stageSlugById = new Map(stageRows.map((stage) => [stage.id, stage.slug]));
+  const repairStatus = get2025StageNumberingRepairStatus({
+    edition,
+    stages: stageRows,
+    participants: participantRows,
+    entries: entryRows.map((entry) => ({
+      participantId: entry.participantId,
+      stageSlug: stageSlugById.get(entry.stageId) ?? "",
+      number: entry.number,
+      displayOrder: entry.displayOrder,
+    })),
+  });
+  if (repairStatus === "incompatible") {
+    throw new Error("Data peserta dan tahap tidak cocok dengan sumber 2025");
+  }
   const participantsById = new Map(participantRows.map((participant) => [participant.id, participant]));
   const entriesByKey = new Map(entryRows.map((entry) => [`${entry.participantId}:${entry.stageId}`, entry]));
   const now = new Date();
