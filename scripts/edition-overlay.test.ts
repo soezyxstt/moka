@@ -77,7 +77,15 @@ test('public readers overlay CMS sections and event media while keeping operatio
     await db.insert(schema.selectionStages).values({ id: 'new-final', editionId: 'new', slug: 'finalis', name: 'Finalis', lifecycle: 'draft', finalStage: true, displayOrder: 1 });
     assert.equal((await readers.getPublicNavigation()).participantKind, 'semifinalis', 'Draft final stage keeps semifinal links');
     await db.update(schema.selectionStages).set({ lifecycle: 'active' }).where(eq(schema.selectionStages.id, 'new-final'));
+    assert.equal((await readers.getPublicNavigation()).participantKind, 'semifinalis', 'An active semifinal or missing roster keeps semifinal links');
+    await db.update(schema.selectionStages).set({ lifecycle: 'closed' }).where(eq(schema.selectionStages.id, 'new-semi'));
+    await db.insert(schema.categories).values({ id: 'new-category', editionId: 'new', code: 'JD', slug: 'jd', label: 'JD' });
+    await db.insert(schema.participants).values({ id: 'new-participant', editionId: 'new', categoryId: 'new-category', stage: 'finalis', number: 1, name: 'New', slug: 'new' });
+    await db.insert(schema.participantStageEntries).values({ participantId: 'new-participant', stageId: 'new-final' });
     assert.equal((await readers.getPublicNavigation()).participantKind, 'finalis', 'Public final stage switches profile links');
+    await db.delete(schema.participantStageEntries).where(eq(schema.participantStageEntries.participantId, 'new-participant'));
+    await db.delete(schema.participants).where(eq(schema.participants.id, 'new-participant'));
+    await db.delete(schema.categories).where(eq(schema.categories.id, 'new-category'));
 
     const home = await readers.getPublicHomeContent();
     assert.equal(home.sections.hero.title, 'New hero');

@@ -1,5 +1,11 @@
 # Plan 014: CMS Dinamis untuk Konten Publik dan Siklus Tahunan
 
+## Hasil terbaru 2026-10-16
+
+Pembaruan produksi 2026-10-16: operator mengotorisasi pembaruan database dan aktivasi 2026. Pada host `pamoka-soezyxstt.aws-ap-south-1.turso.io`, 2026 kini aktif dan 2025 arsip. Dari 68 respons spreadsheet (66 identitas unik), 65 profil selesai: 28 pembaruan, 37 peserta baru, 192 butir prestasi. Motivasi dan CTA menjadi dua paragraf bio; biodata pribadi tidak diimpor. Iqbal tetap JR-029 sesuai konfirmasi operator. Total 67 peserta: JD 15, MD 13, JR 19, MR 20. Rahma tertunda karena MD-08 dan MD-20 sama-sama kosong dan tidak ada nomor pada respons; foto Drive memerlukan akses. Jangan menebak nomor. Muhamad Fachri dan Yoga Pratama belum memiliki respons dan dipertahankan. Tahap semifinal aktif, final belum dibuka; timeline menyebut pengumuman finalis 25 Oktober 2026.
+
+Backup AES-256-GCM/DPAPI baru lulus pemulihan 49 tabel/3.236 baris. Baca ulang memverifikasi 66 audit baru, 28 revisi, seluruh tabel tidak terkait sama, foto/QR existing terjaga, integrity ok dan nol FK error. Bukti `.tmp/semifinal-2026/verification.json`. Browser produksi mengonfirmasi navigasi semifinalis dan paragraf/prestasi; profil sampel 380 px tanpa overflow. Operasi sementara dihapus. Tidak ada upload, migrasi atau deployment. Guard reader tambahan pada source lokal menahan final saat tahap sebelumnya aktif atau roster final kosong; dua tes query nyata lulus, guard belum dideploy. Pernyataan 2025 aktif/2026 draf di bawah merupakan riwayat sebelum aktivasi ini.
+
 Koreksi gambar terbaru: 32 WebP dari sumber asli memakai Pillow sudah diterapkan ke database produksi dan lulus verifikasi, dengan 62 revisi/94 audit baru serta 2025 tetap utuh. Hero menggabungkan dewasa dan rumaja transparan; potret Patandang dibersihkan dari bingkai/QR poster. Build produksi `--webpack`, typecheck, lint scoped dan QA ulang lulus; Plan 016 DONE untuk koreksi source/aset produksi/QA, deployment terpisah. Bukti `.tmp/edition-2026/refinement/production-final-verification.json`, rincian `plans/annual-brand-assets.md`. Catatan hasil sebelumnya di bawah tetap historis.
 
 Status: IN PROGRESS (persiapan edisi 2026 bertahap).

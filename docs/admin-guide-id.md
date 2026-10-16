@@ -1,5 +1,11 @@
 # Panduan Lengkap PAMOKA CMS
 
+## Profil dan fase 2026
+
+Produksi memakai edisi 2026 aktif sejak 16 Oktober 2026; 2025 tersedia sebagai arsip. Profil semifinalis menampilkan motivasi dan CTA sebagai dua paragraf di Bio, lalu daftar Prestasi. Sebanyak 65 profil sudah diisi dari respons terbaru spreadsheet. Foto dan QR yang belum tersedia tidak dibuat otomatis. Rahma menunggu nomor terverifikasi; Fachri dan Yoga belum mengisi respons.
+
+Timeline menetapkan pengumuman finalis 25 Oktober 2026. Saat hasil seleksi sudah terverifikasi dan fase final dimulai, tutup tahap semifinal, masukkan peserta yang benar-benar lolos ke roster final, lalu aktifkan tahap final melalui workspace seleksi. Jangan membuka final hanya karena tanggal berlalu. Guard source tambahan untuk menahan final selama semifinal aktif atau roster kosong masih menunggu deployment; state produksi saat ini sudah menunjukkan semifinal.
+
 ## Persiapan Pasanggiri tahunan
 
 1. Buka **Kelola edisi**, isi tahun dan nama. Sistem membuat draf beserta kategori JD, MD, JR, MR otomatis. Pilih edisi tersebut pada header sebelum mengisi modul lain.

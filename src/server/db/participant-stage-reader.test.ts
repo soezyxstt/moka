@@ -52,6 +52,23 @@ test('tahap publik memakai semifinal aktif tanpa placeholder final dan tetap ter
     await db.update(schema.selectionStages).set({ lifecycle: 'closed' }).where(eq(schema.selectionStages.id, 'future'));
     await db.update(schema.selectionStages).set({ lifecycle: 'active' }).where(eq(schema.selectionStages.id, 'final'));
     assert.equal((await getPublicParticipantStage(db, 'current', 'semifinalis'))?.id, 'future');
+    assert.equal(await getPublicParticipantStage(db, 'current', 'finalis'), undefined, 'Semifinal masih aktif');
+    await db.update(schema.selectionStages).set({ lifecycle: 'closed' }).where(eq(schema.selectionStages.id, 'semi'));
+    assert.equal(await getPublicParticipantStage(db, 'current', 'finalis'), undefined, 'Roster final belum tersedia');
+    await db.insert(schema.categories).values([
+      { id: 'current-category', editionId: 'current', code: 'JD', slug: 'jd', label: 'JD' },
+      { id: 'old-category', editionId: 'old', code: 'JD', slug: 'jd', label: 'JD' },
+    ]);
+    await db.insert(schema.participants).values([
+      { id: 'current-participant', editionId: 'current', categoryId: 'current-category', stage: 'finalis', name: 'Current', slug: 'current', number: 1, active: false },
+      { id: 'old-participant', editionId: 'old', categoryId: 'old-category', stage: 'finalis', name: 'Old', slug: 'old', number: 1 },
+    ]);
+    await db.insert(schema.participantStageEntries).values([
+      { participantId: 'current-participant', stageId: 'final' },
+      { participantId: 'old-participant', stageId: 'old-final' },
+    ]);
+    assert.equal(await getPublicParticipantStage(db, 'current', 'finalis'), undefined, 'Peserta nonaktif tidak membuka final');
+    await db.update(schema.participants).set({ active: true }).where(eq(schema.participants.id, 'current-participant'));
     assert.equal((await getPublicParticipantStage(db, 'current', 'finalis'))?.id, 'final');
     assert.equal((await getPublicParticipantStage(db, 'old', 'finalis'))?.id, 'old-final');
     assert.equal(await getPublicParticipantStage(db, 'old', 'semifinalis'), undefined);

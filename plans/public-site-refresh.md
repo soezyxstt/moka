@@ -17,6 +17,8 @@ Rapikan pengalaman halaman publik PAMOKA Garut lewat perubahan kecil pada hierar
 
 ## File dalam cakupan
 
+- `src/app/loading.module.css`
+
 - `src/app/not-found.tsx`, `src/app/loading.tsx`, `src/app/error.tsx`, `src/app/global-error.tsx`
 - `src/components/custom/site-status.tsx`
 
@@ -71,6 +73,8 @@ Rapikan pengalaman halaman publik PAMOKA Garut lewat perubahan kecil pada hierar
 - Route voting publik membaca kategori edisi aktif. Tanpa kampanye terverifikasi, tampilkan status belum tersedia; jangan membuat transaksi, tally, atau status kampanye.
 
 ## Catatan verifikasi
+
+Koreksi loading, 2026-10-16: source selesai. Sesuai permintaan operator, loading diganti tiga titik 20 px pada mobile dan 24 px pada desktop, bergantian meloncat di tengah viewport. Tanpa teks terlihat, spinner, atau foto; status tetap memiliki label aksesibel. Animasi CSS scoped mengikuti reduced motion tanpa JavaScript tambahan. Opsi loading yang sudah tidak dipakai pada SiteStatus dihapus. Typegen, TypeScript, lint dengan warning TanStack existing, serta diff whitespace lulus memakai Node bawaan Codex karena shim sistem gagal. Browser dan build tidak dijalankan. Plan 013 tetap IN PROGRESS; tidak mengubah data, global tokens, autentikasi, atau deployment.
 
 Verifikasi setelah integrasi paralel: typecheck lulus, render desktop/mobile kembali terang tanpa overflow atau gambar gagal. Lint seluruh repo kini menemukan error pada `src/app/global-error.tsx:20` (anchor internal ke `/`) dari perubahan lain, ditambah warning data-table existing. Error tersebut di luar cakupan koreksi Tentang; hasil lint sebelumnya mendahului perubahan file ini.
 

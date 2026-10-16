@@ -1,13 +1,13 @@
-import { LoaderCircle } from "lucide-react";
-import { SiteStatus } from "@/components/custom/site-status";
+import styles from "./loading.module.css";
 
 export default function Loading() {
   return (
-    <SiteStatus
-      loading
-      visual={<LoaderCircle strokeWidth={0.75} className="size-32 text-brand motion-safe:animate-spin md:size-48" />}
-      title="Memuat halaman"
-      description=""
-    />
+    <main className="grid min-h-svh place-items-center bg-background" role="status" aria-label="Memuat halaman">
+      <div className="flex items-center gap-3" aria-hidden="true">
+        <span className={`${styles.dot} size-5 rounded-full bg-primary md:size-6`} />
+        <span className={`${styles.dot} size-5 rounded-full bg-primary md:size-6`} />
+        <span className={`${styles.dot} size-5 rounded-full bg-primary md:size-6`} />
+      </div>
+    </main>
   );
 }

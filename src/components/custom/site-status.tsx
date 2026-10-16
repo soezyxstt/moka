@@ -8,10 +8,9 @@ type SiteStatusProps = {
   title: string;
   description: string;
   children?: ReactNode;
-  loading?: boolean;
 };
 
-export function SiteStatus({ visual, title, description, children, loading = false }: SiteStatusProps) {
+export function SiteStatus({ visual, title, description, children }: SiteStatusProps) {
   return (
     <main className="bg-brand-50 text-brand-900">
       <Section
@@ -24,7 +23,7 @@ export function SiteStatus({ visual, title, description, children, loading = fal
           <div aria-hidden="true" className="flex min-h-40 items-center justify-center font-manrope text-[clamp(8rem,24vw,19rem)] font-semibold leading-none tracking-tighter md:min-h-72">
             {visual}
           </div>
-          <div className="border-t border-brand-900/20 pt-8 md:border-l md:border-t-0 md:py-4 md:pl-12" role={loading ? "status" : undefined} aria-live={loading ? "polite" : undefined}>
+          <div className="border-t border-brand-900/20 pt-8 md:border-l md:border-t-0 md:py-4 md:pl-12">
             <h1 className="max-w-md text-balance font-manrope text-3xl! font-semibold leading-tight md:text-4xl! lg:text-5xl!">{title}</h1>
             {description ? <typography.p className="mt-5 max-w-md leading-7">{description}</typography.p> : null}
             {children ? <div className="mt-8 flex flex-wrap items-center gap-4">{children}</div> : null}
