@@ -257,6 +257,7 @@ export function NewsWorkspace({
       const saveArticleId = articleIdRef.current;
       const saveVersion = versionRef.current;
 
+      const toastId = !isAutosave ? toast.loading("Menyimpan draft artikel...") : null;
       try {
         const bodyJsonString = bodyJson ? JSON.stringify(bodyJson) : null;
         const res = await saveNewsDraftAction({
@@ -291,7 +292,7 @@ export function NewsWorkspace({
           setLastSavedTime(timeString);
 
           if (!isAutosave) {
-            toast.success("Draft artikel berhasil disimpan");
+            toast.success("Draft artikel berhasil disimpan", { id: toastId! });
           }
 
           if (res.isNew) {
@@ -309,7 +310,7 @@ export function NewsWorkspace({
         }
         if (!isAutosave) {
           const msg = err instanceof Error ? err.message : "Gagal menyimpan draft berita";
-          toast.error(msg);
+          toast.error(msg, { id: toastId! });
         }
       }
       return null;
@@ -379,10 +380,14 @@ export function NewsWorkspace({
     }
 
     setIsSubmitting(true);
+    const toastId = toast.loading("Menerbitkan artikel...");
     try {
       // Ensure draft is saved first
       const saved = await performSaveDraft(true);
-      if (!saved) return;
+      if (!saved) {
+        toast.dismiss(toastId);
+        return;
+      }
 
       const res = await publishNewsArticleAction({
         id: saved.articleId,
@@ -390,7 +395,7 @@ export function NewsWorkspace({
       });
 
       if (res.success) {
-        toast.success("Berita berhasil diterbitkan");
+        toast.success("Berita berhasil diterbitkan", { id: toastId });
         setStatus("published");
         setPublishedAt(res.publishedAt);
         versionRef.current = res.version;
@@ -400,7 +405,7 @@ export function NewsWorkspace({
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Gagal menerbitkan artikel";
-      toast.error(msg);
+      toast.error(msg, { id: toastId });
     } finally {
       setIsSubmitting(false);
     }
@@ -411,13 +416,14 @@ export function NewsWorkspace({
     const currentArticleId = articleIdRef.current;
     if (!currentArticleId) return;
     setIsSubmitting(true);
+    const toastId = toast.loading("Menarik artikel ke draft...");
     try {
       const res = await unpublishNewsArticleAction({
         id: currentArticleId,
         version: versionRef.current,
       });
       if (res.success) {
-        toast.success("Artikel ditarik kembali menjadi draft");
+        toast.success("Artikel ditarik kembali menjadi draft", { id: toastId });
         setStatus("draft");
         versionRef.current = res.version;
         setVersion(res.version);
@@ -425,7 +431,7 @@ export function NewsWorkspace({
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Gagal menarik artikel";
-      toast.error(msg);
+      toast.error(msg, { id: toastId });
     } finally {
       setIsSubmitting(false);
     }
@@ -436,13 +442,14 @@ export function NewsWorkspace({
     const currentArticleId = articleIdRef.current;
     if (!currentArticleId) return;
     setIsSubmitting(true);
+    const toastId = toast.loading("Mengarsipkan artikel...");
     try {
       const res = await archiveNewsArticleAction({
         id: currentArticleId,
         version: versionRef.current,
       });
       if (res.success) {
-        toast.success("Artikel berhasil diarsipkan");
+        toast.success("Artikel berhasil diarsipkan", { id: toastId });
         setStatus("archived");
         versionRef.current = res.version;
         setVersion(res.version);
@@ -450,7 +457,7 @@ export function NewsWorkspace({
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Gagal mengarsipkan artikel";
-      toast.error(msg);
+      toast.error(msg, { id: toastId });
     } finally {
       setIsSubmitting(false);
     }
@@ -460,15 +467,16 @@ export function NewsWorkspace({
   const handleDelete = async () => {
     if (!articleId) return;
     setIsSubmitting(true);
+    const toastId = toast.loading("Menghapus artikel...");
     try {
       const res = await deleteNewsArticleAction({ id: articleId });
       if (res.success) {
-        toast.success("Artikel berita berhasil dihapus");
+        toast.success("Artikel berita berhasil dihapus", { id: toastId });
         router.push("/admin/content/news");
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Gagal menghapus artikel";
-      toast.error(msg);
+      toast.error(msg, { id: toastId });
       setIsSubmitting(false);
     }
   };

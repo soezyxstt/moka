@@ -664,3 +664,110 @@ test("kampanye voting mendukung penghapusan kampanye dan cascade data terkait", 
     client.close();
   }
 });
+
+test("setiap proses pencatatan voting direkam pada audit log beserta jumlah vote dan perubahan nominal", async () => {
+  const { client, db } = await createTestDatabase();
+  try {
+    const campaign = await createVotingCampaign(
+      db,
+      "edition-a",
+      {
+        name: "Voting Audit 2033",
+        slug: "voting-audit-2033",
+        eligibilityStageId: "stage-a-final",
+        startsAt: new Date("2026-09-01T00:00:00+07:00"),
+        endsAt: new Date("2026-09-15T23:59:00+07:00"),
+        pricePerPoint: 2_000,
+      },
+      actor,
+      now,
+    );
+    await startVotingCampaign(
+      db,
+      "edition-a",
+      {
+        campaignId: campaign.id,
+        expectedVersion: 1,
+        confirmation: "Voting Audit 2033",
+        reason: "Mulai voting",
+      },
+      actor,
+      now,
+    );
+
+    const created = await saveVotingTally(
+      db,
+      "edition-a",
+      {
+        campaignId: campaign.id,
+        participantId: "participant-a",
+        localDate: "2026-09-06",
+        amount: 6_000,
+        expectedVersion: 0,
+        reason: "Input awal 3 vote",
+      },
+      actor,
+      now,
+    );
+
+    const [createAudit] = await db
+      .select()
+      .from(auditLogs)
+      .where(eq(auditLogs.action, "voting.tally.create"));
+    assert.ok(createAudit);
+    assert.equal(createAudit.resourceId, created.id);
+    assert.equal(createAudit.resourceLabel, "Peserta A");
+    assert.equal(createAudit.reason, "Input awal 3 vote");
+    assert.equal(JSON.parse(createAudit.beforeJson!), null);
+    assert.deepEqual(JSON.parse(createAudit.afterJson!), {
+      campaignId: campaign.id,
+      participantId: "participant-a",
+      localDate: "2026-09-06",
+      amount: 6_000,
+      votes: 3,
+      version: 1,
+    });
+
+    await saveVotingTally(
+      db,
+      "edition-a",
+      {
+        campaignId: campaign.id,
+        participantId: "participant-a",
+        localDate: "2026-09-06",
+        amount: 14_000,
+        expectedVersion: 1,
+        reason: "Tambah 4 vote dari QRIS",
+      },
+      actor,
+      now,
+    );
+
+    const [correctAudit] = await db
+      .select()
+      .from(auditLogs)
+      .where(eq(auditLogs.action, "voting.tally.correct"));
+    assert.ok(correctAudit);
+    assert.equal(correctAudit.resourceId, created.id);
+    assert.equal(correctAudit.reason, "Tambah 4 vote dari QRIS");
+    assert.deepEqual(JSON.parse(correctAudit.beforeJson!), {
+      campaignId: campaign.id,
+      participantId: "participant-a",
+      localDate: "2026-09-06",
+      amount: 6_000,
+      votes: 3,
+      version: 1,
+    });
+    assert.deepEqual(JSON.parse(correctAudit.afterJson!), {
+      campaignId: campaign.id,
+      participantId: "participant-a",
+      localDate: "2026-09-06",
+      amount: 14_000,
+      votes: 7,
+      version: 2,
+    });
+  } finally {
+    client.close();
+  }
+});
+

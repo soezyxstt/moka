@@ -308,6 +308,7 @@ export function CommitteeWorkspaceClient({
       return;
     }
 
+    const toastId = toast.loading(editingUnit ? "Memperbarui unit panitia..." : "Menambahkan unit panitia...");
     startTransition(async () => {
       try {
         const formData = new FormData();
@@ -322,18 +323,18 @@ export function CommitteeWorkspaceClient({
           formData.append("id", editingUnit.id);
           const res = await updateCommitteeUnitAction(formData);
           if (res.success) {
-            toast.success("Unit panitia berhasil diperbarui");
+            toast.success("Unit panitia berhasil diperbarui", { id: toastId });
             setUnitDialogOpen(false);
           }
         } else {
           const res = await createCommitteeUnitAction(formData);
           if (res.success) {
-            toast.success("Unit panitia baru berhasil ditambahkan");
+            toast.success("Unit panitia baru berhasil ditambahkan", { id: toastId });
             setUnitDialogOpen(false);
           }
         }
       } catch (err: unknown) {
-        toast.error(err instanceof Error ? err.message : "Gagal menyimpan unit panitia");
+        toast.error(err instanceof Error ? err.message : "Gagal menyimpan unit panitia", { id: toastId });
       }
     });
   };
@@ -342,20 +343,21 @@ export function CommitteeWorkspaceClient({
   const handleDeleteUnit = () => {
     if (!deleteUnitTarget) return;
 
+    const toastId = toast.loading("Menghapus unit panitia...");
     startTransition(async () => {
       try {
         const formData = new FormData();
         formData.append("id", deleteUnitTarget.id);
         const res = await deleteCommitteeUnitAction(formData);
         if (res.success) {
-          toast.success(`Unit "${deleteUnitTarget.name}" berhasil dihapus`);
+          toast.success(`Unit "${deleteUnitTarget.name}" berhasil dihapus`, { id: toastId });
           setDeleteUnitTarget(null);
           if (selectedUnitId === deleteUnitTarget.id) {
             setSelectedUnitId("all");
           }
         }
       } catch (err: unknown) {
-        toast.error(err instanceof Error ? err.message : "Gagal menghapus unit panitia");
+        toast.error(err instanceof Error ? err.message : "Gagal menghapus unit panitia", { id: toastId });
       }
     });
   };
@@ -378,12 +380,13 @@ export function CommitteeWorkspaceClient({
       displayOrder: index,
     }));
 
+    const toastId = toast.loading("Memperbarui urutan unit...");
     startTransition(async () => {
       try {
         await reorderCommitteeUnitsAction(items);
-        toast.success("Urutan unit panitia berhasil diperbarui");
+        toast.success("Urutan unit panitia berhasil diperbarui", { id: toastId });
       } catch (err: unknown) {
-        toast.error(err instanceof Error ? err.message : "Gagal mengubah urutan unit");
+        toast.error(err instanceof Error ? err.message : "Gagal mengubah urutan unit", { id: toastId });
       }
     });
   };
@@ -425,6 +428,7 @@ export function CommitteeWorkspaceClient({
       return;
     }
 
+    const toastId = toast.loading(editingMember ? "Memperbarui penugasan panitia..." : "Menugaskan anggota panitia...");
     startTransition(async () => {
       try {
         const formData = new FormData();
@@ -439,18 +443,18 @@ export function CommitteeWorkspaceClient({
           formData.append("version", String(editingMember.version));
           const res = await updateCommitteeAssignmentAction(formData);
           if (res.success) {
-            toast.success("Penugasan panitia berhasil diperbarui");
+            toast.success("Penugasan panitia berhasil diperbarui", { id: toastId });
             setMemberDialogOpen(false);
           }
         } else {
           const res = await assignCommitteeMemberAction(formData);
           if (res.success) {
-            toast.success("Anggota panitia berhasil ditugaskan");
+            toast.success("Anggota panitia berhasil ditugaskan", { id: toastId });
             setMemberDialogOpen(false);
           }
         }
       } catch (err: unknown) {
-        toast.error(err instanceof Error ? err.message : "Gagal menyimpan penugasan panitia");
+        toast.error(err instanceof Error ? err.message : "Gagal menyimpan penugasan panitia", { id: toastId });
       }
     });
   };
@@ -459,6 +463,7 @@ export function CommitteeWorkspaceClient({
   const handleDeleteMember = () => {
     if (!deleteMemberTarget) return;
 
+    const toastId = toast.loading("Menghapus penugasan panitia...");
     startTransition(async () => {
       try {
         const formData = new FormData();
@@ -466,11 +471,11 @@ export function CommitteeWorkspaceClient({
         formData.append("version", String(deleteMemberTarget.version));
         const res = await removeCommitteeAssignmentAction(formData);
         if (res.success) {
-          toast.success(`Penugasan "${deleteMemberTarget.personName}" berhasil dihapus`);
+          toast.success(`Penugasan "${deleteMemberTarget.personName}" berhasil dihapus`, { id: toastId });
           setDeleteMemberTarget(null);
         }
       } catch (err: unknown) {
-        toast.error(err instanceof Error ? err.message : "Gagal menghapus penugasan panitia");
+        toast.error(err instanceof Error ? err.message : "Gagal menghapus penugasan panitia", { id: toastId });
       }
     });
   };
@@ -483,6 +488,7 @@ export function CommitteeWorkspaceClient({
       return;
     }
 
+    const toastId = toast.loading("Membuat profil orang baru...");
     startTransition(async () => {
       try {
         const formData = new FormData();
@@ -496,7 +502,7 @@ export function CommitteeWorkspaceClient({
 
         const res = await createQuickPersonAction(formData);
         if (res.success && res.person) {
-          toast.success(`Profil "${res.person.name}" berhasil dibuat`);
+          toast.success(`Profil "${res.person.name}" berhasil dibuat`, { id: toastId });
           // Add to local people list and select it
           const newPerson: PersonOption = {
             id: res.person.id,
@@ -513,7 +519,7 @@ export function CommitteeWorkspaceClient({
           setQuickPersonPortraitMedia(null);
         }
       } catch (err: unknown) {
-        toast.error(err instanceof Error ? err.message : "Gagal membuat profil orang baru");
+        toast.error(err instanceof Error ? err.message : "Gagal membuat profil orang baru", { id: toastId });
       }
     });
   };

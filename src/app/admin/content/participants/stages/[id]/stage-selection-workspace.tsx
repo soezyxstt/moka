@@ -261,6 +261,7 @@ export function StageSelectionWorkspace({
     const selectedEntries = entries.filter((e) => selectedIds.has(e.id));
     const items = selectedEntries.map((e) => ({ id: e.id, expectedVersion: e.version }));
 
+    const toastId = toast.loading("Menyimpan keputusan tahap...");
     startTransition(async () => {
       try {
         await setStageDecisionsAction({
@@ -287,11 +288,12 @@ export function StageSelectionWorkspace({
         setBulkDecisionType(null);
         setBulkReason("");
         toast.success(
-          `Keputusan ${bulkDecisionType === "advanced" ? "lolos" : "tidak lolos"} berhasil disimpan`
+          `Keputusan ${bulkDecisionType === "advanced" ? "lolos" : "tidak lolos"} berhasil disimpan`,
+          { id: toastId }
         );
         router.refresh();
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Gagal menetapkan keputusan");
+        toast.error(error instanceof Error ? error.message : "Gagal menetapkan keputusan", { id: toastId });
       }
     });
   }
@@ -310,6 +312,7 @@ export function StageSelectionWorkspace({
     formData.set("reason", rollbackReason.trim());
 
     startTransition(async () => {
+      const toastId = toast.loading("Mengembalikan keputusan peserta...");
       try {
         const result = await rollbackStageDecisionAction(formData);
         setEntries((prev) =>
@@ -327,10 +330,10 @@ export function StageSelectionWorkspace({
         );
         setRollbackTarget(null);
         setRollbackReason("");
-        toast.success("Keputusan berhasil dikembalikan ke pending");
+        toast.success("Keputusan berhasil dikembalikan ke pending", { id: toastId });
         router.refresh();
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Gagal rollback keputusan");
+        toast.error(error instanceof Error ? error.message : "Gagal rollback keputusan", { id: toastId });
       }
     });
   }
@@ -351,15 +354,16 @@ export function StageSelectionWorkspace({
     if (closeReason.trim()) formData.set("reason", closeReason.trim());
 
     startTransition(async () => {
+      const toastId = toast.loading("Menutup tahap seleksi...");
       try {
         await closeSelectionStageAction(formData);
-        toast.success("Tahap seleksi berhasil ditutup");
+        toast.success("Tahap seleksi berhasil ditutup", { id: toastId });
         setCloseOpen(false);
         setCloseAllowUnderTarget(false);
         setCloseReason("");
         router.refresh();
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Gagal menutup tahap");
+        toast.error(error instanceof Error ? error.message : "Gagal menutup tahap", { id: toastId });
       }
     });
   }
@@ -370,13 +374,14 @@ export function StageSelectionWorkspace({
     formData.set("expectedVersion", String(stage.version));
 
     startTransition(async () => {
+      const toastId = toast.loading("Membuka tahap seleksi...");
       try {
         await openSelectionStageAction(formData);
-        toast.success("Tahap seleksi berhasil dibuka");
+        toast.success("Tahap seleksi berhasil dibuka", { id: toastId });
         setOpenModalOpen(false);
         router.refresh();
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Gagal membuka tahap");
+        toast.error(error instanceof Error ? error.message : "Gagal membuka tahap", { id: toastId });
       }
     });
   }
@@ -393,14 +398,15 @@ export function StageSelectionWorkspace({
     formData.set("reason", reopenReason.trim());
 
     startTransition(async () => {
+      const toastId = toast.loading("Membuka kembali tahap seleksi...");
       try {
         await reopenSelectionStageAction(formData);
-        toast.success("Tahap seleksi berhasil dibuka kembali");
+        toast.success("Tahap seleksi berhasil dibuka kembali", { id: toastId });
         setReopenOpen(false);
         setReopenReason("");
         router.refresh();
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Gagal membuka kembali tahap");
+        toast.error(error instanceof Error ? error.message : "Gagal membuka kembali tahap", { id: toastId });
       }
     });
   }

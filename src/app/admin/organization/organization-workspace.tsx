@@ -222,6 +222,7 @@ export function OrganizationWorkspace({
     const cleanedMissions = periodMissions.map((m) => m.trim()).filter(Boolean);
 
     startTransition(async () => {
+      const toastId = toast.loading(editingPeriod ? "Menyimpan perubahan periode..." : "Membuat periode baru...");
       try {
         const formData = new FormData();
         formData.append("label", periodLabel.trim());
@@ -235,14 +236,14 @@ export function OrganizationWorkspace({
           formData.append("id", editingPeriod.id);
           formData.append("version", String(editingPeriod.version));
           await updatePeriodAction(formData);
-          toast.success("Periode kepengurusan berhasil diperbarui");
+          toast.success("Periode kepengurusan berhasil diperbarui", { id: toastId });
         } else {
           await createPeriodAction(formData);
-          toast.success("Periode kepengurusan baru berhasil dibuat");
+          toast.success("Periode kepengurusan baru berhasil dibuat", { id: toastId });
         }
         setIsPeriodSheetOpen(false);
       } catch (err: unknown) {
-        toast.error(err instanceof Error ? err.message : "Gagal menyimpan periode");
+        toast.error(err instanceof Error ? err.message : "Gagal menyimpan periode", { id: toastId });
       }
     });
   };
@@ -254,15 +255,16 @@ export function OrganizationWorkspace({
       return;
     }
     startTransition(async () => {
+      const toastId = toast.loading("Menghapus periode kepengurusan...");
       try {
         const formData = new FormData();
         formData.append("id", deletingPeriod.id);
         formData.append("version", String(deletingPeriod.version));
         await deletePeriodAction(formData);
-        toast.success("Periode kepengurusan berhasil dihapus");
+        toast.success("Periode kepengurusan berhasil dihapus", { id: toastId });
         setDeletingPeriod(null);
       } catch (err: unknown) {
-        toast.error(err instanceof Error ? err.message : "Gagal menghapus periode");
+        toast.error(err instanceof Error ? err.message : "Gagal menghapus periode", { id: toastId });
       }
     });
   };
@@ -342,6 +344,7 @@ export function OrganizationWorkspace({
     }
 
     startTransition(async () => {
+      const toastId = toast.loading(editingPerson ? "Menyimpan perubahan profil..." : "Menambahkan profil baru...");
       try {
         const formData = new FormData();
         formData.append("name", personName.trim());
@@ -366,10 +369,10 @@ export function OrganizationWorkspace({
         }
 
         await savePersonAction(formData);
-        toast.success(editingPerson ? "Profil berhasil diperbarui" : "Profil baru berhasil ditambahkan");
+        toast.success(editingPerson ? "Profil berhasil diperbarui" : "Profil baru berhasil ditambahkan", { id: toastId });
         setIsPersonSheetOpen(false);
       } catch (err: unknown) {
-        toast.error(err instanceof Error ? err.message : "Gagal menyimpan profil");
+        toast.error(err instanceof Error ? err.message : "Gagal menyimpan profil", { id: toastId });
       }
     });
   };
@@ -377,15 +380,16 @@ export function OrganizationWorkspace({
   const handleDeletePerson = () => {
     if (!deletingPerson) return;
     startTransition(async () => {
+      const toastId = toast.loading("Menghapus profil...");
       try {
         const formData = new FormData();
         formData.append("id", deletingPerson.id);
         formData.append("version", String(deletingPerson.version));
         await deletePersonAction(formData);
-        toast.success("Profil berhasil dihapus dari direktori");
+        toast.success("Profil berhasil dihapus dari direktori", { id: toastId });
         setDeletingPerson(null);
       } catch (err: unknown) {
-        toast.error(err instanceof Error ? err.message : "Gagal menghapus profil");
+        toast.error(err instanceof Error ? err.message : "Gagal menghapus profil", { id: toastId });
       }
     });
   };
@@ -428,6 +432,7 @@ export function OrganizationWorkspace({
     }
 
     startTransition(async () => {
+      const toastId = toast.loading("Memetakan penugasan...");
       try {
         const formData = new FormData();
         formData.append("legacyAssignmentId", mappingAssignment.id);
@@ -437,10 +442,10 @@ export function OrganizationWorkspace({
         formData.append("title", mapTargetTitle.trim() || mappingAssignment.title);
 
         await mapLegacyAssignmentAction(formData);
-        toast.success(`Berhasil memetakan "${mappingAssignment.title}" ke kepengurusan modern`);
+        toast.success(`Berhasil memetakan "${mappingAssignment.title}" ke kepengurusan modern`, { id: toastId });
         setMappingAssignment(null);
       } catch (err: unknown) {
-        toast.error(err instanceof Error ? err.message : "Gagal memetakan penugasan");
+        toast.error(err instanceof Error ? err.message : "Gagal memetakan penugasan", { id: toastId });
       }
     });
   };

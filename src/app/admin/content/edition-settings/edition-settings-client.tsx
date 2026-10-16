@@ -109,12 +109,13 @@ export function EditionSettingsClient({
     formData.set("slogan", slogan.trim());
     formData.set("version", String(edition.version));
 
+    const toastId = toast.loading("Menyimpan identitas edisi...");
     startTransition(async () => {
       try {
         await updateEditionSettingsAction(formData);
-        toast.success("Identitas edisi disimpan");
+        toast.success("Identitas edisi disimpan", { id: toastId });
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Identitas edisi gagal disimpan");
+        toast.error(err instanceof Error ? err.message : "Identitas edisi gagal disimpan", { id: toastId });
       }
     });
   };
@@ -157,6 +158,7 @@ export function EditionSettingsClient({
     formData.set("description", description);
     formData.set("active", programActive ? "true" : "false");
 
+    const toastId = toast.loading(editingProgram ? "Memperbarui program..." : "Menambahkan program...");
     startTransition(async () => {
       try {
         await saveEditionProgramAction(formData);
@@ -168,9 +170,9 @@ export function EditionSettingsClient({
           )));
         }
         setIsProgramDialogOpen(false);
-        toast.success(editingProgram ? "Program diperbarui" : "Program ditambahkan");
+        toast.success(editingProgram ? "Program diperbarui" : "Program ditambahkan", { id: toastId });
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Program gagal disimpan");
+        toast.error(err instanceof Error ? err.message : "Program gagal disimpan", { id: toastId });
       }
     });
   };
@@ -182,14 +184,15 @@ export function EditionSettingsClient({
     const formData = new FormData();
     formData.set("id", program.id);
 
+    const toastId = toast.loading("Menghapus program...");
     startTransition(async () => {
       try {
         await deleteEditionProgramAction(formData);
         setPrograms((current) => current.filter((item) => item.id !== program.id));
         setDeletingProgram(null);
-        toast.success("Program dihapus");
+        toast.success("Program dihapus", { id: toastId });
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Program gagal dihapus");
+        toast.error(err instanceof Error ? err.message : "Program gagal dihapus", { id: toastId });
       }
     });
   };
@@ -208,13 +211,14 @@ export function EditionSettingsClient({
 
     const idList = reordered.map((p) => p.id);
 
+    const toastId = toast.loading("Memperbarui urutan program...");
     startTransition(async () => {
       try {
         await reorderEditionProgramsAction(idList);
-        toast.success("Urutan program diperbarui");
+        toast.success("Urutan program diperbarui", { id: toastId });
       } catch (err) {
         setPrograms(previous);
-        toast.error(err instanceof Error ? err.message : "Urutan program gagal diperbarui");
+        toast.error(err instanceof Error ? err.message : "Urutan program gagal diperbarui", { id: toastId });
       }
     });
   };

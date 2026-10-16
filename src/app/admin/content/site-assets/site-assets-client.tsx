@@ -214,13 +214,14 @@ function SiteAssetSlotCard({
     formData.set("focalY", String(focalY));
 
     startTransition(async () => {
+      const toastId = toast.loading(`Menyimpan ${definition.label}...`);
       try {
         const saved = await bindSiteAssetAction(formData);
         setVersion(saved.version);
         setIsBound(true);
-        toast.success(`${definition.label} disimpan`);
+        toast.success(`${definition.label} disimpan`, { id: toastId });
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Gagal menyimpan aset");
+        toast.error(err instanceof Error ? err.message : "Gagal menyimpan aset", { id: toastId });
       }
     });
   };
@@ -234,6 +235,7 @@ function SiteAssetSlotCard({
     formData.set("slotKey", definition.slotKey);
 
     startTransition(async () => {
+      const toastId = toast.loading(`Melepas ${definition.label}...`);
       try {
         const saved = await unbindSiteAssetAction(formData);
         setVersion(saved.version);
@@ -241,9 +243,9 @@ function SiteAssetSlotCard({
         setAltOverride("");
         setIsBound(false);
         setIsConfirmUnbindOpen(false);
-        toast.success(`${definition.label} dilepas`);
+        toast.success(`${definition.label} dilepas`, { id: toastId });
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Gagal melepas media");
+        toast.error(err instanceof Error ? err.message : "Gagal melepas media", { id: toastId });
       }
     });
   };
@@ -344,8 +346,8 @@ function SiteAssetSlotCard({
           </Button>
         ) : <span aria-hidden="true" />}
 
-        <AdminButton type="submit" form={formId} disabled={!canManageContent || !selectedAsset || isPending}>
-          {isPending ? "Menyimpan..." : isBound ? "Simpan perubahan" : "Pasang media"}
+        <AdminButton type="submit" form={formId} disabled={!canManageContent || !selectedAsset} loading={isPending}>
+          {isBound ? "Simpan perubahan" : "Pasang media"}
         </AdminButton>
       </div>
 

@@ -48,6 +48,7 @@ export function EventForm({ editionId, initialValue, canEdit, canManageMedia }: 
     if (label.trim().length < 2) return toast.error("Nama acara minimal 2 karakter");
     if (!finalSlug) return toast.error("Slug acara tidak valid");
     if (!Number.isInteger(order) || order < 0) return toast.error("Urutan acara tidak valid");
+    const toastId = toast.loading(initialValue ? "Memperbarui acara..." : "Membuat acara baru...");
     startTransition(async () => {
       try {
         if (initialValue) {
@@ -61,15 +62,15 @@ export function EventForm({ editionId, initialValue, canEdit, canManageMedia }: 
             displayOrder: order,
             active,
           });
-          toast.success("Acara diperbarui");
+          toast.success("Acara diperbarui", { id: toastId });
           router.refresh();
         } else {
           const result = await createEventAction({ label: label.trim(), slug: finalSlug, description: description.trim() || null, heroMediaId, displayOrder: order, active });
-          toast.success("Acara dibuat");
+          toast.success("Acara dibuat", { id: toastId });
           router.push(`/admin/content/events/${result.eventId}`);
         }
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Acara gagal disimpan");
+        toast.error(error instanceof Error ? error.message : "Acara gagal disimpan", { id: toastId });
       }
     });
   }
@@ -107,7 +108,7 @@ export function EventForm({ editionId, initialValue, canEdit, canManageMedia }: 
         />
       </AdminCard>
 
-      {canEdit ? <div className="flex justify-end"><AdminButton type="submit" disabled={pending}>{pending ? "Menyimpan..." : "Simpan acara"}</AdminButton></div> : null}
+      {canEdit ? <div className="flex justify-end"><AdminButton type="submit" loading={pending} disabled={pending}>Simpan acara</AdminButton></div> : null}
     </form>
   );
 }

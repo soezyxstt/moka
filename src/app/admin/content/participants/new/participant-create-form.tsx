@@ -74,13 +74,14 @@ export function ParticipantCreateForm({
     if (slug.trim()) formData.set("slug", slug.trim());
     if (bio.trim()) formData.set("bio", bio.trim());
 
+    const toastId = toast.loading("Menambahkan pendaftar...");
     startTransition(async () => {
       try {
         const result = await createApplicantAction(formData);
-        toast.success("Pendaftar berhasil ditambahkan");
+        toast.success("Pendaftar berhasil ditambahkan", { id: toastId });
         router.push(`/admin/content/participants/${result.id}`);
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Gagal menambahkan pendaftar");
+        toast.error(error instanceof Error ? error.message : "Gagal menambahkan pendaftar", { id: toastId });
       }
     });
   }
@@ -165,8 +166,8 @@ export function ParticipantCreateForm({
         <AdminLinkButton href="/admin/content/participants" variant="secondary">
           Batal
         </AdminLinkButton>
-        <AdminButton type="submit" disabled={pending}>
-          {pending ? "Menyimpan..." : "Simpan pendaftar"}
+        <AdminButton type="submit" loading={pending} disabled={pending}>
+          Simpan pendaftar
         </AdminButton>
       </div>
     </form>

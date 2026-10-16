@@ -22,6 +22,7 @@ import {
 } from "@/server/db/schema";
 import { ParticipantDirectory, type DirectoryParticipant } from "./participant-directory";
 import { repair2025StageNumbersAction } from "./selection-actions";
+import { EditionForm } from "../editions/edition-form";
 
 export const metadata = { title: "Mojang Jajaka" };
 
@@ -222,9 +223,13 @@ export default async function ParticipantsPage() {
       {hasIncompleteStageNumbers ? (
         <AdminCard className="flex flex-wrap items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">Nomor dan urutan peserta di tahap semifinalis atau finalis belum lengkap.</p>
-          <form action={repair2025StageNumbersAction}>
+          <EditionForm
+            action={repair2025StageNumbersAction}
+            loadingLabel="Memperbaiki nomor tahap 2025..."
+            successLabel="Nomor tahap 2025 berhasil diperbaiki"
+          >
             <AdminButton type="submit" variant="secondary">Perbaiki nomor tahap 2025</AdminButton>
-          </form>
+          </EditionForm>
         </AdminCard>
       ) : null}
       <ParticipantDirectory

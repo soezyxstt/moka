@@ -218,6 +218,7 @@ export function ParticipantDetailWorkspace({
       return;
     }
 
+    const toastId = toast.loading("Menyimpan identitas peserta...");
     startTransition(async () => {
       try {
         const res = await updateParticipantAction({
@@ -249,9 +250,9 @@ export function ParticipantDetailWorkspace({
         }));
 
         setIdentityReason("");
-        toast.success("Identitas peserta berhasil diperbarui");
+        toast.success("Identitas peserta berhasil diperbarui", { id: toastId });
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Gagal memperbarui identitas peserta");
+        toast.error(err instanceof Error ? err.message : "Gagal memperbarui identitas peserta", { id: toastId });
       }
     });
   };
@@ -289,6 +290,7 @@ export function ParticipantDetailWorkspace({
   // Save Achievements
   const handleSaveAchievements = (e: React.FormEvent) => {
     e.preventDefault();
+    const toastId = toast.loading("Menyimpan daftar prestasi...");
     startTransition(async () => {
       try {
         const res = await saveParticipantAchievementsAction(
@@ -303,9 +305,9 @@ export function ParticipantDetailWorkspace({
           achievements: achievements.map((a, i) => ({ id: a.id ?? String(i), text: a.text, displayOrder: a.displayOrder })),
         }));
         setAchievementsReason("");
-        toast.success("Daftar prestasi berhasil diperbarui");
+        toast.success("Daftar prestasi berhasil diperbarui", { id: toastId });
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Gagal menyimpan prestasi");
+        toast.error(err instanceof Error ? err.message : "Gagal menyimpan prestasi", { id: toastId });
       }
     });
   };
@@ -343,6 +345,7 @@ export function ParticipantDetailWorkspace({
   // Save Social Links
   const handleSaveSocialLinks = (e: React.FormEvent) => {
     e.preventDefault();
+    const toastId = toast.loading("Menyimpan tautan media sosial...");
     startTransition(async () => {
       try {
         const res = await saveParticipantSocialLinksAction(
@@ -363,9 +366,9 @@ export function ParticipantDetailWorkspace({
           })),
         }));
         setSocialReason("");
-        toast.success("Tautan sosial media berhasil disimpan");
+        toast.success("Tautan sosial media berhasil disimpan", { id: toastId });
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Gagal menyimpan sosial media");
+        toast.error(err instanceof Error ? err.message : "Gagal menyimpan sosial media", { id: toastId });
       }
     });
   };
@@ -431,6 +434,7 @@ export function ParticipantDetailWorkspace({
   // Save Media Gallery
   const handleSaveMedia = (e: React.FormEvent) => {
     e.preventDefault();
+    const toastId = toast.loading("Menyimpan media peserta...");
     startTransition(async () => {
       try {
         const payload: ParticipantMediaItem[] = mediaItems.map((m, idx) => ({
@@ -464,9 +468,9 @@ export function ParticipantDetailWorkspace({
         }));
 
         setMediaReason("");
-        toast.success("Media peserta berhasil diperbarui");
+        toast.success("Media peserta berhasil diperbarui", { id: toastId });
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Gagal menyimpan foto peserta");
+        toast.error(err instanceof Error ? err.message : "Gagal menyimpan foto peserta", { id: toastId });
       }
     });
   };
@@ -485,6 +489,7 @@ export function ParticipantDetailWorkspace({
     if (qrisAsset) formData.set("qrisMediaId", qrisAsset.id);
     formData.set("reason", qrisReason.trim());
 
+    const toastId = toast.loading("Menyimpan QRIS peserta...");
     startTransition(async () => {
       try {
         const res = await updateParticipantQrisAction(formData);
@@ -495,9 +500,9 @@ export function ParticipantDetailWorkspace({
           version: res.version,
         }));
         setQrisReason("");
-        toast.success("QRIS berhasil diperbarui");
+        toast.success("QRIS berhasil diperbarui", { id: toastId });
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Gagal memperbarui QRIS");
+        toast.error(err instanceof Error ? err.message : "Gagal memperbarui QRIS", { id: toastId });
       }
     });
   };

@@ -81,14 +81,15 @@ export function TitleWorkspace({ finalStage, finalists, initialTitles, finalists
       formData.set("expectedVersion", String(editTarget.version));
     }
     startTransition(async () => {
+      const toastId = toast.loading(editTarget ? "Menyimpan perubahan gelar..." : "Membuat gelar baru...");
       try {
         if (editTarget) await updateEditionTitleAction(formData);
         else await createEditionTitleAction(formData);
-        toast.success(editTarget ? "Gelar diperbarui" : "Gelar dibuat");
+        toast.success(editTarget ? "Gelar diperbarui" : "Gelar dibuat", { id: toastId });
         setSheetOpen(false);
         router.refresh();
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Gelar gagal disimpan");
+        toast.error(error instanceof Error ? error.message : "Gelar gagal disimpan", { id: toastId });
       }
     });
   }
@@ -100,13 +101,14 @@ export function TitleWorkspace({ finalStage, finalists, initialTitles, finalists
     const [moved] = reordered.splice(index, 1);
     reordered.splice(targetIndex, 0, moved);
     startTransition(async () => {
+      const toastId = toast.loading("Menyimpan urutan gelar...");
       try {
         await reorderEditionTitlesAction(reordered.map((title) => ({ id: title.id, expectedVersion: title.version })));
         setTitles(reordered.map((title, displayOrder) => ({ ...title, displayOrder, version: title.version + 1 })));
-        toast.success("Urutan gelar disimpan");
+        toast.success("Urutan gelar disimpan", { id: toastId });
         router.refresh();
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Urutan gagal disimpan");
+        toast.error(error instanceof Error ? error.message : "Urutan gagal disimpan", { id: toastId });
       }
     });
   }
@@ -117,13 +119,14 @@ export function TitleWorkspace({ finalStage, finalists, initialTitles, finalists
     formData.set("expectedVersion", String(title.version));
     formData.set("active", String(!title.active));
     startTransition(async () => {
+      const toastId = toast.loading(title.active ? "Menonaktifkan gelar..." : "Mengaktifkan gelar...");
       try {
         const result = await setEditionTitleActiveAction(formData);
         setTitles((items) => items.map((item) => item.id === title.id ? { ...item, active: !item.active, version: result.version } : item));
-        toast.success(title.active ? "Gelar dinonaktifkan" : "Gelar diaktifkan");
+        toast.success(title.active ? "Gelar dinonaktifkan" : "Gelar diaktifkan", { id: toastId });
         router.refresh();
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Status gelar gagal diubah");
+        toast.error(error instanceof Error ? error.message : "Status gelar gagal diubah", { id: toastId });
       }
     });
   }
@@ -134,6 +137,7 @@ export function TitleWorkspace({ finalStage, finalists, initialTitles, finalists
     formData.set("participantId", participantId);
     formData.set("expectedTitleVersion", String(title.version));
     startTransition(async () => {
+      const toastId = toast.loading(checked ? "Menyematkan gelar..." : "Melepas gelar...");
       try {
         const result = checked ? await assignEditionTitleAction(formData) : await unassignEditionTitleAction(formData);
         setTitles((items) => items.map((item) => item.id === title.id ? {
@@ -141,10 +145,10 @@ export function TitleWorkspace({ finalStage, finalists, initialTitles, finalists
           version: result.version,
           participantIds: checked ? [...item.participantIds, participantId] : item.participantIds.filter((id) => id !== participantId),
         } : item));
-        toast.success(checked ? "Gelar diberikan" : "Gelar dilepas");
+        toast.success(checked ? "Gelar diberikan" : "Gelar dilepas", { id: toastId });
         router.refresh();
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Penyematan gelar gagal");
+        toast.error(error instanceof Error ? error.message : "Penyematan gelar gagal", { id: toastId });
       }
     });
   }
@@ -155,14 +159,15 @@ export function TitleWorkspace({ finalStage, finalists, initialTitles, finalists
     formData.set("titleId", deleteTarget.id);
     formData.set("expectedVersion", String(deleteTarget.version));
     startTransition(async () => {
+      const toastId = toast.loading("Menghapus gelar...");
       try {
         await deleteEditionTitleAction(formData);
         setTitles((items) => items.filter((item) => item.id !== deleteTarget.id));
         setDeleteTarget(null);
-        toast.success("Gelar dihapus");
+        toast.success("Gelar dihapus", { id: toastId });
         router.refresh();
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Gelar gagal dihapus");
+        toast.error(error instanceof Error ? error.message : "Gelar gagal dihapus", { id: toastId });
       }
     });
   }
@@ -239,7 +244,7 @@ export function TitleWorkspace({ finalStage, finalists, initialTitles, finalists
             <AdminField label="Nama gelar"><AdminInput value={name} onChange={(event) => setName(event.target.value)} required /></AdminField>
             <AdminField label="Deskripsi"><AdminTextarea value={description} onChange={(event) => setDescription(event.target.value)} rows={3} /></AdminField>
             <AdminField label="Jumlah slot"><AdminInput type="number" min="1" step="1" value={capacity} onChange={(event) => setCapacity(event.target.value)} required /></AdminField>
-            <SheetFooter><AdminButton type="button" variant="secondary" onClick={() => setSheetOpen(false)} disabled={pending}>Batal</AdminButton><AdminButton type="submit" disabled={pending}>{pending ? "Menyimpan..." : "Simpan gelar"}</AdminButton></SheetFooter>
+            <SheetFooter><AdminButton type="button" variant="secondary" onClick={() => setSheetOpen(false)} disabled={pending}>Batal</AdminButton><AdminButton type="submit" loading={pending}>Simpan gelar</AdminButton></SheetFooter>
           </form>
         </SheetContent>
       </Sheet>
@@ -247,7 +252,7 @@ export function TitleWorkspace({ finalStage, finalists, initialTitles, finalists
       <AlertDialog open={Boolean(deleteTarget)} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader><AlertDialogTitle>Hapus gelar</AlertDialogTitle><AlertDialogDescription>Gelar {deleteTarget?.name} akan dihapus.</AlertDialogDescription></AlertDialogHeader>
-          <AlertDialogFooter><AlertDialogCancel disabled={pending}>Batal</AlertDialogCancel><AdminButton variant="danger" onClick={removeTitle} disabled={pending}>Hapus gelar</AdminButton></AlertDialogFooter>
+          <AlertDialogFooter><AlertDialogCancel disabled={pending}>Batal</AlertDialogCancel><AdminButton variant="danger" onClick={removeTitle} loading={pending}>Hapus gelar</AdminButton></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>

@@ -307,6 +307,7 @@ export function PeriodDetailClient({
     }
 
     startTransition(async () => {
+      const toastId = toast.loading(editingUnit ? "Menyimpan perubahan unit..." : "Menambahkan unit baru...");
       try {
         const formData = new FormData();
         formData.append("periodId", period.id);
@@ -318,14 +319,14 @@ export function PeriodDetailClient({
         if (editingUnit) {
           formData.append("id", editingUnit.id);
           await updateUnitAction(formData);
-          toast.success("Unit organisasi berhasil diperbarui");
+          toast.success("Unit organisasi berhasil diperbarui", { id: toastId });
         } else {
           await createUnitAction(formData);
-          toast.success("Unit organisasi berhasil ditambahkan");
+          toast.success("Unit organisasi berhasil ditambahkan", { id: toastId });
         }
         setIsUnitSheetOpen(false);
       } catch (err: unknown) {
-        toast.error(err instanceof Error ? err.message : "Gagal menyimpan unit");
+        toast.error(err instanceof Error ? err.message : "Gagal menyimpan unit", { id: toastId });
       }
     });
   };
@@ -333,14 +334,15 @@ export function PeriodDetailClient({
   const handleDeleteUnit = () => {
     if (!deletingUnit) return;
     startTransition(async () => {
+      const toastId = toast.loading("Menghapus unit organisasi...");
       try {
         const formData = new FormData();
         formData.append("id", deletingUnit.id);
         await deleteUnitAction(formData);
-        toast.success("Unit organisasi berhasil dihapus");
+        toast.success("Unit organisasi berhasil dihapus", { id: toastId });
         setDeletingUnit(null);
       } catch (err: unknown) {
-        toast.error(err instanceof Error ? err.message : "Gagal menghapus unit");
+        toast.error(err instanceof Error ? err.message : "Gagal menghapus unit", { id: toastId });
       }
     });
   };
@@ -364,11 +366,12 @@ export function PeriodDetailClient({
     }));
 
     startTransition(async () => {
+      const toastId = toast.loading("Mengubah urutan unit...");
       try {
         await reorderUnitsAction(itemsToReorder);
-        toast.success("Urutan unit diperbarui");
+        toast.success("Urutan unit diperbarui", { id: toastId });
       } catch (err: unknown) {
-        toast.error(err instanceof Error ? err.message : "Gagal mengubah urutan unit");
+        toast.error(err instanceof Error ? err.message : "Gagal mengubah urutan unit", { id: toastId });
       }
     });
   };
@@ -426,6 +429,7 @@ export function PeriodDetailClient({
     }
 
     startTransition(async () => {
+      const toastId = toast.loading(editingMember ? "Menyimpan perubahan penugasan..." : "Menugaskan pengurus...");
       try {
         const formData = new FormData();
         formData.append("periodId", period.id);
@@ -439,14 +443,14 @@ export function PeriodDetailClient({
           formData.append("id", editingMember.id);
           formData.append("version", String(editingMember.version));
           await updateMembershipAction(formData);
-          toast.success("Penugasan pengurus berhasil diperbarui");
+          toast.success("Penugasan pengurus berhasil diperbarui", { id: toastId });
         } else {
           await assignMemberAction(formData);
-          toast.success("Pengurus baru berhasil ditugaskan");
+          toast.success("Pengurus baru berhasil ditugaskan", { id: toastId });
         }
         setIsMemberSheetOpen(false);
       } catch (err: unknown) {
-        toast.error(err instanceof Error ? err.message : "Gagal menyimpan penugasan");
+        toast.error(err instanceof Error ? err.message : "Gagal menyimpan penugasan", { id: toastId });
       }
     });
   };
@@ -454,14 +458,15 @@ export function PeriodDetailClient({
   const handleDeleteMember = () => {
     if (!deletingMember) return;
     startTransition(async () => {
+      const toastId = toast.loading("Mencabut penugasan pengurus...");
       try {
         const formData = new FormData();
         formData.append("id", deletingMember.id);
         await removeMembershipAction(formData);
-        toast.success("Penugasan pengurus berhasil dicabut");
+        toast.success("Penugasan pengurus berhasil dicabut", { id: toastId });
         setDeletingMember(null);
       } catch (err: unknown) {
-        toast.error(err instanceof Error ? err.message : "Gagal menghapus penugasan");
+        toast.error(err instanceof Error ? err.message : "Gagal menghapus penugasan", { id: toastId });
       }
     });
   };
@@ -503,6 +508,7 @@ export function PeriodDetailClient({
     }
 
     startTransition(async () => {
+      const toastId = toast.loading("Menyimpan tautan edisi...");
       try {
         const formData = new FormData();
         formData.append("periodId", period.id);
@@ -510,10 +516,10 @@ export function PeriodDetailClient({
         formData.append("editionIds", JSON.stringify(selectedEditionIds));
         formData.append("confirmedReassignmentIds", JSON.stringify(confirmedReassignmentIds));
         await setPeriodEditionsAction(formData);
-        toast.success("Edisi terhubung diperbarui");
+        toast.success("Edisi terhubung diperbarui", { id: toastId });
         setIsEditionDialogOpen(false);
       } catch (err: unknown) {
-        toast.error(err instanceof Error ? err.message : "Gagal memperbarui edisi");
+        toast.error(err instanceof Error ? err.message : "Gagal memperbarui edisi", { id: toastId });
       }
     });
   };
@@ -544,6 +550,7 @@ export function PeriodDetailClient({
     const cleaned = editMissions.map((m) => m.trim()).filter(Boolean);
 
     startTransition(async () => {
+      const toastId = toast.loading("Menyimpan metadata periode...");
       try {
         const formData = new FormData();
         formData.append("id", period.id);
@@ -556,10 +563,10 @@ export function PeriodDetailClient({
         formData.append("lifecycle", editLifecycle);
 
         await updatePeriodAction(formData);
-        toast.success("Metadata periode berhasil diperbarui");
+        toast.success("Metadata periode berhasil diperbarui", { id: toastId });
         setIsEditPeriodOpen(false);
       } catch (err: unknown) {
-        toast.error(err instanceof Error ? err.message : "Gagal memperbarui metadata periode");
+        toast.error(err instanceof Error ? err.message : "Gagal memperbarui metadata periode", { id: toastId });
       }
     });
   };

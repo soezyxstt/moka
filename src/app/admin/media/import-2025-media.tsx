@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { AdminButton, AdminCard, AdminCardHeader } from "@/components/admin/primitives";
+import { toast } from "sonner";
 import { import2025MediaBatch } from "@/server/media/import-2025-action";
 
 type ImportResult = Awaited<ReturnType<typeof import2025MediaBatch>>;
@@ -34,17 +35,26 @@ export function Import2025MediaPanel() {
     running.current = true;
     setPending(true);
     setFailed(false);
+    const toastId = toast.loading("Memproses batch media 2025...");
     try {
       let currentCursor = cursor;
+      let lastResult: ImportResult | null = null;
       while (true) {
         const next = await import2025MediaBatch(currentCursor);
+        lastResult = next;
         setResult(next);
         setCursor(next.nextCursor);
         if (next.status !== "in_progress") break;
         currentCursor = next.nextCursor;
       }
+      if (lastResult?.status === "complete") {
+        toast.success("Import media 2025 selesai", { id: toastId });
+      } else {
+        toast.info(getStatusLabel(lastResult?.status ?? "interrupted"), { id: toastId });
+      }
     } catch {
       setFailed(true);
+      toast.error("Gagal memproses batch media", { id: toastId });
     } finally {
       running.current = false;
       setPending(false);

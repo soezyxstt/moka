@@ -54,6 +54,7 @@ export function AdminMediaUploader({
   const uploadKind = allowedKinds.includes(selectedKind) ? selectedKind : (allowedKinds[0] ?? "image");
   const [files, setFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [uploadToastId, setUploadToastId] = useState<string | number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const inputAccept = mediaUploadAccept(uploadKind);
   const { startUpload, isUploading } = useUploadThing(uploadKind, {
@@ -64,13 +65,28 @@ export function AdminMediaUploader({
       setFiles([]);
       onUploaded?.(identities);
       if (identities.length !== responses.length) {
-        toast.error("Identitas upload belum lengkap. Periksa pustaka media.");
+        if (uploadToastId) {
+          toast.error("Identitas upload belum lengkap. Periksa pustaka media.", { id: uploadToastId });
+        } else {
+          toast.error("Identitas upload belum lengkap. Periksa pustaka media.");
+        }
+        setUploadToastId(null);
         return;
       }
-      toast.success(`${identities.length} media berhasil diunggah`);
+      if (uploadToastId) {
+        toast.success(`${identities.length} media berhasil diunggah`, { id: uploadToastId });
+      } else {
+        toast.success(`${identities.length} media berhasil diunggah`);
+      }
+      setUploadToastId(null);
     },
     onUploadError: (error) => {
-      toast.error(error.message || "Upload media gagal");
+      if (uploadToastId) {
+        toast.error(error.message || "Upload media gagal", { id: uploadToastId });
+      } else {
+        toast.error(error.message || "Upload media gagal");
+      }
+      setUploadToastId(null);
     },
   });
 
@@ -179,7 +195,11 @@ export function AdminMediaUploader({
           type="button"
           disabled={files.length === 0 || isUploading}
           className="mt-2 h-8 bg-brand px-3 text-xs text-canvas hover:bg-brand-600"
-          onClick={() => void startUpload(files, { folderId })}
+          onClick={() => {
+            const id = toast.loading(`Mengunggah ${files.length} file...`);
+            setUploadToastId(id);
+            void startUpload(files, { folderId });
+          }}
         >
           {isUploading ? "Mengunggah..." : files.length > 0 ? `Unggah ${files.length} file` : "Pilih file dahulu"}
         </Button>

@@ -54,20 +54,21 @@ Sidebar akhir:
 | Grup | Item | Route |
 |---|---|---|
 | Ringkasan | Dashboard | `/admin` |
-| Konteks | Kelola edisi | `/admin/content/editions` |
+| Operasional | Voting | `/admin/voting` |
+| Operasional | Pengguna | `/admin/users` |
+| Operasional | Audit log | `/admin/audit` |
 | Konten, collapsible | Identitas edisi | `/admin/content/edition-settings` |
 | Konten, collapsible | Aset situs | `/admin/content/site-assets` |
+| Konten, collapsible | Teks halaman | `/admin/content/pages` |
 | Konten, collapsible | Berita | `/admin/content/news` |
 | Konten, collapsible | Sponsor | `/admin/content/sponsors` |
 | Konten, collapsible | Mojang Jajaka | `/admin/content/participants` |
 | Konten, collapsible | Acara | `/admin/content/events` |
 | Konten, collapsible | Galeri | `/admin/content/galleries` |
 | Konten, collapsible | Panitia | `/admin/content/committee` |
-| Umum | Kepengurusan | `/admin/organization` |
 | Studio | Pustaka media | `/admin/media` |
-| Operasional | Voting | `/admin/voting` |
-| Operasional | Pengguna | `/admin/users` |
-| Operasional | Audit log | `/admin/audit` |
+| Kepengurusan | Kepengurusan | `/admin/organization` |
+| Konteks | Kelola edisi | `/admin/content/editions` |
 | Akun | Profil | `/admin/profile` |
 
 Ketentuan route:

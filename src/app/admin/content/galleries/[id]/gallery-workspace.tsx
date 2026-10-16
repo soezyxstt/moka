@@ -178,6 +178,7 @@ export function GalleryWorkspace({
     if (!beginMutation()) return;
 
     setIsSavingMeta(true);
+    const toastId = toast.loading("Menyimpan detail album...");
     try {
       const result = await updateGalleryAction({
         id: gallery.id,
@@ -191,10 +192,10 @@ export function GalleryWorkspace({
         version,
       });
       setVersion(result.version);
-      toast.success("Detail album disimpan");
+      toast.success("Detail album disimpan", { id: toastId });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Gagal menyimpan metadata";
-      toast.error(msg);
+      toast.error(msg, { id: toastId });
     } finally {
       setIsSavingMeta(false);
       endMutation();
@@ -214,6 +215,7 @@ export function GalleryWorkspace({
     }
     const mediaIds = uniqueAssets.map((asset) => asset.id);
     if (!beginMutation()) return;
+    const toastId = toast.loading("Menambahkan media ke album...");
     try {
       const result = await addGalleryItemsAction({
         galleryId: gallery.id,
@@ -230,10 +232,10 @@ export function GalleryWorkspace({
       }));
       setItems((prev) => [...prev, ...newItems]);
       setVersion(result.version);
-      toast.success(`${uniqueAssets.length} foto berhasil ditambahkan ke album`);
+      toast.success(`${uniqueAssets.length} foto berhasil ditambahkan ke album`, { id: toastId });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Gagal menambahkan foto";
-      toast.error(msg);
+      toast.error(msg, { id: toastId });
     } finally {
       endMutation();
     }
@@ -259,6 +261,7 @@ export function GalleryWorkspace({
     }
     if (!beginMutation()) return;
 
+    const toastId = toast.loading("Menambahkan video YouTube...");
     try {
       const result = await addGalleryItemsAction({
         galleryId: gallery.id,
@@ -277,13 +280,13 @@ export function GalleryWorkspace({
       };
       setItems((prev) => [...prev, newItem]);
       setVersion(result.version);
-      toast.success("Video YouTube berhasil ditambahkan");
+      toast.success("Video YouTube berhasil ditambahkan", { id: toastId });
       setYoutubeDialogOpen(false);
       setYoutubeInput("");
       setYoutubeCaption("");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Gagal menambahkan video YouTube";
-      toast.error(msg);
+      toast.error(msg, { id: toastId });
     } finally {
       endMutation();
     }
@@ -300,6 +303,7 @@ export function GalleryWorkspace({
     // Reassign order
     const updated = newItems.map((item, idx) => ({ ...item, displayOrder: idx + 1 }));
     if (!beginMutation()) return;
+    const toastId = toast.loading("Memperbarui urutan item...");
     try {
       const result = await reorderGalleryItemsAction({
         galleryId: gallery.id,
@@ -308,9 +312,10 @@ export function GalleryWorkspace({
       });
       setItems(updated);
       setVersion(result.version);
+      toast.success("Urutan item berhasil disimpan", { id: toastId });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Gagal menyimpan urutan item";
-      toast.error(message);
+      toast.error(message, { id: toastId });
     } finally {
       endMutation();
     }
@@ -319,6 +324,7 @@ export function GalleryWorkspace({
   const handleDeleteItem = async () => {
     if (!deleteItemTarget) return;
     if (!beginMutation()) return;
+    const toastId = toast.loading("Menghapus item dari album...");
     try {
       const result = await deleteGalleryItemAction({
         itemId: deleteItemTarget.id,
@@ -326,11 +332,11 @@ export function GalleryWorkspace({
       });
       setItems((prev) => prev.filter((i) => i.id !== deleteItemTarget.id));
       setVersion(result.version);
-      toast.success("Item berhasil dihapus dari album");
+      toast.success("Item berhasil dihapus dari album", { id: toastId });
       setDeleteItemTarget(null);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Gagal menghapus item";
-      toast.error(msg);
+      toast.error(msg, { id: toastId });
     } finally {
       endMutation();
     }
@@ -345,6 +351,7 @@ export function GalleryWorkspace({
       });
       return;
     }
+    const toastId = toast.loading("Menyimpan keterangan item...");
     try {
       const result = await updateGalleryItemAction({
         itemId: item.id,
@@ -360,7 +367,7 @@ export function GalleryWorkspace({
         return next;
       });
       setVersion(result.version);
-      toast.success("Keterangan item disimpan");
+      toast.success("Keterangan item disimpan", { id: toastId });
     } catch (err: unknown) {
       setCaptionDrafts((current) => {
         const next = { ...current };
@@ -368,7 +375,7 @@ export function GalleryWorkspace({
         return next;
       });
       const message = err instanceof Error ? err.message : "Gagal menyimpan keterangan";
-      toast.error(message);
+      toast.error(message, { id: toastId });
     } finally {
       endMutation();
     }

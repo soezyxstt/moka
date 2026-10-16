@@ -75,6 +75,7 @@ export function PageSectionsEditor({
       actionLabel: clean(section.value.actionLabel ?? ""),
       actionHref: clean(section.value.actionHref ?? ""),
     };
+    const toastId = toast.loading("Menyimpan draf teks...");
     try {
       const result = await savePageSectionDraftAction({
         expectedEditionId: editionId,
@@ -88,9 +89,9 @@ export function PageSectionsEditor({
       setSections((current) => current.map((item) => item.slotKey === section.slotKey
         ? { ...item, version: result.version, value: copy, draft: copy }
         : item));
-      toast.success("Draf teks disimpan");
+      toast.success("Draf teks disimpan", { id: toastId });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Draf gagal disimpan");
+      toast.error(error instanceof Error ? error.message : "Draf gagal disimpan", { id: toastId });
     } finally {
       setPending(null);
     }
@@ -98,15 +99,16 @@ export function PageSectionsEditor({
 
   async function publish(section: PageSectionEditorItem) {
     setPending(`${section.slotKey}:publish`);
+    const toastId = toast.loading("Menerbitkan teks...");
     try {
       const result = await publishPageSectionAction({ slotKey: section.slotKey, expectedEditionId: editionId });
       if (result.error || result.version === null) throw new Error(result.error ?? "Teks gagal diterbitkan");
       setSections((current) => current.map((item) => item.slotKey === section.slotKey
         ? { ...item, version: result.version, status: "published", published: { ...item.value }, draft: null }
         : item));
-      toast.success("Teks diterbitkan");
+      toast.success("Teks diterbitkan", { id: toastId });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Teks gagal diterbitkan");
+      toast.error(error instanceof Error ? error.message : "Teks gagal diterbitkan", { id: toastId });
     } finally {
       setPending(null);
     }
@@ -195,18 +197,24 @@ export function PageSectionsEditor({
                   {canEdit || canPublish ? (
                     <div className="flex flex-wrap items-center gap-2 border-t border-border pt-4">
                       {canEdit ? (
-                        <AdminButton type="button" disabled={Boolean(pending)} onClick={() => void save(section)}>
-                          {pending === `${section.slotKey}:save` ? "Menyimpan" : "Simpan draf"}
+                        <AdminButton
+                          type="button"
+                          loading={pending === `${section.slotKey}:save`}
+                          disabled={Boolean(pending)}
+                          onClick={() => void save(section)}
+                        >
+                          Simpan draf
                         </AdminButton>
                       ) : null}
                       {canPublish && section.draft ? (
                         <AdminButton
                           type="button"
                           variant="secondary"
+                          loading={pending === `${section.slotKey}:publish`}
                           disabled={Boolean(pending) || hasUnpublishedChanges}
                           onClick={() => void publish(section)}
                         >
-                          {pending === `${section.slotKey}:publish` ? "Menerbitkan" : "Terbitkan"}
+                          Terbitkan
                         </AdminButton>
                       ) : null}
                       {section.draft ? (

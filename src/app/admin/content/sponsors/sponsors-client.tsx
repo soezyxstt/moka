@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { adminNativeScrollbarClassName } from "@/components/admin/admin-scroll-area";
 import { AdminMediaField, type MediaAssetSummary } from "@/components/admin/media-picker";
 import {
+  AdminBadge,
   AdminButton,
   AdminCard,
   AdminEmptyState,
@@ -40,6 +41,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 import { createSponsorAction, deleteSponsorAction, toggleSponsorActiveAction, updateSponsorAction } from "./actions";
@@ -88,13 +95,13 @@ export function getSponsorTierLabel(tier: SponsorTier) {
 export function getTierBadgeStyle(tier: SponsorTier) {
   switch (tier) {
     case "utama":
-      return "border-warning-400 bg-warning-50 text-warning-900";
+      return "border-warning-300 bg-warning-50/80 text-warning-900";
     case "pendukung":
-      return "border-success-400 bg-success-50 text-success-900";
+      return "border-success-300 bg-success-50/80 text-success-900";
     case "pendamping":
-      return "border-info-400 bg-info-50 text-info-900";
+      return "border-info-300 bg-info-50/80 text-info-900";
     case "pelengkap":
-      return "border-neutral-400 bg-neutral-100 text-neutral-800";
+      return "border-neutral-300 bg-neutral-100 text-neutral-800";
     default:
       return "border-border bg-muted text-muted-foreground";
   }
@@ -201,22 +208,24 @@ export function SponsorsClient({
       formData.set("id", editingSponsor.id);
       formData.set("version", String(editingSponsor.version));
       startTransition(async () => {
+        const toastId = toast.loading(`Menyimpan perubahan sponsor "${name}"...`);
         try {
           await updateSponsorAction(formData);
-          toast.success(`Sponsor "${name}" diperbarui`);
+          toast.success(`Sponsor "${name}" diperbarui`, { id: toastId });
           setIsSheetOpen(false);
         } catch (error) {
-          toast.error(error instanceof Error ? error.message : "Perubahan sponsor gagal disimpan");
+          toast.error(error instanceof Error ? error.message : "Perubahan sponsor gagal disimpan", { id: toastId });
         }
       });
     } else {
       startTransition(async () => {
+        const toastId = toast.loading(`Menambahkan sponsor "${name}"...`);
         try {
           await createSponsorAction(formData);
-          toast.success(`Sponsor "${name}" ditambahkan sebagai nonaktif`);
+          toast.success(`Sponsor "${name}" ditambahkan sebagai nonaktif`, { id: toastId });
           setIsSheetOpen(false);
         } catch (error) {
-          toast.error(error instanceof Error ? error.message : "Sponsor gagal disimpan");
+          toast.error(error instanceof Error ? error.message : "Sponsor gagal disimpan", { id: toastId });
         }
       });
     }
@@ -232,13 +241,15 @@ export function SponsorsClient({
     formData.set("id", sponsor.id);
 
     startTransition(async () => {
+      const toastId = toast.loading(`${sponsor.active ? "Menonaktifkan" : "Mengaktifkan"} sponsor "${sponsor.name}"...`);
       try {
         await toggleSponsorActiveAction(formData);
         toast.success(
           `Sponsor "${sponsor.name}" ${sponsor.active ? "dinonaktifkan" : "diaktifkan"}`,
+          { id: toastId }
         );
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Status sponsor gagal diubah");
+        toast.error(error instanceof Error ? error.message : "Status sponsor gagal diubah", { id: toastId });
       }
     });
   };
@@ -251,212 +262,229 @@ export function SponsorsClient({
     formData.set("id", sponsorToDelete.id);
 
     startTransition(async () => {
+      const toastId = toast.loading(`Menghapus sponsor "${sponsorToDelete.name}"...`);
       try {
         await deleteSponsorAction(formData);
-        toast.success(`Sponsor "${sponsorToDelete.name}" dihapus`);
+        toast.success(`Sponsor "${sponsorToDelete.name}" dihapus`, { id: toastId });
         setDeletingSponsor(null);
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Sponsor gagal dihapus");
+        toast.error(error instanceof Error ? error.message : "Sponsor gagal dihapus", { id: toastId });
       }
     });
   };
 
   return (
-    <div className="space-y-5">
-      <AdminCard padding="none">
-        <div className="space-y-4 p-4 sm:p-5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="font-manrope text-lg font-semibold text-brand-900">Daftar sponsor</h2>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {filteredSponsors.length} dari {sponsors.length} sponsor tampil
-              </p>
+    <TooltipProvider delayDuration={150}>
+      <div className="space-y-5">
+        <AdminCard padding="none">
+          <div className="space-y-4 p-4 sm:p-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="font-manrope text-lg font-semibold text-brand-900">Daftar sponsor</h2>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {filteredSponsors.length} dari {sponsors.length} sponsor tampil
+                </p>
+              </div>
+              {canEdit ? (
+                <AdminButton type="button" onClick={openCreateSheet} className="w-full sm:w-auto">
+                  <Plus size={16} /> Tambah sponsor
+                </AdminButton>
+              ) : null}
             </div>
-            {canEdit ? (
-              <AdminButton type="button" onClick={openCreateSheet} className="w-full sm:w-auto">
-                <Plus size={16} /> Tambah sponsor
-              </AdminButton>
-            ) : null}
-          </div>
 
-          <div className="grid gap-3 sm:grid-cols-[minmax(0,1.5fr)_minmax(9rem,0.75fr)_minmax(9rem,0.75fr)]">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-              <AdminInput
-                type="search"
-                aria-label="Cari nama sponsor"
-                placeholder="Cari nama sponsor"
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                className="pl-9"
+            <div className="grid gap-3 sm:grid-cols-[minmax(0,1.5fr)_minmax(9rem,0.75fr)_minmax(9rem,0.75fr)]">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                <AdminInput
+                  type="search"
+                  aria-label="Cari nama sponsor"
+                  placeholder="Cari nama sponsor"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <AdminSelect
+                aria-label="Filter tingkat sponsor"
+                value={tierFilter}
+                onValueChange={setTierFilter}
+                options={[
+                  { value: "semua", label: "Semua tingkat" },
+                  ...SPONSOR_TIERS.map((tier) => ({ value: tier, label: getSponsorTierLabel(tier) })),
+                ]}
+              />
+              <AdminSelect
+                aria-label="Filter status sponsor"
+                value={statusFilter}
+                onValueChange={setStatusFilter}
+                options={[
+                  { value: "semua", label: "Semua status" },
+                  { value: "aktif", label: "Aktif" },
+                  { value: "nonaktif", label: "Nonaktif" },
+                ]}
               />
             </div>
-            <AdminSelect
-              aria-label="Filter tingkat sponsor"
-              value={tierFilter}
-              onValueChange={setTierFilter}
-              options={[
-                { value: "semua", label: "Semua tingkat" },
-                ...SPONSOR_TIERS.map((tier) => ({ value: tier, label: getSponsorTierLabel(tier) })),
-              ]}
-            />
-            <AdminSelect
-              aria-label="Filter status sponsor"
-              value={statusFilter}
-              onValueChange={setStatusFilter}
-              options={[
-                { value: "semua", label: "Semua status" },
-                { value: "aktif", label: "Aktif" },
-                { value: "nonaktif", label: "Nonaktif" },
-              ]}
-            />
-          </div>
-        </div>
-      </AdminCard>
-
-      {filteredSponsors.length === 0 ? (
-        <AdminCard padding="none">
-          <AdminEmptyState
-            icon="handshake"
-            title={sponsors.length === 0 ? "Belum ada sponsor" : "Sponsor tidak ditemukan"}
-          />
-        </AdminCard>
-      ) : (
-        <AdminCard padding="none">
-          <div className="hidden border-b border-border bg-muted/40 px-4 py-2.5 text-xs font-medium text-muted-foreground lg:grid lg:grid-cols-[4.5rem_minmax(12rem,1.6fr)_minmax(6.5rem,0.8fr)_minmax(10rem,1fr)_4rem_6rem_auto] lg:items-center lg:gap-3 sm:px-5">
-            <span>Logo</span>
-            <span>Nama</span>
-            <span>Tingkat</span>
-            <span>Website</span>
-            <span className="text-center">Urutan</span>
-            <span className="text-center">Status</span>
-            <span className="text-right">Aksi</span>
-          </div>
-
-          <div role="list" aria-label="Daftar sponsor" className="divide-y divide-border">
-            {filteredSponsors.map((sponsor) => {
-              const canToggle = canEdit && (sponsor.active || canPublish);
-              return (
-                <article
-                  key={sponsor.id}
-                  role="listitem"
-                  className="grid grid-cols-[3.25rem_minmax(0,1fr)] gap-x-3 gap-y-3 p-4 transition-colors hover:bg-brand-50/25 sm:p-5 lg:grid-cols-[4.5rem_minmax(12rem,1.6fr)_minmax(6.5rem,0.8fr)_minmax(10rem,1fr)_4rem_6rem_auto] lg:items-center lg:gap-3"
-                >
-                  <div className="col-span-2 flex items-center gap-3 lg:contents">
-                    <div className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-brand-100 bg-canvas p-1.5">
-                      {sponsor.logoAsset?.url ? (
-                        <Image
-                          src={sponsor.logoAsset.url}
-                          alt={sponsor.logoAsset.alt || sponsor.name}
-                          width={52}
-                          height={52}
-                          className="size-full object-contain"
-                        />
-                      ) : (
-                        <Building2 className="size-5 text-brand-300" aria-hidden="true" />
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <h3 className="truncate font-manrope text-sm font-semibold text-brand-900">{sponsor.name}</h3>
-                      {!sponsor.logoAsset ? <p className="mt-0.5 text-xs text-muted-foreground">Belum ada logo</p> : null}
-                    </div>
-                  </div>
-
-                  <div className="col-span-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs lg:contents">
-                    <span className={cn("inline-flex w-fit rounded-md border-l-2 px-2 py-1 font-medium", getTierBadgeStyle(sponsor.tier))}>
-                      {getSponsorTierLabel(sponsor.tier)}
-                    </span>
-                    <div className="min-w-0 max-w-full lg:max-w-[14rem]">
-                      {sponsor.website ? (
-                        <a
-                          href={sponsor.website}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex max-w-full items-center gap-1 text-brand hover:underline"
-                          title={sponsor.website}
-                        >
-                          <Globe className="size-3.5 shrink-0" aria-hidden="true" />
-                          <span className="truncate">{websiteLabel(sponsor.website)}</span>
-                          <ExternalLink className="size-3 shrink-0 opacity-70" aria-hidden="true" />
-                        </a>
-                      ) : (
-                        <span className="text-muted-foreground">Belum diisi</span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <span>Urutan</span>
-                      <span className="font-semibold text-foreground">{sponsor.displayOrder}</span>
-                    </div>
-                    <span
-                      className={cn(
-                        "inline-flex w-fit rounded-md border-l-2 px-2 py-1 font-medium",
-                        sponsor.active
-                          ? "border-success-500 bg-success-50 text-success-800"
-                          : "border-neutral-400 bg-neutral-100 text-neutral-700",
-                      )}
-                    >
-                      {sponsor.active ? "Aktif" : "Nonaktif"}
-                    </span>
-                  </div>
-
-                  <div className="col-span-2 flex flex-wrap items-center justify-end gap-2 border-t border-border pt-3 lg:col-span-1 lg:border-t-0 lg:pt-0">
-                    {canEdit ? (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openEditSheet(sponsor)}
-                        disabled={isPending}
-                        className="h-8 border-brand-100 px-2.5 text-xs text-brand-800 hover:bg-brand-50"
-                      >
-                        <Pencil className="size-3.5" aria-hidden="true" /> Ubah
-                      </Button>
-                    ) : null}
-                    {canToggle ? (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleToggleActive(sponsor)}
-                        disabled={isPending}
-                        className={cn(
-                          "h-8 px-2.5 text-xs",
-                          sponsor.active
-                            ? "border-warning-200 text-warning-800 hover:bg-warning-50"
-                            : "border-success-200 text-success-800 hover:bg-success-50",
-                        )}
-                      >
-                        {sponsor.active ? (
-                          <>
-                            <PowerOff className="size-3.5" aria-hidden="true" /> Nonaktifkan
-                          </>
-                        ) : (
-                          <>
-                            <Power className="size-3.5" aria-hidden="true" /> Aktifkan
-                          </>
-                        )}
-                      </Button>
-                    ) : null}
-                    {canEdit ? (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setDeletingSponsor(sponsor)}
-                        disabled={isPending}
-                        aria-label={`Hapus sponsor ${sponsor.name}`}
-                        className="size-8 border-danger-200 text-destructive hover:bg-danger-50"
-                      >
-                        <Trash2 className="size-3.5" aria-hidden="true" />
-                      </Button>
-                    ) : null}
-                  </div>
-                </article>
-              );
-            })}
           </div>
         </AdminCard>
-      )}
+
+        {filteredSponsors.length === 0 ? (
+          <AdminCard padding="none">
+            <AdminEmptyState
+              icon="handshake"
+              title={sponsors.length === 0 ? "Belum ada sponsor" : "Sponsor tidak ditemukan"}
+            />
+          </AdminCard>
+        ) : (
+          <AdminCard padding="none" className="overflow-hidden">
+            <div className="overflow-x-auto">
+              <div className="min-w-0 lg:min-w-[760px]">
+                <div className="hidden border-b border-border bg-muted/40 px-4 py-2.5 text-xs font-medium text-muted-foreground lg:grid lg:grid-cols-[3.5rem_minmax(11rem,1.5fr)_minmax(6rem,0.8fr)_minmax(9rem,1fr)_4rem_5.5rem_7rem] lg:items-center lg:gap-3 sm:px-5">
+                  <span>Logo</span>
+                  <span>Nama</span>
+                  <span>Tingkat</span>
+                  <span>Website</span>
+                  <span className="text-center">Urutan</span>
+                  <span className="text-center">Status</span>
+                  <span className="text-right">Aksi</span>
+                </div>
+
+                <div role="list" aria-label="Daftar sponsor" className="divide-y divide-border">
+                  {filteredSponsors.map((sponsor) => {
+                    const canToggle = canEdit && (sponsor.active || canPublish);
+                    return (
+                      <article
+                        key={sponsor.id}
+                        role="listitem"
+                        className="grid grid-cols-[3rem_minmax(0,1fr)] gap-x-3 gap-y-3 p-4 transition-colors hover:bg-brand-50/25 sm:p-5 lg:grid-cols-[3.5rem_minmax(11rem,1.5fr)_minmax(6rem,0.8fr)_minmax(9rem,1fr)_4rem_5.5rem_7rem] lg:items-center lg:gap-3"
+                      >
+                        <div className="col-span-2 flex items-center gap-3 lg:contents">
+                          <div className="relative flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-md border border-brand-100 bg-canvas p-1">
+                            {sponsor.logoAsset?.url ? (
+                              <Image
+                                src={sponsor.logoAsset.url}
+                                alt={sponsor.logoAsset.alt || sponsor.name}
+                                width={44}
+                                height={44}
+                                className="size-full object-contain"
+                              />
+                            ) : (
+                              <Building2 className="size-5 text-brand-300" aria-hidden="true" />
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <h3 className="truncate font-manrope text-sm font-semibold text-brand-900">{sponsor.name}</h3>
+                            {!sponsor.logoAsset ? <p className="mt-0.5 text-xs text-muted-foreground">Belum ada logo</p> : null}
+                          </div>
+                        </div>
+
+                        <div className="col-span-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs lg:contents">
+                          <div className="flex items-center">
+                            <span className={cn("inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium", getTierBadgeStyle(sponsor.tier))}>
+                              {getSponsorTierLabel(sponsor.tier)}
+                            </span>
+                          </div>
+                          <div className="min-w-0 max-w-full lg:max-w-[13rem]">
+                            {sponsor.website ? (
+                              <a
+                                href={sponsor.website}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex max-w-full items-center gap-1 text-xs text-brand hover:underline"
+                                title={sponsor.website}
+                              >
+                                <Globe className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                                <span className="truncate">{websiteLabel(sponsor.website)}</span>
+                                <ExternalLink className="size-3 shrink-0 opacity-70" aria-hidden="true" />
+                              </a>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">Belum diisi</span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1 text-muted-foreground lg:justify-center">
+                            <span className="text-xs lg:hidden">Urutan</span>
+                            <span className="font-semibold text-foreground">{sponsor.displayOrder}</span>
+                          </div>
+                          <div className="flex items-center lg:justify-center">
+                            <AdminBadge value={sponsor.active ? "active" : "inactive"} />
+                          </div>
+                        </div>
+
+                        <div className="col-span-2 flex items-center justify-end gap-1.5 border-t border-border pt-3 lg:col-span-1 lg:border-t-0 lg:pt-0">
+                          {canEdit ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => openEditSheet(sponsor)}
+                                  disabled={isPending}
+                                  aria-label={`Ubah sponsor ${sponsor.name}`}
+                                  title="Ubah"
+                                  className="size-8 border-brand-100 text-brand-800 hover:border-brand-200 hover:bg-brand-50"
+                                >
+                                  <Pencil className="size-3.5" aria-hidden="true" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Ubah</TooltipContent>
+                            </Tooltip>
+                          ) : null}
+                          {canToggle ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => handleToggleActive(sponsor)}
+                                  disabled={isPending}
+                                  aria-label={sponsor.active ? `Nonaktifkan sponsor ${sponsor.name}` : `Aktifkan sponsor ${sponsor.name}`}
+                                  title={sponsor.active ? "Nonaktifkan" : "Aktifkan"}
+                                  className={cn(
+                                    "size-8",
+                                    sponsor.active
+                                      ? "border-warning-200 text-warning-800 hover:border-warning-300 hover:bg-warning-50"
+                                      : "border-success-200 text-success-800 hover:border-success-300 hover:bg-success-50",
+                                  )}
+                                >
+                                  {sponsor.active ? (
+                                    <PowerOff className="size-3.5" aria-hidden="true" />
+                                  ) : (
+                                    <Power className="size-3.5" aria-hidden="true" />
+                                  )}
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>{sponsor.active ? "Nonaktifkan" : "Aktifkan"}</TooltipContent>
+                            </Tooltip>
+                          ) : null}
+                          {canEdit ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => setDeletingSponsor(sponsor)}
+                                  disabled={isPending}
+                                  aria-label={`Hapus sponsor ${sponsor.name}`}
+                                  title="Hapus"
+                                  className="size-8 border-danger-200 text-destructive hover:border-danger-300 hover:bg-danger-50"
+                                >
+                                  <Trash2 className="size-3.5" aria-hidden="true" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Hapus</TooltipContent>
+                            </Tooltip>
+                          ) : null}
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </AdminCard>
+        )}
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetContent className="flex w-[min(100%,34rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-xl">
@@ -634,5 +662,6 @@ export function SponsorsClient({
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </TooltipProvider>
   );
 }

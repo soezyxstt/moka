@@ -84,15 +84,16 @@ export function ParticipantDirectory({
 
   function removeParticipant() {
     if (!deleteTarget) return;
+    const toastId = toast.loading("Menghapus pendaftar...");
     startTransition(async () => {
       try {
         await deleteParticipantAction({ participantId: deleteTarget.id, expectedVersion: deleteTarget.version, reason: deleteReason.trim() || undefined });
         setParticipants((items) => items.filter((item) => item.id !== deleteTarget.id));
         setDeleteTarget(null);
         setDeleteReason("");
-        toast.success("Pendaftar dihapus");
+        toast.success("Pendaftar dihapus", { id: toastId });
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Pendaftar gagal dihapus");
+        toast.error(error instanceof Error ? error.message : "Pendaftar gagal dihapus", { id: toastId });
       }
     });
   }

@@ -83,16 +83,17 @@ export function NewsListClient({
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setIsDeleting(true);
+    const toastId = toast.loading("Menghapus artikel...");
     try {
       const res = await deleteNewsArticleAction({ id: deleteTarget.id });
       if (res.success) {
         setArticles((prev) => prev.filter((a) => a.id !== deleteTarget.id));
-        toast.success(`Artikel "${deleteTarget.title}" berhasil dihapus`);
+        toast.success(`Artikel "${deleteTarget.title}" berhasil dihapus`, { id: toastId });
         setDeleteTarget(null);
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Gagal menghapus artikel";
-      toast.error(msg);
+      toast.error(msg, { id: toastId });
     } finally {
       setIsDeleting(false);
     }

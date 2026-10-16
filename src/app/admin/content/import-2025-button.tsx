@@ -5,6 +5,7 @@ import { Database, LoaderCircle } from "lucide-react";
 
 import { AdminButton } from "@/components/admin/primitives";
 import type { Import2025Result } from "@/server/cms/import-2025";
+import { toast } from "sonner";
 import { import2025ContentAction } from "./import-2025-action";
 
 const countLabels: Record<keyof Import2025Result["counts"], string> = {
@@ -34,15 +35,22 @@ export function Import2025Button() {
   const [result, setResult] = useState<Import2025Result | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const runImport = () => startTransition(async () => {
-    setError(null);
-    setResult(null);
-    try {
-      setResult(await import2025ContentAction());
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Import gagal.");
-    }
-  });
+  const runImport = () => {
+    const toastId = toast.loading("Mengimpor konten 2025...");
+    startTransition(async () => {
+      setError(null);
+      setResult(null);
+      try {
+        const res = await import2025ContentAction();
+        setResult(res);
+        toast.success("Konten 2025 berhasil diimpor", { id: toastId });
+      } catch (cause) {
+        const msg = cause instanceof Error ? cause.message : "Import gagal.";
+        setError(msg);
+        toast.error(msg, { id: toastId });
+      }
+    });
+  };
 
   return (
     <div className="space-y-4">

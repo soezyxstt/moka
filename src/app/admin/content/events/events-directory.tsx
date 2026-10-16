@@ -36,28 +36,30 @@ export function EventsDirectory({ initialEvents, canEdit }: { initialEvents: Eve
     const reordered = [...events];
     const [moved] = reordered.splice(index, 1);
     reordered.splice(targetIndex, 0, moved);
+    const toastId = toast.loading("Menyimpan urutan acara...");
     startTransition(async () => {
       try {
         await reorderEventsAction({ items: reordered.map((item) => ({ id: item.id, expectedVersion: item.version })) });
         setEvents(reordered.map((item, displayOrder) => ({ ...item, displayOrder: displayOrder + 1, version: item.version + 1 })));
-        toast.success("Urutan acara disimpan");
+        toast.success("Urutan acara disimpan", { id: toastId });
         router.refresh();
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Urutan gagal disimpan");
+        toast.error(error instanceof Error ? error.message : "Urutan gagal disimpan", { id: toastId });
       }
     });
   }
 
   function removeEvent() {
     if (!deleteTarget) return;
+    const toastId = toast.loading("Menghapus acara...");
     startTransition(async () => {
       try {
         await deleteEventAction({ id: deleteTarget.id, expectedVersion: deleteTarget.version });
         setEvents((items) => items.filter((item) => item.id !== deleteTarget.id));
         setDeleteTarget(null);
-        toast.success("Acara dihapus");
+        toast.success("Acara dihapus", { id: toastId });
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Acara gagal dihapus");
+        toast.error(error instanceof Error ? error.message : "Acara gagal dihapus", { id: toastId });
       }
     });
   }

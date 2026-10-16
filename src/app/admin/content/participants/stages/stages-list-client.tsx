@@ -213,14 +213,15 @@ export function StagesListClient({
     setCategoryTargets(formData, categoryTargets);
     if (createFinal) formData.set("finalStage", "true");
 
+    const toastId = toast.loading("Membuat tahap seleksi...");
     startTransition(async () => {
       try {
         await createSelectionStageAction(formData);
-        toast.success("Tahap seleksi berhasil dibuat");
+        toast.success("Tahap seleksi berhasil dibuat", { id: toastId });
         resetCreateForm();
         router.refresh();
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Gagal membuat tahap");
+        toast.error(error instanceof Error ? error.message : "Gagal membuat tahap", { id: toastId });
       }
     });
   }
@@ -263,14 +264,15 @@ export function StagesListClient({
     setCategoryTargets(formData, categoryTargets);
     if (editFinal) formData.set("finalStage", "true");
 
+    const toastId = toast.loading("Memperbarui tahap seleksi...");
     startTransition(async () => {
       try {
         await updateSelectionStageAction(formData);
-        toast.success("Tahap seleksi berhasil diperbarui");
+        toast.success("Tahap seleksi berhasil diperbarui", { id: toastId });
         setEditTarget(null);
         router.refresh();
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Gagal memperbarui tahap");
+        toast.error(error instanceof Error ? error.message : "Gagal memperbarui tahap", { id: toastId });
       }
     });
   }
@@ -288,14 +290,15 @@ export function StagesListClient({
       expectedVersion: stage.version,
     }));
 
+    const toastId = toast.loading("Menyimpan urutan tahap...");
     startTransition(async () => {
       try {
         await reorderSelectionStagesAction(items);
         setStages(reordered);
-        toast.success("Urutan tahap berhasil disimpan");
+        toast.success("Urutan tahap berhasil disimpan", { id: toastId });
         router.refresh();
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Gagal mengubah urutan");
+        toast.error(error instanceof Error ? error.message : "Gagal mengubah urutan", { id: toastId });
       }
     });
   }
@@ -306,14 +309,15 @@ export function StagesListClient({
     formData.set("stageId", openTarget.id);
     formData.set("expectedVersion", String(openTarget.version));
 
+    const toastId = toast.loading("Membuka tahap seleksi...");
     startTransition(async () => {
       try {
         await openSelectionStageAction(formData);
-        toast.success("Tahap seleksi berhasil dibuka");
+        toast.success("Tahap seleksi berhasil dibuka", { id: toastId });
         setOpenTarget(null);
         router.refresh();
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Gagal membuka tahap");
+        toast.error(error instanceof Error ? error.message : "Gagal membuka tahap", { id: toastId });
       }
     });
   }
@@ -342,16 +346,17 @@ export function StagesListClient({
     if (closeAllowUnderTarget) formData.set("allowUnderTarget", "true");
     if (closeReason.trim()) formData.set("reason", closeReason.trim());
 
+    const toastId = toast.loading("Menutup tahap seleksi...");
     startTransition(async () => {
       try {
         await closeSelectionStageAction(formData);
-        toast.success("Tahap seleksi berhasil ditutup");
+        toast.success("Tahap seleksi berhasil ditutup", { id: toastId });
         setCloseTarget(null);
         setCloseAllowUnderTarget(false);
         setCloseReason("");
         router.refresh();
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Gagal menutup tahap");
+        toast.error(error instanceof Error ? error.message : "Gagal menutup tahap", { id: toastId });
       }
     });
   }
@@ -368,15 +373,16 @@ export function StagesListClient({
     formData.set("expectedVersion", String(reopenTarget.version));
     formData.set("reason", reopenReason.trim());
 
+    const toastId = toast.loading("Membuka kembali tahap seleksi...");
     startTransition(async () => {
       try {
         await reopenSelectionStageAction(formData);
-        toast.success("Tahap seleksi berhasil dibuka kembali");
+        toast.success("Tahap seleksi berhasil dibuka kembali", { id: toastId });
         setReopenTarget(null);
         setReopenReason("");
         router.refresh();
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Gagal membuka kembali tahap");
+        toast.error(error instanceof Error ? error.message : "Gagal membuka kembali tahap", { id: toastId });
       }
     });
   }
@@ -387,14 +393,15 @@ export function StagesListClient({
     formData.set("stageId", deleteTarget.id);
     formData.set("expectedVersion", String(deleteTarget.version));
 
+    const toastId = toast.loading("Menghapus tahap seleksi...");
     startTransition(async () => {
       try {
         await deleteSelectionStageAction(formData);
-        toast.success("Tahap seleksi berhasil dihapus");
+        toast.success("Tahap seleksi berhasil dihapus", { id: toastId });
         setDeleteTarget(null);
         router.refresh();
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Gagal menghapus tahap");
+        toast.error(error instanceof Error ? error.message : "Gagal menghapus tahap", { id: toastId });
       }
     });
   }

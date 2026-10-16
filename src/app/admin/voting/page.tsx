@@ -7,6 +7,8 @@ import { getEffectivePermissions } from "@/server/auth/authorization";
 import { auth } from "@/server/auth/config";
 import { database } from "@/server/db/client";
 import {
+  auditLogs,
+  authUsers,
   categories,
   editions,
   mediaAssets,
@@ -17,10 +19,34 @@ import {
   votingCampaigns,
 } from "@/server/db/schema";
 import { getAdminEditionContext } from "@/server/cms/context";
+import { createAuditUserLookup } from "@/lib/audit-format";
 
-import { VotingConsole } from "./voting-console";
+import { VotingConsole, type VotingAuditEntry } from "./voting-console";
 
 export const metadata = { title: "Voting tahunan" };
+
+function parseAuditPayload(raw: string | null): {
+  campaignId?: string;
+  participantId?: string;
+  localDate?: string;
+  amount?: number;
+  votes?: number;
+} | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown> | null;
+    if (!parsed || typeof parsed !== "object") return null;
+    return {
+      campaignId: typeof parsed.campaignId === "string" ? parsed.campaignId : undefined,
+      participantId: typeof parsed.participantId === "string" ? parsed.participantId : undefined,
+      localDate: typeof parsed.localDate === "string" ? parsed.localDate : undefined,
+      amount: typeof parsed.amount === "number" ? parsed.amount : undefined,
+      votes: typeof parsed.votes === "number" ? parsed.votes : undefined,
+    };
+  } catch {
+    return null;
+  }
+}
 
 export default async function VotingAdminPage() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -82,7 +108,8 @@ export default async function VotingAdminPage() {
   ]);
 
   const campaignIds = campaignRows.map((c) => c.id);
-  const [participantRows, tallyRows] = campaignIds.length
+  const campaignIdSet = new Set(campaignIds);
+  const [participantRows, tallyRows, rawAuditRows, users] = campaignIds.length
     ? await Promise.all([
         database
           .select({
@@ -109,20 +136,68 @@ export default async function VotingAdminPage() {
           )
           .orderBy(categories.displayOrder, participants.displayOrder),
         database
-        .select({
-          id: voteDailyTallies.id,
-          campaignId: voteDailyTallies.campaignId,
-          participantId: voteDailyTallies.participantId,
-          localDate: voteDailyTallies.localDate,
-          amount: voteDailyTallies.amount,
-          version: voteDailyTallies.version,
-          updatedAt: voteDailyTallies.updatedAt,
-        })
-        .from(voteDailyTallies)
-        .where(inArray(voteDailyTallies.campaignId, campaignIds))
-        .orderBy(desc(voteDailyTallies.localDate)),
+          .select({
+            id: voteDailyTallies.id,
+            campaignId: voteDailyTallies.campaignId,
+            participantId: voteDailyTallies.participantId,
+            localDate: voteDailyTallies.localDate,
+            amount: voteDailyTallies.amount,
+            version: voteDailyTallies.version,
+            updatedAt: voteDailyTallies.updatedAt,
+          })
+          .from(voteDailyTallies)
+          .where(inArray(voteDailyTallies.campaignId, campaignIds))
+          .orderBy(desc(voteDailyTallies.localDate)),
+        database
+          .select({
+            id: auditLogs.id,
+            actorUserId: auditLogs.actorUserId,
+            actorLabel: auditLogs.actorLabel,
+            action: auditLogs.action,
+            resourceId: auditLogs.resourceId,
+            resourceLabel: auditLogs.resourceLabel,
+            beforeJson: auditLogs.beforeJson,
+            afterJson: auditLogs.afterJson,
+            reason: auditLogs.reason,
+            createdAt: auditLogs.createdAt,
+          })
+          .from(auditLogs)
+          .where(
+            and(
+              eq(auditLogs.source, "admin-voting"),
+              eq(auditLogs.resourceType, "voteDailyTally"),
+            ),
+          )
+          .orderBy(desc(auditLogs.createdAt))
+          .limit(60),
+        database.select({ id: authUsers.id, name: authUsers.name, email: authUsers.email }).from(authUsers),
       ])
-    : [[], []];
+    : [[], [], [], []];
+
+  const auditLookup = createAuditUserLookup(users);
+  const tallyById = new Map(tallyRows.map((row) => [row.id, row]));
+  const auditEntries: VotingAuditEntry[] = [];
+  for (const row of rawAuditRows) {
+    const before = parseAuditPayload(row.beforeJson);
+    const after = parseAuditPayload(row.afterJson);
+    const linkedTally = tallyById.get(row.resourceId);
+    const campaignId = after?.campaignId ?? before?.campaignId ?? linkedTally?.campaignId;
+    if (!campaignId || !campaignIdSet.has(campaignId)) continue;
+    const actor = auditLookup.resolveActor(row);
+    auditEntries.push({
+      id: row.id,
+      campaignId,
+      participantId: after?.participantId ?? before?.participantId ?? linkedTally?.participantId ?? null,
+      participantName: row.resourceLabel ?? "Peserta",
+      localDate: after?.localDate ?? before?.localDate ?? linkedTally?.localDate ?? "",
+      actorLabel: actor.name,
+      action: row.action,
+      beforeAmount: before?.amount ?? null,
+      afterAmount: after?.amount ?? linkedTally?.amount ?? 0,
+      reason: row.reason ?? "",
+      createdAt: row.createdAt.toISOString(),
+    });
+  }
 
   return (
     <AdminPage
@@ -152,6 +227,7 @@ export default async function VotingAdminPage() {
           ...tally,
           updatedAt: tally.updatedAt.toISOString(),
         }))}
+        auditEntries={auditEntries}
         canManage={effectivePermissions.has("voting.manage")}
         canTally={effectivePermissions.has("voting.tally")}
       />

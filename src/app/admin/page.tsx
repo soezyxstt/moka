@@ -25,8 +25,10 @@ import {
 import type { PermissionKey } from "@/server/auth/permissions";
 import { auth } from "@/server/auth/config";
 import { database } from "@/server/db/client";
+import { createAuditUserLookup, formatAuditAction, formatAuditResource } from "@/lib/audit-format";
 import {
   auditLogs,
+  authUsers,
   committeeAssignments,
   editionPrograms,
   editions,
@@ -80,6 +82,7 @@ export default async function AdminDashboard() {
     committeeCountRows,
     editionDetailRows,
     recentLogs,
+    allUsers,
   ] = await Promise.all([
     currentEdition
       ? database
@@ -169,7 +172,10 @@ export default async function AdminDashboard() {
           .limit(1)
       : Promise.resolve([]),
     database.select().from(auditLogs).orderBy(desc(auditLogs.createdAt)).limit(6),
+    database.select({ id: authUsers.id, name: authUsers.name, email: authUsers.email }).from(authUsers),
   ]);
+
+  const auditLookup = createAuditUserLookup(allUsers);
 
   const totalParticipants = participantCountRows[0]?.value ?? 0;
   const totalActiveParticipants = activeParticipantCountRows[0]?.value ?? 0;
@@ -405,28 +411,35 @@ export default async function AdminDashboard() {
         >
           <div className="divide-y divide-brand-100">
             {recentLogs.length ? (
-              recentLogs.map((log) => (
-                <div
-                  key={log.id}
-                  className="flex items-center justify-between py-2.5 text-sm"
-                >
-                  <div className="min-w-0 pr-2">
-                    <p className="truncate font-medium text-brand-900">
-                      {log.resourceLabel ?? log.resourceType}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {log.action} · {log.actorLabel}
-                    </p>
+              recentLogs.map((log) => {
+                const actor = auditLookup.resolveActor(log);
+                const actionLabel = formatAuditAction(log.action);
+                const resourceLabel = formatAuditResource(log.resourceType);
+                const contentDetail = auditLookup.resolveContentLabel(log);
+
+                return (
+                  <div
+                    key={log.id}
+                    className="flex items-center justify-between py-2.5 text-sm"
+                  >
+                    <div className="min-w-0 pr-2">
+                      <p className="truncate font-medium text-brand-900">
+                        {resourceLabel} · {contentDetail}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {actionLabel} · oleh {actor.name}
+                      </p>
+                    </div>
+                    <time className="shrink-0 text-xs text-muted-foreground font-inter">
+                      {log.createdAt.toLocaleString("id-ID", {
+                        timeZone: "Asia/Jakarta",
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      })}
+                    </time>
                   </div>
-                  <time className="shrink-0 text-xs text-muted-foreground font-inter">
-                    {log.createdAt.toLocaleString("id-ID", {
-                      timeZone: "Asia/Jakarta",
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    })}
-                  </time>
-                </div>
-              ))
+                );
+              })
             ) : (
               <p className="py-6 text-center text-sm text-muted-foreground">
                 Belum ada aktivitas.

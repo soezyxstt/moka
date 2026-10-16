@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { AdminIcon, type AdminIconName } from "./icons";
+import { Loader2 } from "lucide-react";
 
 export const adminInputClassName =
   "h-10 w-full rounded-md border border-input bg-background px-3 text-base md:text-sm text-foreground shadow-none outline-none transition-colors placeholder:text-muted-foreground focus:border-brand-300 focus:ring-2 focus:ring-brand-100 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground";
@@ -89,11 +90,18 @@ export function AdminTextarea({ className, ...props }: TextareaHTMLAttributes<HT
 export function AdminButton({
   variant = "primary",
   className,
+  loading = false,
+  disabled,
+  children,
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "secondary" | "danger" }) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: "primary" | "secondary" | "danger";
+  loading?: boolean;
+}) {
   return (
     <Button
       variant={variant === "danger" ? "destructive" : variant === "secondary" ? "outline" : "default"}
+      disabled={disabled || loading}
       className={cn(
         "h-10 rounded-md px-4 text-sm font-semibold shadow-none transition-colors focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50",
         variant === "primary" && "bg-brand text-canvas hover:bg-brand-600 focus-visible:ring-brand-100",
@@ -102,7 +110,10 @@ export function AdminButton({
         className,
       )}
       {...props}
-    />
+    >
+      {loading ? <Loader2 className="size-4 animate-spin shrink-0" /> : null}
+      {children}
+    </Button>
   );
 }
 

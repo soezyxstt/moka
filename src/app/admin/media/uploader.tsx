@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { type ChangeEvent, type DragEvent, useMemo, useRef, useState } from "react";
+import { type ChangeEvent, type DragEvent, type FormEvent, useMemo, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { AdminButton, AdminInput, AdminSelect } from "@/components/admin/primitives";
@@ -108,14 +108,25 @@ function MediaUploader({ folderId, folderName }: { folderId: string | null; fold
   const inputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [uploadToastId, setUploadToastId] = useState<string | number | null>(null);
   const { startUpload, isUploading } = useUploadThing("image", {
     onClientUploadComplete: () => {
       setFiles([]);
-      toast.success("Media berhasil diunggah");
+      if (uploadToastId) {
+        toast.success("Media berhasil diunggah", { id: uploadToastId });
+      } else {
+        toast.success("Media berhasil diunggah");
+      }
+      setUploadToastId(null);
       router.refresh();
     },
     onUploadError: (error) => {
-      toast.error(error.message || "Media gagal diunggah");
+      if (uploadToastId) {
+        toast.error(error.message || "Media gagal diunggah", { id: uploadToastId });
+      } else {
+        toast.error(error.message || "Media gagal diunggah");
+      }
+      setUploadToastId(null);
     },
   });
 
@@ -194,7 +205,11 @@ function MediaUploader({ folderId, folderName }: { folderId: string | null; fold
             type="button"
             disabled={!files.length || isUploading}
             className="mt-3 h-9 rounded-md bg-brand px-4 text-xs hover:bg-brand-600"
-            onClick={() => startUpload(files, { folderId })}
+            onClick={() => {
+              const id = toast.loading(`Mengunggah ${files.length} file...`);
+              setUploadToastId(id);
+              void startUpload(files, { folderId });
+            }}
           >
             {isUploading ? "Mengunggah..." : files.length ? `Unggah ${files.length} file` : "Pilih file dahulu"}
           </Button>
@@ -219,11 +234,79 @@ export function MediaExplorer({
   canManage?: boolean;
   activeEditionId?: string | null;
 }) {
+  const router = useRouter();
+  const [isPendingFolder, startTransitionFolder] = useTransition();
+  const [isPendingMeta, startTransitionMeta] = useTransition();
+  const [isPendingMove, startTransitionMove] = useTransition();
+  const [isPendingRename, startTransitionRename] = useTransition();
+
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [folderScope, setFolderScope] = useState<"all" | "edition" | "global">("all");
+
+  const handleCreateFolder = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    startTransitionFolder(async () => {
+      const toastId = toast.loading("Membuat folder...");
+      try {
+        await createMediaFolderAction(formData);
+        toast.success("Folder berhasil dibuat", { id: toastId });
+        form.reset();
+        router.refresh();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Gagal membuat folder", { id: toastId });
+      }
+    });
+  };
+
+  const handleUpdateMetadata = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    startTransitionMeta(async () => {
+      const toastId = toast.loading("Menyimpan metadata media...");
+      try {
+        await updateMediaAssetMetadataAction(formData);
+        toast.success("Metadata berhasil disimpan", { id: toastId });
+        router.refresh();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Gagal menyimpan metadata", { id: toastId });
+      }
+    });
+  };
+
+  const handleMoveAsset = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    startTransitionMove(async () => {
+      const toastId = toast.loading("Memindahkan file...");
+      try {
+        await moveMediaAssetAction(formData);
+        toast.success("File berhasil dipindahkan", { id: toastId });
+        router.refresh();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Gagal memindahkan file", { id: toastId });
+      }
+    });
+  };
+
+  const handleRenameFolder = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    startTransitionRename(async () => {
+      const toastId = toast.loading("Menyimpan perubahan folder...");
+      try {
+        await renameMediaFolderAction(formData);
+        toast.success("Folder berhasil diperbarui", { id: toastId });
+        router.refresh();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Gagal mengubah nama folder", { id: toastId });
+      }
+    });
+  };
 
   const currentFolder = folders.find((folder) => folder.id === currentFolderId) ?? null;
   const selectedAsset = assets.find((asset) => asset.id === selectedId) ?? null;
@@ -425,20 +508,21 @@ export function MediaExplorer({
               </div>
             </div>
             {canManage ? (
-              <form action={createMediaFolderAction} className="flex flex-col gap-2 rounded-lg border border-dashed border-brand-200 bg-brand-50/35 p-3 sm:flex-row sm:items-center">
+              <form onSubmit={handleCreateFolder} className="flex flex-col gap-2 rounded-lg border border-dashed border-brand-200 border-dashed border-brand-200 bg-brand-50/35 p-3 sm:flex-row sm:items-center">
                 <input type="hidden" name="parentId" value={currentFolderId ?? ""} />
-                <AdminInput name="name" required maxLength={80} placeholder={currentFolder ? `Folder baru di ${currentFolder.name}` : "Nama folder baru"} className="flex-1" />
+                <AdminInput name="name" required maxLength={80} placeholder={currentFolder ? `Folder baru di ${currentFolder.name}` : "Nama folder baru"} className="flex-1" disabled={isPendingFolder} />
                 <AdminSelect
                   aria-label="Edisi folder"
                   name="editionId"
                   defaultValue={activeEditionId ?? ""}
+                  disabled={isPendingFolder}
                   className="sm:w-44"
                   options={[
                     { value: "", label: "Folder global" },
                     ...editions.map((ed) => ({ value: ed.id, label: `Edisi ${ed.year}` })),
                   ]}
                 />
-                <AdminButton type="submit" variant="secondary" className="shrink-0">
+                <AdminButton type="submit" variant="secondary" className="shrink-0" loading={isPendingFolder}>
                   <FolderPlus size={15} /> Buat folder
                 </AdminButton>
               </form>
@@ -587,7 +671,7 @@ export function MediaExplorer({
 
               {/* Metadata Edit (alt & decorative) */}
               {canManage ? (
-                <form action={updateMediaAssetMetadataAction} className="mt-4 space-y-2.5 border-t border-border pt-4">
+                <form onSubmit={handleUpdateMetadata} className="mt-4 space-y-2.5 border-t border-border pt-4">
                   <input type="hidden" name="assetId" value={selectedAsset.id} />
                   <p className="text-xs font-semibold text-foreground">Metadata aset</p>
                   <label className="flex items-center gap-2 text-xs text-foreground cursor-pointer">
@@ -595,6 +679,7 @@ export function MediaExplorer({
                       name="decorative"
                       value="true"
                       defaultChecked={selectedAsset.decorative}
+                      disabled={isPendingMeta}
                     />
                     Tandai sebagai dekoratif
                   </label>
@@ -606,15 +691,16 @@ export function MediaExplorer({
                     name="alt"
                     defaultValue={selectedAsset.alt ?? ""}
                     placeholder="Deskripsi untuk pembaca layar"
+                    disabled={isPendingMeta}
                   />
-                  <AdminButton type="submit" variant="secondary" className="w-full">
+                  <AdminButton type="submit" variant="secondary" className="w-full" loading={isPendingMeta}>
                     Simpan metadata
                   </AdminButton>
                 </form>
               ) : null}
 
               {canManage ? (
-                <form action={moveMediaAssetAction} className="mt-4 space-y-2 border-t border-border pt-4">
+                <form onSubmit={handleMoveAsset} className="mt-4 space-y-2 border-t border-border pt-4">
                   <input type="hidden" name="assetId" value={selectedAsset.id} />
                   <label className="text-xs font-semibold text-foreground" htmlFor="move-folder">
                     Pindahkan ke
@@ -624,12 +710,13 @@ export function MediaExplorer({
                     aria-label="Folder tujuan"
                     name="folderId"
                     defaultValue={selectedAsset.folderId ?? ""}
+                    disabled={isPendingMove}
                     options={[
                       { value: "", label: "Root media" },
                       ...flatFolders.map((folder) => ({ value: folder.id, label: `${"  ".repeat(folder.depth)}${folder.name}` })),
                     ]}
                   />
-                  <AdminButton type="submit" className="w-full">
+                  <AdminButton type="submit" className="w-full" loading={isPendingMove}>
                     Pindahkan file
                   </AdminButton>
                 </form>
@@ -652,22 +739,23 @@ export function MediaExplorer({
               <h3 className="mt-2 font-manrope text-base font-semibold text-brand-900">{currentFolder.name}</h3>
               <p className="mt-0.5 text-xs text-muted-foreground">{folderCount(currentFolder.id)} file</p>
               {canManage ? (
-                <form action={renameMediaFolderAction} className="mt-5 space-y-2 border-t border-border pt-4">
+                <form onSubmit={handleRenameFolder} className="mt-5 space-y-2 border-t border-border pt-4">
                   <input type="hidden" name="folderId" value={currentFolder.id} />
                   <label className="text-xs font-semibold" htmlFor="rename-folder">
                     Ubah nama folder
                   </label>
-                  <AdminInput id="rename-folder" name="name" defaultValue={currentFolder.name} required maxLength={80} />
+                  <AdminInput id="rename-folder" name="name" defaultValue={currentFolder.name} required maxLength={80} disabled={isPendingRename} />
                   <AdminSelect
                     aria-label="Edisi folder"
                     name="editionId"
                     defaultValue={currentFolder.editionId ?? ""}
+                    disabled={isPendingRename}
                     options={[
                       { value: "", label: "Folder global" },
                       ...editions.map((ed) => ({ value: ed.id, label: `Edisi ${ed.year}` })),
                     ]}
                   />
-                  <AdminButton type="submit" variant="secondary" className="w-full">
+                  <AdminButton type="submit" variant="secondary" className="w-full" loading={isPendingRename}>
                     Simpan perubahan
                   </AdminButton>
                 </form>

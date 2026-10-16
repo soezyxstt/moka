@@ -2,13 +2,19 @@ import { desc } from "drizzle-orm";
 
 import { AdminEmptyState, AdminPage } from "@/components/admin/primitives";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { createAuditUserLookup, formatAuditAction, formatAuditResource } from "@/lib/audit-format";
 import { requirePermission } from "@/server/auth/authorization";
 import { database } from "@/server/db/client";
-import { auditLogs } from "@/server/db/schema";
+import { auditLogs, authUsers } from "@/server/db/schema";
 
 export default async function AuditPage() {
   await requirePermission("audit.view");
-  const logs = await database.select().from(auditLogs).orderBy(desc(auditLogs.createdAt)).limit(100);
+  const [logs, users] = await Promise.all([
+    database.select().from(auditLogs).orderBy(desc(auditLogs.createdAt)).limit(100),
+    database.select({ id: authUsers.id, name: authUsers.name, email: authUsers.email }).from(authUsers),
+  ]);
+  const lookup = createAuditUserLookup(users);
+
   return (
     <AdminPage title="Riwayat aktivitas">
       {logs.length === 0 ? (
@@ -25,22 +31,39 @@ export default async function AuditPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {logs.map((log) => (
-                <TableRow className="border-border hover:bg-muted/30" key={log.id}>
-                  <TableCell className="px-4 py-3 text-xs text-muted-foreground font-inter">
-                    {log.createdAt.toLocaleString("id-ID", {
-                      timeZone: "Asia/Jakarta",
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    })}
-                  </TableCell>
-                  <TableCell className="py-3 text-sm font-medium text-brand-900">{log.actorLabel}</TableCell>
-                  <TableCell className="py-3 text-xs font-medium text-brand">{log.action}</TableCell>
-                  <TableCell className="py-3 text-sm text-muted-foreground">
-                    {log.resourceType} · {log.resourceLabel ?? log.resourceId}
-                  </TableCell>
-                </TableRow>
-              ))}
+              {logs.map((log) => {
+                const actor = lookup.resolveActor(log);
+                const actionLabel = formatAuditAction(log.action);
+                const resourceLabel = formatAuditResource(log.resourceType);
+                const contentDetail = lookup.resolveContentLabel(log);
+
+                return (
+                  <TableRow className="border-border hover:bg-muted/30" key={log.id}>
+                    <TableCell className="px-4 py-3 text-xs text-muted-foreground font-inter whitespace-nowrap">
+                      {log.createdAt.toLocaleString("id-ID", {
+                        timeZone: "Asia/Jakarta",
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      })}
+                    </TableCell>
+                    <TableCell className="py-3">
+                      <div className="text-sm font-medium text-brand-900">{actor.name}</div>
+                      {actor.subtext ? (
+                        <div className="text-xs text-muted-foreground">{actor.subtext}</div>
+                      ) : null}
+                    </TableCell>
+                    <TableCell className="py-3">
+                      <span className="text-sm font-medium text-brand" title={log.action}>
+                        {actionLabel}
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-3 text-sm text-muted-foreground">
+                      <span className="font-medium text-foreground">{resourceLabel}</span>
+                      {contentDetail ? <span> · {contentDetail}</span> : null}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>
@@ -48,3 +71,4 @@ export default async function AuditPage() {
     </AdminPage>
   );
 }
+

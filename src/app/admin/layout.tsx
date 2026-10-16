@@ -19,8 +19,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     // Ringkasan
     { href: "/admin", label: "Ringkasan", icon: "layout", group: "Ringkasan", exact: true, permission: "admin.view" },
 
-    // Konteks
-    { href: "/admin/content/editions", label: "Kelola edisi", icon: "calendar", group: "Konteks", exact: false, permission: "content.view" },
+    // Operasional
+    { href: "/admin/voting", label: "Voting", icon: "bar-chart", group: "Operasional", exact: false, permission: "voting.view" },
+    { href: "/admin/users", label: "Pengguna", icon: "shield", group: "Operasional", exact: false, permission: "users.view" },
+    { href: "/admin/audit", label: "Riwayat audit", icon: "clock", group: "Operasional", exact: false, permission: "audit.view" },
 
     // Konten (Collapsible)
     { href: "/admin/content/edition-settings", label: "Identitas edisi", icon: "award", group: "Konten", exact: false, permission: "content.view" },
@@ -33,16 +35,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: "/admin/content/galleries", label: "Galeri", icon: "gallery", group: "Konten", exact: false, permission: "content.view" },
     { href: "/admin/content/committee", label: "Panitia", icon: "clipboard", group: "Konten", exact: false, permission: "content.view" },
 
-    // Umum
-    { href: "/admin/organization", label: "Kepengurusan", icon: "building", group: "Umum", exact: false, permission: "content.view" },
-
     // Studio
     { href: "/admin/media", label: "Pustaka media", icon: "folder", group: "Studio", exact: false, permission: "media.view" },
 
-    // Operasional
-    { href: "/admin/voting", label: "Voting", icon: "bar-chart", group: "Operasional", exact: false, permission: "voting.view" },
-    { href: "/admin/users", label: "Pengguna", icon: "shield", group: "Operasional", exact: false, permission: "users.view" },
-    { href: "/admin/audit", label: "Riwayat audit", icon: "clock", group: "Operasional", exact: false, permission: "audit.view" },
+    // Kepengurusan
+    { href: "/admin/organization", label: "Kepengurusan", icon: "building", group: "Kepengurusan", exact: false, permission: "content.view" },
+
+    // Konteks
+    { href: "/admin/content/editions", label: "Kelola edisi", icon: "calendar", group: "Konteks", exact: false, permission: "content.view" },
 
     // Akun
     { href: "/admin/profile", label: "Profil", icon: "settings", group: "Akun", exact: true, permission: "admin.view" },

@@ -1,12 +1,11 @@
 import { eq } from "drizzle-orm";
-import { Check } from "lucide-react";
-import { AdminBadge, AdminButton, AdminEmptyState, AdminField, AdminInput, AdminListRow, AdminPage, AdminSection } from "@/components/admin/primitives";
-import { Checkbox } from "@/components/ui/checkbox";
+import { AdminBadge, AdminEmptyState, AdminListRow, AdminPage, AdminSection } from "@/components/admin/primitives";
 import { database } from "@/server/db/client";
 import { accessRequests, adminProfiles, authUsers, roles, userRoles } from "@/server/db/schema";
 import { requireRoleAdministrator } from "@/server/auth/authorization";
 import { roleTemplates } from "@/server/auth/permissions";
-import { approveAction, updateUserRolesAction } from "./actions";
+import { AccessRequestForm } from "./access-request-form";
+import { UserRolesForm } from "./user-roles-form";
 
 export default async function UsersPage() {
   await requireRoleAdministrator();
@@ -58,35 +57,7 @@ export default async function UsersPage() {
                 >
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{request.reason}</p>
                   {request.status === "open" ? (
-                    <form
-                      action={approveAction}
-                      className="mt-3 space-y-4 border-l-2 border-brand bg-brand-50/40 p-4"
-                    >
-                      <input type="hidden" name="requestId" value={request.id} />
-                      <fieldset className="space-y-2">
-                        <legend className="text-sm font-semibold text-foreground">Peran</legend>
-                        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                          {assignableRoles.map(([slug, role], idx) => (
-                            <label
-                              key={slug}
-                              htmlFor={`req-${request.id}-${slug}`}
-                              className="flex cursor-pointer items-center gap-2 rounded-md border border-brand-100 bg-canvas px-3 py-2 text-sm text-foreground transition-colors has-[[data-state=checked]]:border-brand-300 has-[[data-state=checked]]:bg-brand-50"
-                            >
-                              <Checkbox id={`req-${request.id}-${slug}`} name="roleSlugs" value={slug} defaultChecked={idx === 0} />
-                              <span>{role.label}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </fieldset>
-                      <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
-                        <AdminField label="Catatan">
-                          <AdminInput name="note" placeholder="Catatan persetujuan (opsional)" />
-                        </AdminField>
-                        <AdminButton type="submit">
-                          <Check size={15} /> Setujui
-                        </AdminButton>
-                      </div>
-                    </form>
+                    <AccessRequestForm requestId={request.id} assignableRoles={assignableRoles} />
                   ) : null}
                 </AdminListRow>
               ))
@@ -116,40 +87,11 @@ export default async function UsersPage() {
                         Super Admin aktif (ditetapkan melalui runbook database).
                       </p>
                     ) : null}
-                    <form
-                      action={updateUserRolesAction}
-                      className="mt-3 space-y-4 rounded-md border border-brand-100 bg-brand-50/25 p-4"
-                    >
-                      <input type="hidden" name="userId" value={user.id} />
-                      <fieldset className="space-y-2">
-                        <legend className="text-sm font-semibold text-foreground">Peran pengguna</legend>
-                        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                          {assignableRoles.map(([slug, role]) => (
-                            <label
-                              key={slug}
-                              htmlFor={`user-${user.id}-${slug}`}
-                              className="flex cursor-pointer items-center gap-2 rounded-md border border-brand-100 bg-canvas px-3 py-2 text-sm text-foreground transition-colors has-[[data-state=checked]]:border-brand-300 has-[[data-state=checked]]:bg-brand-50"
-                            >
-                              <Checkbox
-                                id={`user-${user.id}-${slug}`}
-                                name="roleSlugs"
-                                value={slug}
-                                defaultChecked={currentSlugs.has(slug)}
-                              />
-                              <span>{role.label}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </fieldset>
-                      <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
-                        <AdminField label="Alasan perubahan">
-                          <AdminInput name="reason" placeholder="Alasan pembaruan peran (opsional)" />
-                        </AdminField>
-                        <AdminButton type="submit" variant="secondary">
-                          Simpan peran
-                        </AdminButton>
-                      </div>
-                    </form>
+                    <UserRolesForm
+                      userId={user.id}
+                      initialRoleSlugs={[...currentSlugs]}
+                      assignableRoles={assignableRoles}
+                    />
                   </AdminListRow>
                 );
               })

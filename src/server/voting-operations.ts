@@ -1,6 +1,6 @@
 import { and, eq, ne } from "drizzle-orm";
 
-import { formatLocalDate } from "@/lib/voting";
+import { calculateVotesFromAmount, formatLocalDate } from "@/lib/voting";
 import { appendAuditLog } from "@/server/auth/audit";
 import type { Database } from "@/server/db/queries";
 import {
@@ -683,6 +683,10 @@ export async function saveVotingTally(
         updatedAt: now,
       });
     }
+    const votes = calculateVotesFromAmount(input.amount, campaign.pricePerPoint);
+    const beforeVotes = before
+      ? calculateVotesFromAmount(before.amount, campaign.pricePerPoint)
+      : null;
     await appendAuditLog(tx, {
       actorUserId: actor.userId,
       actorLabel: actor.label,
@@ -690,15 +694,27 @@ export async function saveVotingTally(
       resourceType: "voteDailyTally",
       resourceId: id,
       resourceLabel: snapshot.name,
-      before: before ? { amount: before.amount, version: before.version } : null,
+      before: before
+        ? {
+            campaignId: campaign.id,
+            participantId: input.participantId,
+            localDate: input.localDate,
+            amount: before.amount,
+            votes: beforeVotes,
+            version: before.version,
+          }
+        : null,
       after: {
         campaignId: campaign.id,
         participantId: input.participantId,
         localDate: input.localDate,
         amount: input.amount,
+        votes,
         version: nextVersion,
       },
-      changedFields: ["amount", "version"],
+      changedFields: before
+        ? ["amount", "votes", "version"]
+        : ["campaignId", "participantId", "localDate", "amount", "votes", "version"],
       source: "admin-voting",
       reason,
     });

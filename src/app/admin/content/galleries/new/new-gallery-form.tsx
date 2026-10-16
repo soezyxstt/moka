@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Loader2, Save } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -80,6 +80,7 @@ export function NewGalleryForm({
     }
 
     setIsSubmitting(true);
+    const toastId = toast.loading("Membuat album baru...");
     try {
       const res = await createGalleryAction({
         title: title.trim(),
@@ -92,12 +93,12 @@ export function NewGalleryForm({
       });
 
       if (res.galleryId) {
-        toast.success("Album baru berhasil dibuat");
+        toast.success("Album baru berhasil dibuat", { id: toastId });
         router.push(`/admin/content/galleries/${res.galleryId}`);
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Gagal membuat album";
-      toast.error(msg);
+      toast.error(msg, { id: toastId });
       setIsSubmitting(false);
     }
   };
@@ -229,7 +230,11 @@ export function NewGalleryForm({
             disabled={isSubmitting}
             className="bg-brand hover:bg-brand/90 text-canvas text-xs"
           >
-            <Save size={14} className="mr-1.5" />
+            {isSubmitting ? (
+              <Loader2 size={14} className="mr-1.5 animate-spin" />
+            ) : (
+              <Save size={14} className="mr-1.5" />
+            )}
             {isSubmitting ? "Menyimpan..." : "Buat album"}
           </Button>
         </div>
