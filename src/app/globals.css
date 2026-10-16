@@ -360,27 +360,4 @@ button {
 }
 
 
-/* Reveal motion system matching tampiloka.adihnursyam.com */
-.site-motion[data-motion-ready="true"] [data-reveal]:not([data-revealed="true"]) {
-  opacity: 0;
-  transform: translateY(32px);
-}
 
-.site-motion [data-reveal] {
-  transition: opacity 0.75s cubic-bezier(0.19, 1, 0.22, 1),
-              transform 0.75s cubic-bezier(0.19, 1, 0.22, 1);
-  transition-delay: var(--reveal-delay, 0s);
-}
-
-.site-motion[data-motion-ready="true"] [data-reveal][data-revealed="true"] {
-  opacity: 1;
-  transform: translate(0, 0);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .site-motion [data-reveal] {
-    opacity: 1 !important;
-    transition: none !important;
-    transform: none !important;
-  }
-}

@@ -10,9 +10,8 @@ type SiteMotionProps = {
 };
 
 /**
- * Global smooth reveal motion system inspired by tampiloka.adihnursyam.com.
- * Uses progressive enhancement, IntersectionObserver, and staggered deceleration
- * to gracefully animate text and components as they enter the viewport.
+ * Global smooth reveal motion system using IntersectionObserver and the native
+ * Web Animations API so DOM attributes are never mutated during React hydration.
  */
 export function SiteMotion({ children, className }: SiteMotionProps) {
   const ref = useRef<HTMLDivElement>(null);
@@ -22,7 +21,11 @@ export function SiteMotion({ children, className }: SiteMotionProps) {
     const root = ref.current;
     if (!root) return;
 
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+      !("IntersectionObserver" in window) ||
+      typeof Element.prototype.animate !== "function"
+    ) {
       return;
     }
 
@@ -45,31 +48,36 @@ export function SiteMotion({ children, className }: SiteMotionProps) {
 
     const seenSet = new WeakSet<HTMLElement>();
     const parentCountMap = new Map<HTMLElement, number>();
+    const delayMap = new WeakMap<HTMLElement, number>();
 
-    const observer =
-      "IntersectionObserver" in window
-        ? new IntersectionObserver(
-            (entries) => {
-              for (const entry of entries) {
-                if (entry.isIntersecting) {
-                  const target = entry.target as HTMLElement;
-                  target.dataset.revealed = "true";
-                  observer?.unobserve(target);
-                }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const target = entry.target as HTMLElement;
+            observer.unobserve(target);
+            const delay = delayMap.get(target) ?? 0;
+            target.animate(
+              [
+                { opacity: 0, transform: "translateY(24px)" },
+                { opacity: 1, transform: "translateY(0)" },
+              ],
+              {
+                duration: 650,
+                delay,
+                easing: "cubic-bezier(0.19, 1, 0.22, 1)",
+                fill: "backwards",
               }
-            },
-            { threshold: 0.05, rootMargin: "0px" }
-          )
-        : null;
+            );
+          }
+        }
+      },
+      { threshold: 0.05, rootMargin: "0px" }
+    );
 
     const registerElement = (el: HTMLElement) => {
       if (seenSet.has(el)) return;
-      if (el.dataset.revealed === "true") {
-        seenSet.add(el);
-        return;
-      }
 
-      // Avoid animating hidden elements or items inside overlay modals/menus
       if (
         !el.hasAttribute("data-reveal") &&
         (el.closest('[aria-hidden="true"]') ||
@@ -82,28 +90,20 @@ export function SiteMotion({ children, className }: SiteMotionProps) {
         return;
       }
 
-      // If an ancestor is already a registered reveal container, preserve cohesive animation
-      // and clear any SSR data-reveal attribute so CSS does not keep the child hidden.
       if (el.parentElement?.closest("[data-reveal]")) {
-        el.removeAttribute("data-reveal");
         return;
       }
 
       seenSet.add(el);
-      el.dataset.reveal = "";
 
       const parent = el.parentElement;
       if (parent) {
         const count = parentCountMap.get(parent) ?? 0;
-        el.style.setProperty("--reveal-delay", `${(count % 6) * 80}ms`);
+        delayMap.set(el, (count % 6) * 70);
         parentCountMap.set(parent, count + 1);
       }
 
-      if (observer) {
-        observer.observe(el);
-      } else {
-        el.dataset.revealed = "true";
-      }
+      observer.observe(el);
     };
 
     const handleAddedNode = (node: Node) => {
@@ -115,41 +115,20 @@ export function SiteMotion({ children, className }: SiteMotionProps) {
       }
     };
 
-    const initialElements = Array.from(root.querySelectorAll(selector)).filter(
-      (el): el is HTMLElement => el instanceof HTMLElement
-    );
-
-    if (!("MutationObserver" in window)) {
-      initialElements.forEach((el) => {
-        el.dataset.revealed = "true";
-      });
-      return;
-    }
-
-    initialElements.forEach(registerElement);
-    root.dataset.motionReady = "true";
+    root.querySelectorAll(selector).forEach((el) => {
+      if (el instanceof HTMLElement) registerElement(el);
+    });
 
     const mutationObserver = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
-        if (mutation.type === "attributes") {
-          if (mutation.target instanceof HTMLElement) {
-            registerElement(mutation.target);
-          }
-        } else {
-          mutation.addedNodes.forEach(handleAddedNode);
-        }
+        mutation.addedNodes.forEach(handleAddedNode);
       }
     });
 
-    mutationObserver.observe(root, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ["data-reveal"],
-    });
+    mutationObserver.observe(root, { childList: true, subtree: true });
 
     return () => {
-      observer?.disconnect();
+      observer.disconnect();
       mutationObserver.disconnect();
     };
   }, [pathname]);
