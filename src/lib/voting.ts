@@ -8,6 +8,23 @@ export function calculateVotesFromAmount(amount: number, pricePerVote: number) {
   return Math.floor(amount / pricePerVote);
 }
 
+export function calculateVotePaymentAmount(
+  voteCount: number,
+  pricePerVote: number,
+  participantNumber: number,
+) {
+  if (!Number.isSafeInteger(voteCount) || voteCount <= 0) {
+    throw new Error("Jumlah vote harus berupa bilangan bulat positif");
+  }
+  if (!Number.isSafeInteger(pricePerVote) || pricePerVote <= 0) {
+    throw new Error("Harga per vote harus lebih dari nol");
+  }
+  if (!Number.isSafeInteger(participantNumber) || participantNumber < 0) {
+    throw new Error("Nomor peserta tidak valid");
+  }
+  return pricePerVote * voteCount + participantNumber;
+}
+
 export function formatLocalDate(date: Date, timeZone: string) {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone,

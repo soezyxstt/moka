@@ -7,10 +7,12 @@ import { Button } from '@/components/custom/button';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { calculateVotePaymentAmount } from '@/lib/voting';
 
 export type VotingPanelCandidate = {
   id: string;
   slug: string;
+  number: number;
   name: string;
   code: string;
   imageUrl: string | null;
@@ -24,6 +26,7 @@ export type VotingPanelProps = {
   period: string | null;
   status: string;
   open: boolean;
+  pricePerVote: number;
   resultsVisible: boolean;
   totalVotes: number;
   results: { name: string; votes: number }[];
@@ -33,7 +36,7 @@ export type VotingPanelProps = {
 const chartConfig = { votes: { label: 'Vote', color: 'var(--chart-1)' } } satisfies ChartConfig;
 const number = new Intl.NumberFormat('id-ID');
 
-export function VotingPanel({ title, period, status, open, resultsVisible, totalVotes, results, candidates }: VotingPanelProps) {
+export function VotingPanel({ title, period, status, open, pricePerVote, resultsVisible, totalVotes, results, candidates }: VotingPanelProps) {
   return <div className="mt-8">
     <div className="flex flex-col gap-6 border-b border-brand-200 pb-8 md:flex-row md:items-end md:justify-between">
       <div>
@@ -41,7 +44,7 @@ export function VotingPanel({ title, period, status, open, resultsVisible, total
         <p className="mt-3 flex items-center gap-2 text-left text-neutral-600"><CalendarDays className="size-4 shrink-0" aria-hidden />{period ?? 'Jadwal voting belum tersedia'}</p>
         <p className="mt-1 text-sm text-neutral-600">{status}</p>
       </div>
-      <VoteDialog open={open} candidates={candidates} resultsVisible={resultsVisible} />
+      <VoteDialog open={open} pricePerVote={pricePerVote} candidates={candidates} resultsVisible={resultsVisible} />
     </div>
     <div className="mt-8">
       <div className="flex items-end justify-between gap-4">
@@ -62,7 +65,7 @@ export function VotingPanel({ title, period, status, open, resultsVisible, total
   </div>;
 }
 
-function VoteDialog({ open, candidates, resultsVisible }: { open: boolean; candidates: VotingPanelCandidate[]; resultsVisible: boolean }) {
+function VoteDialog({ open, pricePerVote, candidates, resultsVisible }: { open: boolean; pricePerVote: number; candidates: VotingPanelCandidate[]; resultsVisible: boolean }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -80,7 +83,7 @@ function VoteDialog({ open, candidates, resultsVisible }: { open: boolean; candi
     <Button size="lg" disabled={!open || !candidates.length} onClick={() => setDialogOpen(true)} className="w-full justify-center gap-2 disabled:opacity-60 md:w-auto"><Vote className="size-4" aria-hidden />Vote sekarang</Button>
     <Dialog open={dialogOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-md" data-lenis-prevent>
-        {selected ? <CandidateDetail candidate={selected} total={candidates.length} resultsVisible={resultsVisible} onBack={() => setSelectedId(null)} /> : <>
+        {selected ? <CandidateDetail key={selected.id} candidate={selected} total={candidates.length} pricePerVote={pricePerVote} resultsVisible={resultsVisible} onBack={() => setSelectedId(null)} /> : <>
           <DialogHeader className="text-left">
             <DialogTitle>Pilih peserta</DialogTitle>
             <DialogDescription>Cari nama atau nomor peserta.</DialogDescription>
@@ -104,8 +107,17 @@ function VoteDialog({ open, candidates, resultsVisible }: { open: boolean; candi
   </>;
 }
 
-function CandidateDetail({ candidate, total, resultsVisible, onBack }: { candidate: VotingPanelCandidate; total: number; resultsVisible: boolean; onBack: () => void }) {
+function CandidateDetail({ candidate, total, pricePerVote, resultsVisible, onBack }: { candidate: VotingPanelCandidate; total: number; pricePerVote: number; resultsVisible: boolean; onBack: () => void }) {
+  const [voteCountInput, setVoteCountInput] = useState('1');
+  const [confirmedVotes, setConfirmedVotes] = useState<number | null>(null);
   const [downloading, setDownloading] = useState(false);
+
+  const parsedVotes = Number.parseInt(voteCountInput.trim(), 10);
+  const validVotes = Number.isSafeInteger(parsedVotes) && parsedVotes >= 1 && /^\d+$/.test(voteCountInput.trim()) ? parsedVotes : null;
+  const paymentAmount = confirmedVotes !== null && pricePerVote > 0
+    ? calculateVotePaymentAmount(confirmedVotes, pricePerVote, candidate.number)
+    : null;
+
   const downloadQr = async () => {
     if (!candidate.qrImageUrl) return;
     setDownloading(true);
@@ -124,6 +136,30 @@ function CandidateDetail({ candidate, total, resultsVisible, onBack }: { candida
     }
   };
 
+  if (confirmedVotes !== null && paymentAmount !== null) {
+    return <>
+      <button type="button" onClick={() => setConfirmedVotes(null)} className="flex w-fit items-center gap-1.5 rounded-md text-sm text-neutral-600 hover:text-brand-900"><ArrowLeft className="size-4" aria-hidden />Kembali</button>
+      <DialogHeader className="text-left">
+        <DialogTitle className="text-xl leading-tight">{candidate.name}</DialogTitle>
+        <DialogDescription>{candidate.code} · {number.format(confirmedVotes)} vote</DialogDescription>
+      </DialogHeader>
+      <div className="rounded-lg border border-brand-200 bg-brand-50 p-4 text-left">
+        <p className="text-xs text-neutral-600">Nominal pembayaran QRIS</p>
+        <p className="mt-1 font-manrope text-2xl font-semibold text-brand-900">Rp {number.format(paymentAmount)}</p>
+        <p className="mt-1 text-xs text-neutral-600">
+          {number.format(confirmedVotes)} vote x Rp {number.format(pricePerVote)} + kode peserta {candidate.number}
+        </p>
+        <p className="mt-2 text-xs text-neutral-600">
+          Masukkan nominal tepat hingga digit terakhir saat membayar dengan QRIS.
+        </p>
+      </div>
+      {candidate.qrImageUrl ? <div className="flex flex-col items-center gap-4">
+        <Image src={candidate.qrImageUrl} alt={`QR voting ${candidate.name}`} width={224} height={224} className="aspect-square rounded-lg border border-neutral-200 bg-canvas object-contain p-2" />
+        <Button size="lg" onClick={downloadQr} disabled={downloading} className="w-full justify-center gap-2"><Download className="size-4" aria-hidden />{downloading ? 'Mengunduh' : 'Unduh QR'}</Button>
+      </div> : <p className="text-sm text-neutral-600">QR voting belum tersedia.</p>}
+    </>;
+  }
+
   return <>
     <button type="button" onClick={onBack} className="flex w-fit items-center gap-1.5 rounded-md text-sm text-neutral-600 hover:text-brand-900"><ArrowLeft className="size-4" aria-hidden />Kembali</button>
     <div className="flex items-center gap-4">
@@ -139,10 +175,32 @@ function CandidateDetail({ candidate, total, resultsVisible, onBack }: { candida
       <div className="pr-4"><dt className="text-xs text-neutral-600">Posisi</dt><dd className="mt-1 font-manrope text-lg font-semibold text-brand-900">{resultsVisible && candidate.rank ? `${candidate.rank} dari ${total}` : 'Belum tampil'}</dd></div>
       <div className="pl-4"><dt className="text-xs text-neutral-600">Jumlah vote</dt><dd className="mt-1 font-manrope text-lg font-semibold text-brand-900">{resultsVisible && candidate.votes !== null ? number.format(candidate.votes) : 'Belum tampil'}</dd></div>
     </dl>
-    {candidate.qrImageUrl ? <div className="flex flex-col items-center gap-4">
-      <Image src={candidate.qrImageUrl} alt={`QR voting ${candidate.name}`} width={224} height={224} className="aspect-square rounded-lg border border-neutral-200 bg-canvas object-contain p-2" />
-      <Button size="lg" onClick={downloadQr} disabled={downloading} className="w-full justify-center gap-2"><Download className="size-4" aria-hidden />{downloading ? 'Mengunduh' : 'Unduh QR'}</Button>
-    </div> : <p className="text-sm text-neutral-600">QR voting belum tersedia.</p>}
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (validVotes !== null && pricePerVote > 0) setConfirmedVotes(validVotes);
+      }}
+      className="space-y-4"
+    >
+      <div className="space-y-1.5 text-left">
+        <label htmlFor="vote-count-input" className="block text-sm font-medium text-brand-900">Ingin vote berapa?</label>
+        <Input
+          id="vote-count-input"
+          type="number"
+          min={1}
+          step={1}
+          inputMode="numeric"
+          value={voteCountInput}
+          onChange={(event) => setVoteCountInput(event.target.value)}
+          placeholder="Masukkan jumlah vote"
+          className="h-10"
+        />
+        {pricePerVote > 0 ? <p className="text-xs text-neutral-600">Harga per vote: Rp {number.format(pricePerVote)}</p> : null}
+      </div>
+      <Button type="submit" size="lg" disabled={validVotes === null || pricePerVote <= 0} className="w-full justify-center">
+        Lanjut
+      </Button>
+    </form>
   </>;
 }
 

@@ -1,7 +1,7 @@
 import BG from '@/components/next-image-bg';
 import { typography } from '@/components/custom/typography';
 import Link from 'next/link';
-import { ArrowLeft, ArrowUpRight } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import Image from 'next/image';
 import type { PublicEditionParticipant, PublicParticipantKind } from '@/server/cms/public-participant-readers';
 
@@ -74,40 +74,10 @@ export default function ParticipantProfile({
             </div>
 
             <div className="relative z-1 min-w-0 space-y-6 px-6 pt-4 pb-8 sm:px-8 md:px-10 md:py-9 lg:px-12">
-              <header className="space-y-4 border-b border-canvas/15 pb-5">
+              <header className="border-b border-canvas/15 pb-5">
                 <h1 className="font-manrope text-3xl leading-tight font-semibold wrap-break-word text-on-media sm:text-4xl md:text-5xl">
                   {participantName}
                 </h1>
-
-                {cmsParticipant.qrImageUrl && (
-                  <aside aria-labelledby="qr-heading" className="flex items-center gap-4 pt-4">
-                    <Image
-                      src={cmsParticipant.qrImageUrl}
-                      alt={`QR voting ${participantName}`}
-                      width={112}
-                      height={112}
-                      loading="eager"
-                      className="size-28 shrink-0 rounded-lg bg-canvas object-contain p-2"
-                    />
-                    <div className="min-w-0 space-y-1.5">
-                      <h2 id="qr-heading" className="font-manrope text-base font-semibold text-on-media">
-                        Dukung {participantName}
-                      </h2>
-                      <typography.p className="max-w-md text-xs leading-relaxed text-on-media/85 sm:text-sm">
-                        Pindai QR untuk voting. Dari ponsel, buka dan simpan gambar QR.
-                      </typography.p>
-                      <a
-                        href={cmsParticipant.qrImageUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 text-sm font-medium text-highlight-300 underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-canvas"
-                      >
-                        Buka gambar QR <ArrowUpRight className="size-4" aria-hidden="true" />
-                        <span className="sr-only"> (tab baru)</span>
-                      </a>
-                    </div>
-                  </aside>
-                )}
               </header>
 
               {bioParagraphs.length > 0 && (
