@@ -35,7 +35,6 @@ export function SiteMotion({ children, className }: SiteMotionProps) {
       "main h5",
       "main h6",
       "main p",
-      "main article",
       "main figure",
       "main li",
       "footer h2",
@@ -59,7 +58,7 @@ export function SiteMotion({ children, className }: SiteMotionProps) {
                 }
               }
             },
-            { threshold: 0.12, rootMargin: "0px" }
+            { threshold: 0.05, rootMargin: "0px" }
           )
         : null;
 
@@ -84,7 +83,9 @@ export function SiteMotion({ children, className }: SiteMotionProps) {
       }
 
       // If an ancestor is already a registered reveal container, preserve cohesive animation
+      // and clear any SSR data-reveal attribute so CSS does not keep the child hidden.
       if (el.parentElement?.closest("[data-reveal]")) {
+        el.removeAttribute("data-reveal");
         return;
       }
 

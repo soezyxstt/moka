@@ -1,5 +1,7 @@
 # Kesiapan CMS untuk edisi 2026
 
+Roster resmi terbaru sudah lengkap 70 semifinalis aktif di produksi: JD 15, MD 15, JR 20, MR 20. Rahma MD-08 sudah terisi; empat peserta tanpa respons tetap kosong (Yoga, Fachri, Sonya dan Kautsar). Ada 66 bio dan 193 prestasi, dengan foto/QR existing dipertahankan. Semifinal aktif, final belum dibuka. Bukti `.tmp/semifinal-70/production-verification.json`, cakupan `plans/public-content-cms.md`. Status roster 67 atau Rahma tertunda berikut adalah riwayat sebelum rekonsiliasi daftar resmi.
+
 ## Hasil terbaru 2026-10-16
 
 Pembaruan produksi 2026-10-16: operator mengotorisasi pembaruan database dan aktivasi 2026. Pada host `pamoka-soezyxstt.aws-ap-south-1.turso.io`, 2026 kini aktif dan 2025 arsip. Dari 68 respons spreadsheet (66 identitas unik), 65 profil selesai: 28 pembaruan, 37 peserta baru, 192 butir prestasi. Motivasi dan CTA menjadi dua paragraf bio; biodata pribadi tidak diimpor. Iqbal tetap JR-029 sesuai konfirmasi operator. Total 67 peserta: JD 15, MD 13, JR 19, MR 20. Rahma tertunda karena MD-08 dan MD-20 sama-sama kosong dan tidak ada nomor pada respons; foto Drive memerlukan akses. Jangan menebak nomor. Muhamad Fachri dan Yoga Pratama belum memiliki respons dan dipertahankan. Tahap semifinal aktif, final belum dibuka; timeline menyebut pengumuman finalis 25 Oktober 2026.

@@ -8,6 +8,8 @@ Konten 2025 produksi sudah disamakan dengan CMS lokal pada 16 Oktober 2026. Edis
 
 ## Profil dan fase 2026
 
+Pembaruan daftar resmi: roster produksi lengkap 70 semifinalis, JD 15, MD 15, JR 20 dan MR 20. Rahma sekarang MD-08 dan profilnya sudah dilengkapi dari sumber. Sonya MD-20 serta M Kautsar JR-09 sudah terdaftar; keduanya bersama Yoga dan Fachri tetap tanpa motivasi/prestasi. Nadilla memakai MR-22 dan Nabila MR-30. Gunakan bagian Bio dan daftar Prestasi pada editor peserta saat sumber tambahan tersedia. Catatan jumlah 65/Rahma tertunda berikut adalah riwayat pengisian pertama.
+
 Produksi memakai edisi 2026 aktif sejak 16 Oktober 2026; 2025 tersedia sebagai arsip. Profil semifinalis menampilkan motivasi dan CTA sebagai dua paragraf di Bio, lalu daftar Prestasi. Sebanyak 65 profil sudah diisi dari respons terbaru spreadsheet. Foto dan QR yang belum tersedia tidak dibuat otomatis. Rahma menunggu nomor terverifikasi; Fachri dan Yoga belum mengisi respons.
 
 Timeline menetapkan pengumuman finalis 25 Oktober 2026. Saat hasil seleksi sudah terverifikasi dan fase final dimulai, tutup tahap semifinal, masukkan peserta yang benar-benar lolos ke roster final, lalu aktifkan tahap final melalui workspace seleksi. Jangan membuka final hanya karena tanggal berlalu. Guard source tambahan untuk menahan final selama semifinal aktif atau roster kosong masih menunggu deployment; state produksi saat ini sudah menunjukkan semifinal.

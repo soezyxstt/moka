@@ -1,32 +1,34 @@
 import Image from "next/image";
 import Link from 'next/link';
-import { ArrowRight, Calendar, Compass, FileText, Vote } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/custom/button';
 import { typography } from '@/components/custom/typography';
 import { formatCategoryName } from '@/components/footer';
-import { getPublicHomeContent, getPublicNavigation, getPublicNews } from '@/server/cms/public-readers';
+import { resolveBrandLogos } from '@/server/cms/brand-assets';
+import { getPublicHomeContent, getPublicNavigation, getPublicNews, getPublicSiteIdentity } from '@/server/cms/public-readers';
 
 function cssBackground(url?: string) {
   return url ? `url(${JSON.stringify(url)})` : undefined;
 }
 
 function parseProgramItem(item: string | { title: string; description: string | null }) {
-  if (typeof item !== 'string') {
-    return {
-      title: item.title.trim(),
-      description: item.description?.trim() || 'Program pengembangan kapasitas, budaya, dan kolaborasi sosial Paguyuban Mojang Jajaka Kabupaten Garut.',
-    };
-  }
-  const colonIndex = item.indexOf(':');
+  const rawTitle = typeof item === 'string' ? item.trim() : item.title.trim();
+  const rawDesc = typeof item === 'string' ? '' : (item.description?.trim() ?? '');
+
+  const colonIndex = rawTitle.indexOf(':');
   if (colonIndex > 0) {
+    const title = rawTitle.slice(0, colonIndex).trim();
+    const extractedDesc = rawTitle.slice(colonIndex + 1).trim();
     return {
-      title: item.slice(0, colonIndex).trim(),
-      description: item.slice(colonIndex + 1).trim(),
+      title,
+      description: rawDesc || extractedDesc,
     };
   }
+
+  const cleanTitle = rawTitle.replace(/\.$/, '').trim();
   return {
-    title: item.trim(),
-    description: 'Program kerja dan pengabdian masyarakat Paguyuban Mojang Jajaka Kabupaten Garut.',
+    title: cleanTitle,
+    description: rawDesc || 'Ajang pemilihan dan pembinaan duta budaya, pariwisata, serta generasi muda Kabupaten Garut.',
   };
 }
 
@@ -42,16 +44,12 @@ function resolvePhilosophyCards(title: string | null | undefined, body: string |
   if (isNitiHarti) {
     return [
       {
-        badge: 'Pilar Pertama',
         title: firstTitle,
-        subtitle: 'Landasan Makna & Kebijaksanaan',
         description:
           'Menapaki setiap langkah dengan ilmu pengetahuan, pemahaman karakter, serta keluhuran budi pekerti Sunda yang berakar kuat.',
       },
       {
-        badge: 'Pilar Kedua',
         title: secondTitle,
-        subtitle: 'Wujud Karya & Pengabdian Nyata',
         description:
           'Menegakkan bukti konkret melalui prestasi, keteladanan generasi muda, dan kontribusi berdampak bagi kemajuan Kabupaten Garut.',
       },
@@ -65,17 +63,13 @@ function resolvePhilosophyCards(title: string | null | undefined, body: string |
 
   return [
     {
-      badge: 'Pilar Pertama',
       title: firstTitle,
-      subtitle: 'Nilai Dasar & Pemahaman',
       description:
         sentences[0] ||
         'Menjaga jati diri generasi muda Kabupaten Garut yang berwawasan luas, berbudaya, dan berdaya saing.',
     },
     {
-      badge: 'Pilar Kedua',
       title: secondTitle,
-      subtitle: 'Implementasi & Kontribusi',
       description:
         sentences.slice(1).join(' ') ||
         'Mewujudkan gagasan menjadi aksi kolaboratif yang memberi manfaat nyata bagi pariwisata, budaya, dan masyarakat.',
@@ -130,11 +124,14 @@ function GununganOrnament({ className }: { className?: string }) {
 }
 
 export default async function Home() {
-  const [home, newsItems, navigation] = await Promise.all([
+  const [home, newsItems, navigation, identity] = await Promise.all([
     getPublicHomeContent(),
     getPublicNews(),
     getPublicNavigation(),
+    getPublicSiteIdentity(),
   ]);
+  const logos = resolveBrandLogos(identity.assets, identity.edition);
+  const bannerLogo = logos.footer ?? logos.desktop;
   const hero = home.sections.hero;
   const program = home.sections.program;
   const news = home.sections.berita;
@@ -192,9 +189,6 @@ export default async function Home() {
           <div className={`relative z-10 mx-auto grid w-full max-w-7xl items-center gap-8 md:gap-12 ${heroImage ? 'md:grid-cols-[minmax(0,1.05fr)_minmax(0,1.2fr)]' : ''}`}>
             {hero?.title?.trim() || hero?.body?.trim() ? (
               <div className="text-canvas">
-                <p data-reveal="" className="mb-3 inline-flex items-center gap-2 rounded-md border border-highlight-400/40 bg-brand-950/40 px-3 py-1 font-manrope text-xs font-bold uppercase tracking-wider text-highlight-300 backdrop-blur-xs">
-                  {hero?.eyebrow?.trim() || `Pasanggiri Mojang Jajaka Kabupaten Garut ${navigation.edition.year}`}
-                </p>
                 {hero.title?.trim() ? (
                   <h1 data-reveal="" className="max-w-2xl font-manrope !text-3xl font-semibold leading-tight sm:!text-4xl md:!text-5xl">
                     {hero.title.trim()}
@@ -215,8 +209,7 @@ export default async function Home() {
                   ) : (
                     <Button asChild size="lg" className="bg-highlight-400 font-semibold text-neutral-950 hover:bg-highlight-300">
                       <Link href="/voting">
-                        <Vote className="mr-2 size-4" aria-hidden="true" />
-                        Voting Sekarang
+                        Voting Sekarang <ArrowRight className="ml-2 size-4" aria-hidden="true" />
                       </Link>
                     </Button>
                   )}
@@ -230,14 +223,6 @@ export default async function Home() {
                       Lihat Profil {participantRoleLabel}
                     </Link>
                   </Button>
-                  {navigation.registrationVisible ? (
-                    <Link
-                      href="/voting"
-                      className="inline-flex min-h-10 items-center gap-1.5 px-2 font-inter text-sm font-medium text-highlight-300 underline-offset-4 hover:underline"
-                    >
-                      Halaman Voting <ArrowRight className="size-3.5" aria-hidden="true" />
-                    </Link>
-                  ) : null}
                 </div>
               </div>
             ) : null}
@@ -262,18 +247,15 @@ export default async function Home() {
       {hasCta ? (
         <section
           id="filosofi-tema"
-          className="relative isolate overflow-hidden border-b border-neutral-200/60 bg-linear-to-b from-neutral-50 via-background to-neutral-50 px-8 py-16 md:px-20 md:py-24"
+          className="relative isolate overflow-hidden border-b border-neutral-200/70 bg-neutral-50 px-8 py-16 md:px-20 md:py-24"
         >
-          <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-5xl">
             <div className="relative flex flex-col items-center">
-              <GununganOrnament className="pointer-events-none absolute -left-6 top-0 hidden h-44 w-28 text-brand-700/15 lg:block" />
-              <GununganOrnament className="pointer-events-none absolute -right-6 top-0 hidden h-44 w-28 text-brand-700/15 lg:block" />
+              <GununganOrnament className="pointer-events-none absolute -left-8 top-0 hidden h-40 w-24 text-brand-700/12 lg:block" />
+              <GununganOrnament className="pointer-events-none absolute -right-8 top-0 hidden h-40 w-24 text-brand-700/12 lg:block" />
 
               <div className="max-w-3xl text-center">
-                <typography.t1 className="text-brand-600">
-                  {cta?.eyebrow?.trim() || `Filosofi Tema Pasanggiri ${navigation.edition.year}`}
-                </typography.t1>
-                <typography.h1 className="mt-2 text-3xl text-brand-900 md:text-5xl">
+                <typography.h1 className="text-3xl text-brand-900 md:text-5xl">
                   {philosophyHeading}
                 </typography.h1>
               </div>
@@ -286,24 +268,17 @@ export default async function Home() {
                 </div>
               ) : null}
 
-              <div className="mt-10 grid w-full grid-cols-1 gap-6 md:grid-cols-2">
-                {philosophyCards.map((card) => (
+              <div className="mt-12 grid w-full grid-cols-1 divide-y divide-neutral-200 border-y border-neutral-200 md:grid-cols-2 md:divide-x md:divide-y-0">
+                {philosophyCards.map((card, index) => (
                   <div
                     key={card.title}
                     data-reveal=""
-                    className="group relative overflow-hidden rounded-2xl border border-brand-200/60 bg-canvas/90 p-6 shadow-xs backdrop-blur-xs transition-all hover:border-highlight-400 hover:shadow-md md:p-8"
+                    className={`py-6 md:py-8 ${index === 0 ? 'md:pr-10' : 'md:pl-10'}`}
                   >
-                    <div className="pointer-events-none absolute -right-6 -top-6 size-24 rounded-full bg-highlight-100/40 transition-transform duration-500 group-hover:scale-125" />
-                    <span className="inline-flex items-center rounded-md bg-brand-50 px-2.5 py-1 font-manrope text-xs font-bold uppercase tracking-wider text-brand-700">
-                      {card.badge}
-                    </span>
-                    <h3 className="mt-3 font-manrope text-2xl font-bold text-brand-900">
+                    <h3 className="font-manrope text-xl font-semibold text-brand-900 md:text-2xl">
                       {card.title}
                     </h3>
-                    <p className="mt-1 font-manrope text-sm font-semibold text-highlight-700">
-                      {card.subtitle}
-                    </p>
-                    <p className="mt-3 text-left font-inter text-sm leading-relaxed text-neutral-600">
+                    <p className="mt-2.5 text-left font-inter text-sm leading-relaxed text-neutral-600 md:text-base">
                       {card.description}
                     </p>
                   </div>
@@ -332,15 +307,14 @@ export default async function Home() {
       {hasEvents ? (
         <section
           id="rangkaian-kegiatan"
-          className="relative border-b border-neutral-200/60 bg-background px-8 py-16 md:px-20 md:py-24"
+          className="relative border-b border-neutral-200/70 bg-background px-8 py-16 md:px-20 md:py-24"
         >
           <div className="mx-auto w-full max-w-7xl">
             <div className="mb-10 flex flex-col justify-between gap-4 md:mb-12 md:flex-row md:items-end">
               <div>
-                <typography.t1 className="text-brand-600">Alur Pelaksanaan</typography.t1>
-                <typography.h1 className="mt-1 text-brand-900">Rangkaian Kegiatan</typography.h1>
+                <typography.h1 className="text-brand-900">Rangkaian Kegiatan</typography.h1>
                 <typography.p className="mt-2 max-w-2xl text-left text-neutral-600">
-                  Ikuti setiap tahapan seleksi, pembekalan, hingga malam puncak Pasanggiri Mojang Jajaka Kabupaten Garut.
+                  Tahapan seleksi, pembekalan, hingga malam puncak Pasanggiri Mojang Jajaka Kabupaten Garut.
                 </typography.p>
               </div>
               <Link
@@ -351,33 +325,23 @@ export default async function Home() {
               </Link>
             </div>
 
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {navigation.events.map((event, index) => (
+            <div className="divide-y divide-neutral-200 border-y border-neutral-200">
+              {navigation.events.map((event) => (
                 <Link
                   key={event.slug}
                   href={`/rangkaian-kegiatan/${event.slug}`}
                   data-reveal=""
-                  className="group relative flex flex-col justify-between rounded-2xl border border-neutral-200/80 bg-neutral-50/70 p-6 transition-all hover:border-highlight-400 hover:bg-canvas hover:shadow-md"
+                  className="group grid grid-cols-1 gap-2 py-5 transition-colors hover:bg-neutral-50/80 md:grid-cols-12 md:items-baseline md:gap-8 md:px-4"
                 >
-                  <div>
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="inline-flex items-center gap-1.5 rounded-md border border-brand-200/80 bg-brand-50 px-2.5 py-1 font-manrope text-xs font-bold text-brand-800">
-                        <Calendar className="size-3.5 text-brand-600" aria-hidden="true" />
-                        Tahap {String(index + 1).padStart(2, '0')}
-                      </span>
-                      <span className="font-manrope text-xs font-semibold text-neutral-500 group-hover:text-brand">
-                        Detail kegiatan
-                      </span>
-                    </div>
-                    <h3 className="mt-4 font-manrope text-lg font-bold capitalize text-brand-900 transition-colors group-hover:text-brand">
-                      {event.label}
-                    </h3>
-                    <p className="mt-2 line-clamp-3 text-left font-inter text-sm leading-relaxed text-neutral-600">
-                      {event.desc || `Dokumentasi dan informasi lengkap mengenai rangkaian kegiatan ${event.label}.`}
-                    </p>
-                  </div>
-                  <div className="mt-5 inline-flex items-center gap-1.5 font-inter text-xs font-semibold text-brand group-hover:text-highlight-700">
-                    Lihat dokumentasi <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                  <h3 className="font-manrope text-lg font-semibold capitalize text-brand-900 transition-colors group-hover:text-brand md:col-span-4">
+                    {event.label}
+                  </h3>
+                  <p className="line-clamp-2 text-left font-inter text-sm leading-relaxed text-neutral-600 md:col-span-7">
+                    {event.desc || `Dokumentasi dan informasi lengkap mengenai rangkaian kegiatan ${event.label}.`}
+                  </p>
+                  <div className="mt-1 inline-flex items-center gap-1.5 font-inter text-sm font-medium text-brand group-hover:text-highlight-700 md:col-span-1 md:mt-0 md:justify-end">
+                    <span className="md:sr-only">Lihat kegiatan</span>
+                    <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
                   </div>
                 </Link>
               ))}
@@ -390,15 +354,15 @@ export default async function Home() {
       {hasProgram ? (
         <section
           id="section-1"
-          className="relative border-b border-neutral-200/60 bg-neutral-50 px-8 py-16 md:px-20 md:py-24"
+          className="relative border-b border-neutral-200/70 bg-neutral-50 px-8 py-16 md:px-20 md:py-24"
         >
-          <div className="mx-auto grid w-full max-w-7xl items-center gap-10 lg:grid-cols-12 lg:gap-12">
+          <div className="mx-auto grid w-full max-w-7xl items-center gap-10 lg:grid-cols-12 lg:gap-14">
             {collage.length ? (
               <div data-reveal="" className="grid grid-cols-2 gap-4 lg:col-span-5">
                 {collage.map((asset, index) => (
                   <div
                     key={asset.url}
-                    className={`relative overflow-hidden rounded-2xl border border-neutral-200/80 bg-canvas shadow-md ${
+                    className={`relative overflow-hidden rounded-2xl bg-canvas shadow-md ${
                       collage.length === 1 ? 'col-span-2 aspect-video' : 'aspect-[4/5]'
                     }`}
                   >
@@ -415,41 +379,30 @@ export default async function Home() {
             ) : null}
 
             <div className={collage.length ? 'lg:col-span-7' : 'lg:col-span-12'}>
-              <div className="mb-8">
-                <typography.t1 className="text-brand-600">
-                  {program?.eyebrow?.trim() || 'Inisiatif & Aksi Paguyuban'}
-                </typography.t1>
-                {program?.title?.trim() ? (
-                  <typography.h1 className="mt-1 text-brand-900">
+              {program?.title?.trim() ? (
+                <div className="mb-8">
+                  <typography.h1 className="text-brand-900">
                     {program.title.trim()}
                   </typography.h1>
-                ) : null}
-                <typography.p className="mt-2 max-w-2xl text-left text-neutral-600">
-                  Berbagai program kolaboratif Mojang Jajaka Kabupaten Garut dalam pengembangan pemuda, pariwisata, budaya, dan kepedulian sosial.
-                </typography.p>
-              </div>
+                </div>
+              ) : null}
 
               {programItems.length ? (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                  {programItems.map((item, idx) => (
+                <div className="grid grid-cols-1 gap-x-10 gap-y-6 sm:grid-cols-2">
+                  {programItems.map((item) => (
                     <div
                       key={item.title}
                       data-reveal=""
-                      className="flex flex-col justify-between rounded-2xl border border-neutral-200/80 bg-canvas p-5 shadow-xs transition-all hover:border-highlight-400 hover:shadow-md"
+                      className="border-t border-neutral-200 pt-4"
                     >
-                      <div>
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="inline-flex items-center rounded-md bg-brand-900 px-2.5 py-1 font-manrope text-xs font-bold tracking-wide text-canvas">
-                            {item.title}
-                          </span>
-                          <span className="font-manrope text-xs font-bold text-neutral-400">
-                            {String(idx + 1).padStart(2, '0')}
-                          </span>
-                        </div>
-                        <p className="mt-3 text-left font-inter text-sm leading-relaxed text-neutral-600">
+                      <h3 className="font-manrope text-base font-semibold text-brand-900 md:text-lg">
+                        {item.title}
+                      </h3>
+                      {item.description ? (
+                        <p className="mt-1 text-left font-inter text-sm leading-relaxed text-neutral-600">
                           {item.description}
                         </p>
-                      </div>
+                      ) : null}
                     </div>
                   ))}
                 </div>
@@ -463,16 +416,13 @@ export default async function Home() {
       {hasNews ? (
         <section
           id="section-2"
-          className="relative border-b border-neutral-200/60 bg-background px-8 py-16 md:px-20 md:py-24"
+          className="relative border-b border-neutral-200/70 bg-background px-8 py-16 md:px-20 md:py-24"
         >
           <div className="mx-auto w-full max-w-7xl">
             <div className="mb-10 flex flex-col justify-between gap-4 md:mb-12 md:flex-row md:items-end">
               <div>
-                <typography.t1 className="text-brand-600">
-                  {news?.eyebrow?.trim() || 'Publikasi Resmi'}
-                </typography.t1>
                 {news?.title?.trim() ? (
-                  <typography.h1 className="mt-1 text-brand-900">
+                  <typography.h1 className="text-brand-900">
                     {news.title.trim()}
                   </typography.h1>
                 ) : null}
@@ -506,7 +456,7 @@ export default async function Home() {
                     <article
                       data-reveal=""
                       key={item.link + item.title}
-                      className="group grid grid-cols-1 overflow-hidden rounded-2xl border border-neutral-200/80 bg-neutral-50 shadow-xs transition-all hover:border-highlight-400 hover:shadow-md md:grid-cols-12"
+                      className="group grid grid-cols-1 overflow-hidden rounded-2xl border border-neutral-200/90 bg-canvas shadow-xs transition-all hover:border-brand-300 hover:shadow-md md:grid-cols-12"
                     >
                       <div className="relative flex min-h-64 flex-col justify-between overflow-hidden bg-linear-to-br from-brand-800 via-brand-700 to-brand-950 p-6 text-canvas md:col-span-5 md:p-8">
                         {!isPressRelease && item.imageUrl ? (
@@ -519,49 +469,41 @@ export default async function Home() {
                           />
                         ) : null}
                         <div className="pointer-events-none absolute inset-0 bg-radial-[at_85%_15%] from-highlight-400/20 to-transparent" />
-                        <div className="relative z-10 flex items-center justify-between gap-2">
-                          <span className="inline-flex items-center gap-1.5 rounded-md bg-highlight-400 px-3 py-1 font-manrope text-xs font-bold uppercase tracking-wider text-neutral-950">
-                            <FileText className="size-3.5" aria-hidden="true" />
-                            {isPressRelease ? 'PRESS RELEASE' : 'BERITA RESMI'}
-                          </span>
-                          {formattedDate ? (
-                            <span className="font-inter text-xs font-medium text-canvas/80">
-                              {formattedDate}
-                            </span>
-                          ) : null}
-                        </div>
 
-                        <div className="relative z-10 my-6 flex items-center gap-4">
-                          {navigation.edition.logoUrl ? (
+                        <div className="relative z-10">
+                          {bannerLogo?.url ? (
                             <Image
-                              src={navigation.edition.logoUrl}
-                              alt={navigation.edition.logoAlt || 'Logo MOKA Garut'}
-                              width={88}
-                              height={88}
-                              className="size-16 shrink-0 object-contain md:size-20"
+                              src={bannerLogo.url}
+                              alt={bannerLogo.alt || 'MOKA Garut'}
+                              unoptimized={bannerLogo.mimeType === 'image/svg+xml' || bannerLogo.url.endsWith('.svg')}
+                              width={220}
+                              height={80}
+                              className="h-12 w-auto object-contain object-left md:h-14"
                             />
-                          ) : null}
-                          <div>
-                            <p className="font-manrope text-xs font-semibold uppercase tracking-widest text-highlight-300">
-                              Paguyuban Mojang Jajaka
-                            </p>
-                            <p className="mt-1 font-manrope text-lg font-bold leading-snug text-canvas">
-                              Siaran Pers & Informasi Resmi Kabupaten Garut
-                            </p>
-                          </div>
+                          ) : (
+                            <p className="font-manrope text-xl font-bold text-canvas">MOKA Garut</p>
+                          )}
                         </div>
 
-                        <p className="relative z-10 font-inter text-xs text-canvas/75">
-                          Dokumen publikasi resmi PAMOKA Garut
-                        </p>
+                        <div className="relative z-10 mt-8">
+                          <p className="font-manrope text-lg font-semibold leading-snug text-canvas md:text-xl">
+                            Siaran Pers & Informasi Resmi PAMOKA Garut
+                          </p>
+                          {formattedDate ? (
+                            <p className="mt-1.5 font-inter text-xs text-canvas/75">
+                              Diterbitkan {formattedDate}
+                            </p>
+                          ) : null}
+                        </div>
                       </div>
 
                       <div className="flex flex-col justify-between p-6 md:col-span-7 md:p-8">
                         <div>
-                          <div className="mb-3 flex flex-wrap items-center gap-2 text-xs font-medium text-neutral-500">
-                            <span className="font-semibold text-brand-700">Publikasi PAMOKA Garut</span>
-                            {formattedDate ? <span>• {formattedDate}</span> : null}
-                          </div>
+                          {formattedDate ? (
+                            <p className="mb-2 font-inter text-xs font-medium text-neutral-500">
+                              {formattedDate}
+                            </p>
+                          ) : null}
                           <h3 className="font-manrope text-xl font-bold leading-snug text-brand-900 md:text-2xl">
                             <Link
                               href={item.link}
@@ -600,42 +542,23 @@ export default async function Home() {
                 })}
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="divide-y divide-neutral-200 border-y border-neutral-200">
                 {newsItems.map((item) => {
-                  const isPressRelease = isPressReleaseItem(item.title, item.type);
                   const formattedDate = formatNewsDate(item.date);
                   const isExternal = !item.isInternal && /^https?:\/\//i.test(item.link);
                   return (
                     <article
                       data-reveal=""
                       key={item.link + item.title}
-                      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-neutral-200/80 bg-neutral-50 transition-all hover:border-highlight-400 hover:bg-canvas hover:shadow-md"
+                      className="group grid grid-cols-1 gap-4 py-6 md:grid-cols-12 md:items-baseline md:gap-8"
                     >
-                      <div className="relative aspect-[16/9] overflow-hidden bg-linear-to-br from-brand-800 to-brand-950 p-5 text-canvas">
-                        {!isPressRelease && item.imageUrl ? (
-                          <Image
-                            src={item.imageUrl}
-                            alt={item.title}
-                            fill
-                            className="object-cover transition-transform duration-500 group-hover:scale-102"
-                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 380px"
-                          />
-                        ) : (
-                          <div className="flex h-full flex-col justify-between">
-                            <span className="inline-flex w-fit items-center gap-1.5 rounded-md bg-highlight-400 px-2.5 py-1 font-manrope text-[11px] font-bold uppercase tracking-wider text-neutral-950">
-                              {isPressRelease ? 'PRESS RELEASE' : 'BERITA'}
-                            </span>
-                            <p className="font-manrope text-base font-bold text-canvas">
-                              Siaran Pers Resmi PAMOKA Garut
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex flex-1 flex-col p-5">
+                      <div className="md:col-span-3">
                         {formattedDate ? (
-                          <p className="mb-1.5 font-inter text-xs text-neutral-500">{formattedDate}</p>
+                          <p className="font-inter text-xs font-medium text-neutral-500">{formattedDate}</p>
                         ) : null}
-                        <h3 className="mb-2.5 line-clamp-2 font-manrope text-lg font-bold text-brand-900">
+                      </div>
+                      <div className="md:col-span-7">
+                        <h3 className="font-manrope text-lg font-bold text-brand-900">
                           <Link
                             href={item.link}
                             target={isExternal ? '_blank' : undefined}
@@ -645,16 +568,18 @@ export default async function Home() {
                             {item.title}
                           </Link>
                         </h3>
-                        <p className="line-clamp-3 flex-grow text-left font-inter text-sm leading-relaxed text-neutral-600">
+                        <p className="mt-1.5 line-clamp-2 text-left font-inter text-sm leading-relaxed text-neutral-600">
                           {item.description}
                         </p>
+                      </div>
+                      <div className="md:col-span-2 md:flex md:justify-end">
                         <Link
                           href={item.link}
                           target={isExternal ? '_blank' : undefined}
                           rel={isExternal ? 'noopener noreferrer' : undefined}
-                          className="mt-4 inline-flex min-h-8 w-fit items-center gap-2 font-inter text-sm font-semibold text-brand transition-colors hover:text-highlight-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                          className="inline-flex items-center gap-1.5 font-inter text-sm font-semibold text-brand transition-colors hover:text-highlight-700"
                         >
-                          Baca berita <ArrowRight aria-hidden="true" size={16} />
+                          Baca <ArrowRight aria-hidden="true" size={16} />
                         </Link>
                       </div>
                     </article>
@@ -666,71 +591,51 @@ export default async function Home() {
         </section>
       ) : null}
 
-      {/* 6. DEDICATED CONVERSION CTA BANNER (VOTING / PENDAFTARAN / PROFIL) */}
+      {/* 6. DEDICATED CONVERSION SECTION (VOTING / PENDAFTARAN / PROFIL) */}
       <section
         id="partisipasi"
         className="relative bg-neutral-50 px-8 py-16 md:px-20 md:py-24"
       >
-        <div className="mx-auto w-full max-w-7xl">
-          <div className="relative overflow-hidden rounded-2xl border border-brand-700/40 bg-linear-to-br from-brand-900 via-brand-800 to-brand-950 p-8 text-canvas shadow-xl md:p-12">
-            <div className="pointer-events-none absolute inset-0 bg-radial-[at_90%_10%] from-highlight-400/20 to-transparent" />
-            <div className="relative z-10 grid items-center gap-8 lg:grid-cols-12 lg:gap-12">
-              <div className="lg:col-span-7">
-                <p className="inline-flex items-center gap-2 rounded-md border border-highlight-400/40 bg-brand-950/50 px-3 py-1 font-manrope text-xs font-bold uppercase tracking-wider text-highlight-300">
-                  <Compass className="size-3.5" aria-hidden="true" />
-                  Partisipasi Publik
-                </p>
-                <h2 className="mt-3 font-manrope text-2xl font-bold leading-tight text-canvas sm:text-3xl md:text-4xl">
-                  Kenali Para {participantRoleLabel} & Berikan Dukungan Terbaik Anda
-                </h2>
-                <p className="mt-3 max-w-xl text-left font-inter text-sm leading-relaxed text-canvas/85 md:text-base">
-                  Telusuri profil lengkap peserta di setiap kategori atau berikan dukungan suara Anda secara langsung melalui halaman voting resmi Pasanggiri Mojang Jajaka Kabupaten Garut.
-                </p>
-                <div className="mt-6 flex flex-wrap items-center gap-3.5">
-                  <Button asChild size="lg" className="bg-highlight-400 font-semibold text-neutral-950 hover:bg-highlight-300">
-                    <Link href="/voting">
-                      <Vote className="mr-2 size-4" aria-hidden="true" />
-                      Buka Halaman Voting
-                    </Link>
-                  </Button>
-                  {navigation.registrationVisible ? (
-                    <Button
-                      asChild
-                      size="lg"
-                      variant="outline"
-                      className="border-canvas/35 bg-canvas/10 text-canvas hover:border-highlight-300 hover:bg-canvas/20 hover:text-canvas"
-                    >
-                      <Link href="/pendaftaran">
-                        Informasi Pendaftaran
-                      </Link>
-                    </Button>
-                  ) : null}
-                </div>
-              </div>
-
-              {navigation.categories.length ? (
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:col-span-5">
-                  {navigation.categories.map((category) => (
-                    <Link
-                      key={category.slug}
-                      href={`/profil-${navigation.participantKind}/${category.slug}`}
-                      className="group flex flex-col justify-between rounded-xl border border-canvas/15 bg-canvas/8 p-4 backdrop-blur-xs transition-all hover:border-highlight-300/70 hover:bg-canvas/14"
-                    >
-                      <span className="font-manrope text-xs font-bold uppercase tracking-wider text-highlight-300">
-                        Profil {participantRoleLabel}
-                      </span>
-                      <div className="mt-2 flex items-center justify-between gap-2">
-                        <span className="font-manrope text-base font-bold text-canvas">
-                          {formatCategoryName(category)}
-                        </span>
-                        <ArrowRight className="size-4 shrink-0 text-highlight-300 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-                      </div>
-                    </Link>
-                  ))}
-                </div>
+        <div className="mx-auto grid w-full max-w-7xl items-start gap-10 lg:grid-cols-12 lg:gap-16">
+          <div className="lg:col-span-6">
+            <typography.h1 className="text-brand-900">
+              Kenali Para {participantRoleLabel} & Berikan Dukungan Anda
+            </typography.h1>
+            <p className="mt-3 max-w-xl text-left font-inter text-base leading-relaxed text-neutral-600">
+              Telusuri profil lengkap peserta di setiap kategori atau berikan dukungan suara Anda secara langsung melalui halaman voting resmi Pasanggiri Mojang Jajaka Kabupaten Garut.
+            </p>
+            <div className="mt-6 flex flex-wrap items-center gap-3.5">
+              <Button asChild size="lg">
+                <Link href="/voting">
+                  Buka Halaman Voting <ArrowRight className="ml-2 size-4" aria-hidden="true" />
+                </Link>
+              </Button>
+              {navigation.registrationVisible ? (
+                <Button asChild size="lg" variant="outline">
+                  <Link href="/pendaftaran">
+                    Informasi Pendaftaran
+                  </Link>
+                </Button>
               ) : null}
             </div>
           </div>
+
+          {navigation.categories.length ? (
+            <div className="divide-y divide-neutral-200 border-y border-neutral-200 lg:col-span-6">
+              {navigation.categories.map((category) => (
+                <Link
+                  key={category.slug}
+                  href={`/profil-${navigation.participantKind}/${category.slug}`}
+                  className="group flex items-center justify-between gap-4 py-4 transition-colors hover:text-brand md:px-2"
+                >
+                  <span className="font-manrope text-lg font-semibold text-brand-900 transition-colors group-hover:text-brand">
+                    Profil {participantRoleLabel} {formatCategoryName(category)}
+                  </span>
+                  <ArrowRight className="size-4 shrink-0 text-brand transition-transform group-hover:translate-x-1" aria-hidden="true" />
+                </Link>
+              ))}
+            </div>
+          ) : null}
         </div>
       </section>
     </main>
