@@ -24,6 +24,7 @@ export function AdminScrollArea({
       data-surface={surface}
       type={type}
       className={cn(styles.root, className)}
+      data-lenis-prevent
       {...props}
     />
   );

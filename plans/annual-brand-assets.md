@@ -2,7 +2,13 @@
 
 Pelengkapan potret 2026 dari folder Patandang selesai atas permintaan operator 2026-10-16. Cakupan: inventaris dan mapping kategori/nomor ke 70 peserta produksi, crop foto asli ke rasio potret existing, WebP, upload UploadThing, portrait/closeup melalui server action berizin, audit/revisi serta verifikasi. Foto existing yang sudah benar dipertahankan. Berhenti bila mapping ambigu, wajah terpotong, versi konflik, target host berbeda atau upload/hash gagal. Tidak mengubah bio, prestasi, nomor, QR, hasil seleksi, 2025, skema atau deployment. Baseline drift 3874ede ditinjau sebelum edit; backup baru di `.tmp/portraits-70/preflight/`.
 
-Status: DONE (70 potret semifinalis dipulihkan, 40 media baru diterapkan ke produksi dan QA; tanpa deployment).
+Status: DONE (fallback kategori dan peningkatan mutu hero produksi, 2026-10-16).
+
+## Fallback kategori dan hero, 2026-10-16
+
+Empat fallback poster kategori JD/MD/JR/MR sudah diterapkan ke edisi aktif 2026 melalui CMS produksi, memakai WebP 1280 x 1920 dari foto pinilih asli. Hero diganti ke WebP lossless transparan 3072 x 1630 dari `pinilih_double.png`, tanpa upscale atau perubahan wajah. Total lima media baru 3.623.390 byte melalui UploadThing. Seluruh URL/hash/dimensi dan lima binding terverifikasi; 44 tabel lain serta seluruh media, audit, revisi existing dan binding di luar cakupan tetap utuh. Integrity ok dan nol FK error. Backup AES-256-GCM/DPAPI lulus restore 49 tabel/6.303 baris. Typegen, TypeScript serta lint lulus, dengan satu warning TanStack existing. Pemeriksaan publik hero desktop/380 px dan fallback kategori lulus; bukti `.tmp/site-assets-2026/production-verification.json`. Pengiriman hero hasil optimizer 1080 x 573, 65.792 byte; nilai naturalWidth browser memperhitungkan kepadatan layar. Tanpa perubahan source aplikasi, migrasi atau deployment.
+
+Otorisasi operator: empat poster kategori dan hero landing page pada pamokagarut.com. Cakupan `artifacts/2026 Edition`, olahan WebP dan bukti `.tmp/site-assets-2026/`, binding melalui CMS produksi existing, serta dokumen plan. Tidak mengubah video, peserta, voting, 2025 atau schema. Berhenti bila target/edisi berbeda, sumber salah kategori, backup gagal, konflik versi atau upload gagal. Drift baseline 3874ede sudah ditinjau; worktree awal bersih.
 
 ## Pelengkapan seluruh potret 2026-10-16
 

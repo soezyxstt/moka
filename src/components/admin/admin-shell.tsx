@@ -217,8 +217,8 @@ export function AdminShell({
 
   return (
     <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
-      <div className="min-h-screen bg-background text-foreground lg:flex">
-        <aside className="relative hidden w-64 shrink-0 overflow-hidden border-r border-brand-100 bg-card lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col">
+      <div className="min-h-screen bg-background text-foreground lg:flex" data-lenis-prevent>
+        <aside className="relative hidden w-64 shrink-0 overflow-hidden border-r border-brand-100 bg-card lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col" data-lenis-prevent>
           <div className="flex h-20 shrink-0 items-center border-b border-brand-100 px-5">
             <Link href="/admin" className="flex items-center gap-3" aria-label="Dashboard PAMOKA CMS">
               {branding.logo ? <Image src={branding.logo.url} unoptimized={branding.logo.mimeType === "image/svg+xml"} alt={branding.logo.alt || branding.title} width={150} height={57} className="h-auto w-36 object-contain" /> : <span className="font-manrope font-semibold text-brand-900">{branding.title}</span>}
@@ -241,6 +241,7 @@ export function AdminShell({
         <SheetContent
           side="left"
           className="w-[min(86vw,19rem)] gap-0 overflow-hidden border-brand-100 bg-card p-0 text-foreground sm:max-w-[19rem]"
+          data-lenis-prevent
         >
           <SheetTitle className="sr-only">Navigasi admin PAMOKA CMS</SheetTitle>
           <SheetDescription className="sr-only">Menu ruang kerja admin PAMOKA.</SheetDescription>
@@ -254,7 +255,7 @@ export function AdminShell({
           </AdminScrollArea>
         </SheetContent>
 
-        <div className={cn("h-screen min-w-0 flex-1 overflow-y-auto", adminNativeScrollbarClassName)}>
+        <div className={cn("h-screen min-w-0 flex-1 overflow-y-auto", adminNativeScrollbarClassName)} data-lenis-prevent>
           <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-brand-100 bg-background/95 px-3 backdrop-blur-sm sm:px-6 lg:px-8">
             <div className="flex min-w-0 items-center gap-2 sm:gap-3">
               <SheetTrigger asChild>
@@ -313,7 +314,7 @@ export function AdminAuthShell({
 }) {
   const branding = useAdminBranding();
   return (
-    <main className="grid min-h-svh bg-background text-foreground lg:grid-cols-2">
+    <main className="grid min-h-svh bg-background text-foreground lg:grid-cols-2" data-lenis-prevent>
       <section className="flex min-w-0 flex-col px-6 py-6 sm:px-12 sm:py-10 lg:px-16">
         <Link href="/" className="w-fit" aria-label="Beranda PAMOKA Garut">
           {branding.logo ? <Image src={branding.logo.url} unoptimized={branding.logo.mimeType === "image/svg+xml"} alt={branding.logo.alt || branding.title} width={190} height={72} className="h-auto w-36 object-contain sm:w-44" /> : <span className="font-manrope text-xl font-semibold text-brand-900">{branding.title}</span>}
