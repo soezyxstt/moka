@@ -1,6 +1,6 @@
 import { asc, eq } from "drizzle-orm";
 
-import { AdminBadge, AdminCard, AdminEmptyState, AdminPage } from "@/components/admin/primitives";
+import { AdminBadge, AdminEmptyState, AdminPage } from "@/components/admin/primitives";
 import { requirePermission } from "@/server/auth/authorization";
 import { getAdminEditionContext } from "@/server/cms/context";
 import { database } from "@/server/db/client";
@@ -19,18 +19,11 @@ export default async function SponsorsPage() {
 
   if (!currentEdition) {
     return (
-      <AdminPage
-        title="Sponsor"
-      >
-        <AdminCard padding="none">
-          <div className="p-8">
-            <AdminEmptyState
-              icon="handshake"
-              title="Belum ada edisi dipilih"
-              description="Pilih edisi di bagian atas."
-            />
-          </div>
-        </AdminCard>
+      <AdminPage title="Sponsor">
+        <AdminEmptyState
+          icon="handshake"
+          title="Pilih edisi terlebih dahulu"
+        />
       </AdminPage>
     );
   }

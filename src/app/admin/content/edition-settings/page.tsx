@@ -1,6 +1,6 @@
 import { asc, eq } from "drizzle-orm";
 
-import { AdminCard, AdminEmptyState, AdminPage } from "@/components/admin/primitives";
+import { AdminEmptyState, AdminPage } from "@/components/admin/primitives";
 import { requirePermission } from "@/server/auth/authorization";
 import { getAdminEditionContext } from "@/server/cms/context";
 import { database } from "@/server/db/client";
@@ -18,16 +18,11 @@ export default async function EditionSettingsPage() {
 
   if (!editionContext) {
     return (
-      <AdminPage
-        title="Identitas edisi"
-      >
-        <AdminCard>
-          <AdminEmptyState
-            icon="award"
-            title="Belum ada edisi dipilih"
-            description="Pilih edisi di bagian atas."
-          />
-        </AdminCard>
+      <AdminPage title="Identitas edisi">
+        <AdminEmptyState
+          icon="award"
+          title="Pilih edisi terlebih dahulu"
+        />
       </AdminPage>
     );
   }
@@ -40,16 +35,11 @@ export default async function EditionSettingsPage() {
 
   if (!editionRow) {
     return (
-      <AdminPage
-        title="Identitas edisi"
-      >
-        <AdminCard>
-          <AdminEmptyState
-            icon="award"
-            title="Edisi tidak ditemukan"
-            description="Data edisi yang dipilih tidak ditemukan dalam database."
-          />
-        </AdminCard>
+      <AdminPage title="Identitas edisi">
+        <AdminEmptyState
+          icon="award"
+          title="Edisi tidak ditemukan"
+        />
       </AdminPage>
     );
   }

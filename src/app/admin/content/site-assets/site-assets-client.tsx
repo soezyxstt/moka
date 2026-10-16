@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, CircleAlert, Image as ImageIcon, Trash2, Video } from "lucide-react";
+import { Image as ImageIcon, Trash2, Video } from "lucide-react";
 import Image from "next/image";
 import { useState, useTransition, type FormEvent } from "react";
 import { toast } from "sonner";
@@ -10,6 +10,7 @@ import {
   AdminCard,
   AdminField,
   AdminInput,
+  AdminStatCard,
 } from "@/components/admin/primitives";
 import { AdminMediaField, type MediaAssetSummary } from "@/components/admin/media-picker";
 import {
@@ -58,13 +59,10 @@ function StatusTag({ ready, label }: { ready: boolean; label?: string }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-semibold",
-        ready
-          ? "border-success-200 bg-success-50 text-success-700"
-          : "border-warning-200 bg-warning-50 text-warning-800",
+        "inline-flex shrink-0 items-center gap-1.5 text-xs font-medium before:size-1.5 before:shrink-0 before:rounded-full before:content-['']",
+        ready ? "text-brand-700 before:bg-brand" : "text-highlight-800 before:bg-highlight-500",
       )}
     >
-      {ready ? <CheckCircle2 className="size-3.5" /> : <CircleAlert className="size-3.5" />}
       {label ?? (ready ? "Siap" : "Kosong")}
     </span>
   );
@@ -130,37 +128,15 @@ export function SiteAssetsClient({
   const requiredFilled = requiredSlots.filter((slot) => Boolean(slot.binding?.mediaId && slot.mediaAsset)).length;
 
   return (
-    <div className="space-y-7">
-      <p className="text-sm text-muted-foreground">Aset Pasanggiri {edition.year}. {edition.lifecycle === "archived" ? "Arsip hanya dapat dibaca." : "Penggantian berlaku untuk edisi ini. Media sebelumnya tetap tersimpan."}</p>
-      <div className="grid gap-3 sm:grid-cols-3">
-        <AdminCard padding="none" className="overflow-hidden">
-          <div className="border-l-2 border-brand px-4 py-3.5">
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Slot manifest</p>
-            <p className="mt-1 font-manrope text-2xl font-semibold text-brand-900">{totalSlots}</p>
-            <p className="mt-1 text-xs text-muted-foreground">Slot tetap yang tersedia</p>
-          </div>
-        </AdminCard>
-
-        <AdminCard padding="none" className="overflow-hidden">
-          <div className="border-l-2 border-brand px-4 py-3.5">
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Terpasang</p>
-            <p className="mt-1 font-manrope text-2xl font-semibold text-brand-900">{filledSlots}/{totalSlots}</p>
-            <p className="mt-1 text-xs text-muted-foreground">Media siap pada slot</p>
-          </div>
-        </AdminCard>
-
-        <AdminCard padding="none" className="overflow-hidden">
-          <div className="border-l-2 border-highlight px-4 py-3.5">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Slot wajib</p>
-                <p className="mt-1 font-manrope text-2xl font-semibold text-brand-900">{requiredFilled}/{requiredSlots.length}</p>
-              </div>
-              <StatusTag ready={requiredFilled === requiredSlots.length} label={requiredFilled === requiredSlots.length ? "Lengkap" : "Perlu diisi"} />
-            </div>
-            <p className="mt-1 text-xs text-muted-foreground">Kebutuhan minimum publikasi</p>
-          </div>
-        </AdminCard>
+    <div className="space-y-6">
+      <div className="grid gap-4 sm:grid-cols-3">
+        <AdminStatCard label="Slot manifest" value={totalSlots} />
+        <AdminStatCard label="Terpasang" value={`${filledSlots}/${totalSlots}`} />
+        <AdminStatCard
+          label="Slot wajib"
+          value={`${requiredFilled}/${requiredSlots.length}`}
+          note={requiredFilled === requiredSlots.length ? "Lengkap" : "Perlu diisi"}
+        />
       </div>
 
       <Accordion type="single" collapsible defaultValue="brand" className="space-y-3">
@@ -305,7 +281,6 @@ function SiteAssetSlotCard({
         <AdminMediaField
           name={`media-${definition.slotKey}`}
           label="Media"
-          hint={`Format ${mediaTypeLabel(definition.acceptType).toLowerCase()} yang sesuai rasio slot.`}
           aspectRatioHint={definition.aspectRatio}
           acceptType={definition.acceptType}
           initialAsset={selectedAsset}
@@ -316,11 +291,11 @@ function SiteAssetSlotCard({
 
         {selectedAsset ? (
           <div className="space-y-3 rounded-lg border border-border/70 bg-muted/20 p-3">
-            <AdminField label="Alt khusus slot" hint="Kosongkan untuk memakai alt media.">
+            <AdminField label="Alt khusus slot">
               <AdminInput
                 value={altOverride}
                 onChange={(e) => setAltOverride(e.target.value)}
-                placeholder={selectedAsset.alt ?? "Tulis teks alternatif"}
+                placeholder={selectedAsset.alt ?? "Gunakan alt media"}
                 maxLength={200}
                 disabled={!canManageContent || isPending}
               />
@@ -328,7 +303,7 @@ function SiteAssetSlotCard({
 
             {definition.acceptType === "image" && definition.fit !== "contain" ? (
               <div className="grid grid-cols-2 gap-3">
-                <AdminField label="Fokus X (%)" hint="0 sampai 100.">
+                <AdminField label="Fokus X (%)">
                   <AdminInput
                     type="number"
                     min={0}
@@ -338,7 +313,7 @@ function SiteAssetSlotCard({
                     disabled={!canManageContent || isPending}
                   />
                 </AdminField>
-                <AdminField label="Fokus Y (%)" hint="0 sampai 100.">
+                <AdminField label="Fokus Y (%)">
                   <AdminInput
                     type="number"
                     min={0}

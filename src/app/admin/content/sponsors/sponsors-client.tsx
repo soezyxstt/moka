@@ -310,12 +310,11 @@ export function SponsorsClient({
           <AdminEmptyState
             icon="handshake"
             title={sponsors.length === 0 ? "Belum ada sponsor" : "Sponsor tidak ditemukan"}
-            description={sponsors.length === 0 ? "Tambahkan sponsor melalui tombol di atas." : "Ubah kata kunci atau filter."}
           />
         </AdminCard>
       ) : (
         <AdminCard padding="none">
-          <div className="hidden border-b border-border bg-brand-50/40 px-4 py-3 font-manrope text-xs font-semibold uppercase tracking-[0.12em] text-brand-800 lg:grid lg:grid-cols-[4.5rem_minmax(12rem,1.6fr)_minmax(6.5rem,0.8fr)_minmax(10rem,1fr)_4rem_6rem_auto] lg:items-center lg:gap-3 sm:px-5">
+          <div className="hidden border-b border-border bg-muted/40 px-4 py-2.5 text-xs font-medium text-muted-foreground lg:grid lg:grid-cols-[4.5rem_minmax(12rem,1.6fr)_minmax(6.5rem,0.8fr)_minmax(10rem,1fr)_4rem_6rem_auto] lg:items-center lg:gap-3 sm:px-5">
             <span>Logo</span>
             <span>Nama</span>
             <span>Tingkat</span>
@@ -500,7 +499,6 @@ export function SponsorsClient({
                     name="logoMediaId"
                     acceptType="image"
                     aspectRatioHint="Bebas"
-                    hint="Pilih gambar yang siap digunakan."
                     initialAsset={formLogoAsset}
                     onChange={setFormLogoAsset}
                     activeEditionId={edition.id}
@@ -542,7 +540,7 @@ export function SponsorsClient({
 
                 <section className="space-y-2 border-t border-border pt-5" aria-labelledby="sponsor-preview-title">
                   <div className="flex items-center justify-between gap-3">
-                    <h3 id="sponsor-preview-title" className="font-manrope text-xs font-semibold uppercase tracking-[0.12em] text-brand-800">
+                    <h3 id="sponsor-preview-title" className="text-xs font-semibold text-muted-foreground">
                       Pratinjau kartu
                     </h3>
                     <span className={cn("rounded-md border-l-2 px-2 py-1 text-xs font-medium", getTierBadgeStyle(formTier))}>

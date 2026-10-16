@@ -134,7 +134,7 @@ export function AdminMediaPreview({
 
       <div className="min-w-0 flex-1 space-y-1">
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className={cn("rounded-sm border px-1.5 py-0.2 text-xs font-bold uppercase", badge.color)}>
+          <span className={cn("rounded-sm border px-1.5 py-0.5 text-xs font-medium", badge.color)}>
             {badge.label}
           </span>
           {asset.decorative ? (
@@ -494,7 +494,7 @@ export function AdminMediaPicker({
         <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(0,1fr)_auto] overflow-hidden lg:grid-cols-[200px_minmax(0,1fr)_260px] lg:grid-rows-none">
           {/* Left Sidebar: Folder Browser & Scope */}
           <aside className={cn("hidden border-b border-border bg-brand-50/25 p-3.5 lg:block lg:border-b-0 lg:border-r lg:overflow-y-auto", adminNativeScrollbarClassName)}>
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-800">Cakupan Folder</p>
+            <p className="text-xs font-semibold text-muted-foreground">Cakupan folder</p>
             <div className="mt-2 space-y-1">
               <Button
                 variant="ghost"
@@ -535,7 +535,7 @@ export function AdminMediaPicker({
               </Button>
             </div>
 
-            <p className="mt-4 text-xs font-bold uppercase tracking-[0.16em] text-brand-800">Daftar Folder</p>
+            <p className="mt-4 text-xs font-semibold text-muted-foreground">Daftar folder</p>
             <div className="mt-2 space-y-0.5">
               <Button
                 variant="ghost"
@@ -807,7 +807,7 @@ export function AdminMediaPicker({
           <aside className={cn("border-t border-border bg-muted/20 p-4 lg:border-l lg:border-t-0 flex flex-col justify-between overflow-y-auto", adminNativeScrollbarClassName)}>
             {activeSelectedAsset ? (
               <div className="space-y-3">
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-highlight-700">Detail Terpilih</p>
+                <p className="text-xs font-semibold text-muted-foreground">Detail terpilih</p>
                 <div className="relative aspect-video overflow-hidden rounded-lg border border-border bg-muted">
                   {activeSelectedAsset.mimeType.startsWith("image/") ? (
                     <Image

@@ -67,7 +67,6 @@ export function Import2025MediaPanel() {
     <AdminCard className="mb-6">
       <AdminCardHeader
         title="Import media 2025"
-        description="Unggah media sumber ke UploadThing dan simpan referensinya di pustaka lokal. Import berjalan per batch dan berhenti jika ada file yang perlu diperiksa atau kapasitas tidak cukup."
       />
       {result ? (
         <div className="space-y-3 text-sm">

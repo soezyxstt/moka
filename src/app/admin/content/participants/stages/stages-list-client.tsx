@@ -406,9 +406,6 @@ export function StagesListClient({
           <p className="text-sm font-semibold text-brand-900">
             {stages.length} tahap terdaftar
           </p>
-          <p className="text-xs text-muted-foreground">
-            Alur linear seleksi dari tahap pertama hingga tahap akhir.
-          </p>
         </div>
         {canEdit ? (
           <AdminButton onClick={() => setCreateOpen(true)} disabled={pending}>
@@ -428,13 +425,10 @@ export function StagesListClient({
       ) : null}
 
       {stages.length === 0 ? (
-        <AdminCard padding="none">
-          <AdminEmptyState
-            icon="settings"
-            title="Belum ada tahap seleksi"
-            description="Tambahkan tahap seleksi pertama untuk memulai alur penerimaan peserta."
-          />
-        </AdminCard>
+        <AdminEmptyState
+          icon="settings"
+          title="Belum ada tahap seleksi"
+        />
       ) : (
         <div className="space-y-4">
           {stages.map((stage, index) => {
@@ -594,25 +588,25 @@ export function StagesListClient({
                 </div>
 
                 <div className="mt-4 grid grid-cols-2 gap-3 border-t border-brand-100 pt-3 sm:grid-cols-4">
-                  <div className="rounded-md border border-brand-100 bg-brand-50/40 p-2.5">
+                  <div>
                     <p className="text-xs font-medium text-muted-foreground">Total peserta</p>
                     <p className="font-manrope text-lg font-semibold text-brand-900">
                       {stage.stats.total}
                     </p>
                   </div>
-                  <div className="rounded-md border border-warning-200 bg-warning-50/40 p-2.5">
+                  <div>
                     <p className="text-xs font-medium text-warning-700">Pending</p>
                     <p className="font-manrope text-lg font-semibold text-warning-900">
                       {stage.stats.pending}
                     </p>
                   </div>
-                  <div className="rounded-md border border-success-200 bg-success-50/40 p-2.5">
+                  <div>
                     <p className="text-xs font-medium text-success-700">Lolos</p>
                     <p className="font-manrope text-lg font-semibold text-success-900">
                       {stage.stats.advanced}
                     </p>
                   </div>
-                  <div className="rounded-md border border-danger-200 bg-danger-50/40 p-2.5">
+                  <div>
                     <p className="text-xs font-medium text-danger-700">Tidak lolos</p>
                     <p className="font-manrope text-lg font-semibold text-danger-900">
                       {stage.stats.eliminated}
@@ -630,13 +624,11 @@ export function StagesListClient({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Tambah tahap seleksi</DialogTitle>
-            <DialogDescription>
-              Tahap baru akan ditambahkan di akhir alur linear seleksi.
-            </DialogDescription>
+            <DialogDescription className="sr-only">Form tahap seleksi</DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleCreateStage} className="space-y-4">
-            <AdminField label="Nama tahap" hint="Contoh: Seleksi Berkas, Semifinal, Final">
+            <AdminField label="Nama tahap">
               <AdminInput
                 value={createName}
                 onChange={(e) => setCreateName(e.target.value)}
@@ -646,10 +638,7 @@ export function StagesListClient({
             </AdminField>
 
             <div className="space-y-2">
-              <div>
-                <p className="text-xs font-semibold text-foreground">Target per kategori</p>
-                <p className="text-xs leading-5 text-muted-foreground">Jumlah peserta yang dapat masuk ke tahap ini.</p>
-              </div>
+              <p className="text-xs font-semibold text-foreground">Target per kategori</p>
               <CategoryTargetFields value={createTargets} onChange={setCreateTargets} />
               <p className="pt-1 text-xs text-muted-foreground">Total target: {totalTargetInput(createTargets)} peserta</p>
             </div>
@@ -691,9 +680,7 @@ export function StagesListClient({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Ubah tahap seleksi</DialogTitle>
-            <DialogDescription>
-              Perbarui nama, target peserta, atau status tahap final.
-            </DialogDescription>
+            <DialogDescription className="sr-only">Ubah tahap seleksi</DialogDescription>
           </DialogHeader>
 
           {editTarget ? (

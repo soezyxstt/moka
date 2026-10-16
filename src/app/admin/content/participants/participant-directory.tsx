@@ -119,7 +119,7 @@ export function ParticipantDirectory({
 
       <p className="text-sm text-muted-foreground">{filtered.length} dari {participants.length} peserta</p>
       {filtered.length === 0 ? (
-        <AdminCard padding="none"><AdminEmptyState icon="users" title="Tidak ada peserta" description="Ubah filter atau tambahkan pendaftar." /></AdminCard>
+        <AdminEmptyState icon="users" title="Tidak ada peserta" />
       ) : (
         <AdminCard padding="none" className="overflow-hidden">
           <div className="divide-y divide-brand-100">

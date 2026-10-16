@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 
 import { requirePermission } from "@/server/auth/authorization";
-import { AdminIcon, type AdminIconName } from "@/components/admin/icons";
+import type { AdminIconName } from "@/components/admin/icons";
 import { AdminBadge, AdminCard, AdminCardHeader, AdminLinkButton, AdminListRow, AdminPage } from "@/components/admin/primitives";
 import { getAdminEditionContext } from "@/server/cms/context";
 import { database } from "@/server/db/client";
@@ -40,14 +40,7 @@ export default async function ContentPage() {
         {modules.map((module) => (
           <AdminListRow
             key={module.slug}
-            title={
-              <span className="flex items-center gap-3">
-                <span className="grid size-9 shrink-0 place-items-center rounded-md bg-brand-50 text-brand">
-                  <AdminIcon name={module.icon} size={18} strokeWidth={1.8} />
-                </span>
-                <span className="font-manrope">{module.label}</span>
-              </span>
-            }
+            title={module.label}
             meta={module.description}
             action={
               <AdminLinkButton href={`/admin/content/${module.slug}`} variant="secondary" className="w-full sm:w-auto">
@@ -61,7 +54,6 @@ export default async function ContentPage() {
         <AdminCard className="mt-6">
           <AdminCardHeader
             title="Import konten 2025"
-            description="Menyalin konten sumber 2025 ke file:local.db. Import hanya berjalan sekali agar perubahan CMS tidak tertimpa."
           />
           {existing2025.length ? (
             <p className="text-sm text-muted-foreground">Edisi 2025 sudah tersedia. Gunakan editor CMS untuk perubahan berikutnya.</p>

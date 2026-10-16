@@ -16,13 +16,10 @@ export default async function RequestAccessPage() {
   await ensurePendingAdminProfile(session.user.id);
 
   return (
-    <AdminAuthShell
-      title="Minta akses"
-      description="Pilih area yang perlu Anda kelola. Admin akan meninjau permintaan Anda."
-    >
+    <AdminAuthShell title="Minta akses">
       <form action={requestAccessAction} className="space-y-6">
-        <AdminField label="Alasan kebutuhan akses" hint="Minimal 10 karakter, maksimal 500 karakter.">
-          <AdminTextarea name="reason" required minLength={10} maxLength={500} placeholder="Contoh: Saya perlu mengelola berita dan galeri kegiatan." />
+        <AdminField label="Alasan kebutuhan akses">
+          <AdminTextarea name="reason" required minLength={10} maxLength={500} placeholder="Jelaskan kebutuhan akses Anda..." />
         </AdminField>
         <fieldset className="space-y-3">
           <legend className="text-xs font-semibold text-foreground">Area yang diperlukan</legend>

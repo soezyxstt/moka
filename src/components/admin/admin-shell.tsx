@@ -309,7 +309,7 @@ export function AdminAuthShell({
 }: {
   children: React.ReactNode;
   title: string;
-  description: string;
+  description?: string;
 }) {
   const branding = useAdminBranding();
   return (
@@ -320,7 +320,7 @@ export function AdminAuthShell({
         </Link>
         <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-16 lg:py-12">
           <h1 className="font-manrope !text-3xl font-semibold leading-tight tracking-tight text-brand-900 sm:!text-4xl">{title}</h1>
-          <p className="mt-3 text-sm leading-6 text-muted-foreground">{description}</p>
+          {description ? <p className="mt-3 text-sm leading-6 text-muted-foreground">{description}</p> : null}
           <div className="mt-8">{children}</div>
         </div>
         <Button asChild variant="link" className="w-fit px-0 text-sm text-brand hover:text-brand-700">

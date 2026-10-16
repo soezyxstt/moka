@@ -2,7 +2,6 @@ import Link from "next/link";
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from "react";
 
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -124,19 +123,20 @@ export function AdminLinkButton({ href, children, variant = "primary", className
   );
 }
 
+// Status is plain text with a leading dot; no filled pill so lists stay quiet.
 const badgeStyles: Record<string, string> = {
-  active: "border-brand-200 bg-brand-50 text-brand-700",
-  approved: "border-brand-200 bg-brand-50 text-brand-700",
-  ready: "border-brand-200 bg-brand-50 text-brand-700",
-  published: "border-brand-200 bg-brand-50 text-brand-700",
-  draft: "border-highlight-200 bg-highlight-50 text-highlight-800",
-  open: "border-highlight-200 bg-highlight-50 text-highlight-800",
-  pending: "border-highlight-200 bg-highlight-50 text-highlight-800",
-  closed: "border-border bg-muted text-muted-foreground",
-  inactive: "border-border bg-muted text-muted-foreground",
-  archived: "border-border bg-muted text-muted-foreground",
-  rejected: "border-danger-200 bg-danger-50 text-danger-700",
-  suspended: "border-danger-200 bg-danger-50 text-danger-700",
+  active: "text-brand-700 before:bg-brand",
+  approved: "text-brand-700 before:bg-brand",
+  ready: "text-brand-700 before:bg-brand",
+  published: "text-brand-700 before:bg-brand",
+  draft: "text-highlight-800 before:bg-highlight-500",
+  open: "text-highlight-800 before:bg-highlight-500",
+  pending: "text-highlight-800 before:bg-highlight-500",
+  closed: "text-muted-foreground before:bg-muted-foreground",
+  inactive: "text-muted-foreground before:bg-muted-foreground",
+  archived: "text-muted-foreground before:bg-muted-foreground",
+  rejected: "text-danger-700 before:bg-danger-700",
+  suspended: "text-danger-700 before:bg-danger-700",
 };
 
 const badgeLabels: Record<string, string> = {
@@ -156,39 +156,56 @@ const badgeLabels: Record<string, string> = {
 
 export function AdminBadge({ value, className }: { value: string; className?: string }) {
   return (
-    <Badge variant="outline" className={cn("rounded-md px-2 py-0.5 text-xs font-medium", badgeStyles[value.toLowerCase()] ?? "border-brand-200 bg-brand-50 text-brand-700", className)}>
+    <span
+      className={cn(
+        "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap text-xs font-medium before:size-1.5 before:shrink-0 before:rounded-full before:content-['']",
+        badgeStyles[value.toLowerCase()] ?? "text-brand-700 before:bg-brand",
+        className,
+      )}
+    >
       {badgeLabels[value.toLowerCase()] ?? value.replaceAll("_", " ")}
-    </Badge>
+    </span>
   );
 }
 
-export function AdminStatCard({
-  label,
-  value,
-  note,
-  icon,
-  accent = "green",
+export function AdminStatCard({ label, value, note }: { label: string; value: string | number; note?: string }) {
+  return (
+    <div className="border-t border-brand-100 py-4">
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className="mt-1 font-manrope text-3xl font-semibold tracking-[-0.04em] text-brand-900">{value}</p>
+      {note ? <p className="mt-1 text-xs text-muted-foreground">{note}</p> : null}
+    </div>
+  );
+}
+
+// Flat grouping for page regions: heading plus a top rule, no surface. Prefer this over AdminCard
+// unless the content genuinely needs to read as a separate object.
+export function AdminSection({
+  title,
+  description,
+  action,
+  className,
+  children,
 }: {
-  label: string;
-  value: string | number;
-  note: string;
-  icon: AdminIconName;
-  accent?: "green" | "gold" | "blue";
+  title?: string;
+  description?: string;
+  action?: ReactNode;
+  className?: string;
+  children: ReactNode;
 }) {
   return (
-    <div className="relative border-t border-brand-100 py-5 sm:px-5">
-      <div className={cn("absolute left-0 top-5 h-8 w-1", accent === "gold" ? "bg-highlight" : "bg-brand")} />
-      <div className="flex items-start justify-between gap-4 pl-4">
-        <div>
-          <p className="text-xs font-medium text-muted-foreground">{label}</p>
-          <p className="mt-2 font-manrope text-3xl font-semibold tracking-[-0.04em] text-brand-900">{value}</p>
+    <section className={cn("border-t border-brand-100 pt-5", className)}>
+      {title || action ? (
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            {title ? <h2 className="font-manrope text-base font-semibold text-brand-900">{title}</h2> : null}
+            {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
+          </div>
+          {action ? <div className="shrink-0">{action}</div> : null}
         </div>
-        <span className={cn("grid size-9 place-items-center rounded-md", accent === "gold" ? "bg-highlight-50 text-highlight-700" : "bg-brand-50 text-brand")}>
-          <AdminIcon name={icon} size={17} strokeWidth={1.8} />
-        </span>
-      </div>
-      <p className="mt-3 pl-4 text-xs text-muted-foreground">{note}</p>
-    </div>
+      ) : null}
+      {children}
+    </section>
   );
 }
 

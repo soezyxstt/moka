@@ -97,7 +97,7 @@ export function AdminEditionSelector({
         className="w-[min(18rem,calc(100vw-1.5rem))] rounded-lg border border-brand-100 bg-canvas p-1.5 shadow-lg"
       >
         <SelectGroup>
-          <SelectLabel className="border-b border-brand-50 px-2.5 py-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          <SelectLabel className="border-b border-brand-50 px-2.5 py-2 text-xs font-medium text-muted-foreground">
             Pilih edisi
           </SelectLabel>
           {editions.length === 0 ? (

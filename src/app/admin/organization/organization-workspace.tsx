@@ -533,22 +533,19 @@ export function OrganizationWorkspace({
       {activeTab === "periods" && (
         <div className="space-y-4">
           {periods.length === 0 ? (
-            <AdminCard padding="none">
-              <div className="p-8">
-                <AdminEmptyState
-                  icon="building"
-                  title="Belum ada periode kepengurusan"
-                  description="Buat periode pertama untuk mulai menyusun kepengurusan."
-                />
-                {canEdit ? (
-                  <div className="mt-4 flex justify-center">
-                    <AdminButton onClick={openCreatePeriod} className="gap-2">
-                      <Plus size={15} /> Buat periode pertama
-                    </AdminButton>
-                  </div>
-                ) : null}
-              </div>
-            </AdminCard>
+            <div>
+              <AdminEmptyState
+                icon="building"
+                title="Belum ada periode kepengurusan"
+              />
+              {canEdit ? (
+                <div className="mt-4 flex justify-center">
+                  <AdminButton onClick={openCreatePeriod} className="gap-2">
+                    <Plus size={15} /> Buat periode pertama
+                  </AdminButton>
+                </div>
+              ) : null}
+            </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {periods.map((p) => {
@@ -612,15 +609,15 @@ export function OrganizationWorkspace({
 
                       <div className="mt-4 grid grid-cols-3 gap-2 border-t border-border pt-3 text-center text-xs">
                         <div className="rounded-md bg-muted/40 p-2">
-                          <p className="text-xs uppercase tracking-wider text-muted-foreground">Unit</p>
+                          <p className="text-xs text-muted-foreground">Unit</p>
                           <p className="font-manrope text-sm font-bold text-brand-900">{p.unitCount}</p>
                         </div>
                         <div className="rounded-md bg-muted/40 p-2">
-                          <p className="text-xs uppercase tracking-wider text-muted-foreground">Pengurus</p>
+                          <p className="text-xs text-muted-foreground">Pengurus</p>
                           <p className="font-manrope text-sm font-bold text-brand-900">{p.memberCount}</p>
                         </div>
                         <div className="rounded-md bg-muted/40 p-2">
-                          <p className="text-xs uppercase tracking-wider text-muted-foreground">Edisi</p>
+                          <p className="text-xs text-muted-foreground">Edisi</p>
                           <p className="font-manrope text-sm font-bold text-brand-900">{p.connectedEditionsCount}</p>
                         </div>
                       </div>
@@ -782,15 +779,10 @@ export function OrganizationWorkspace({
           </div>
 
           {legacyAssignments.length === 0 ? (
-            <AdminCard padding="none">
-              <div className="p-8">
-                <AdminEmptyState
-                  icon="building"
-                  title="Tidak ada data lama"
-                  description="Semua penugasan sudah dipetakan."
-                />
-              </div>
-            </AdminCard>
+            <AdminEmptyState
+              icon="building"
+              title="Tidak ada data lama"
+            />
           ) : (
             <AdminCard padding="none" className="overflow-hidden">
               <div className="overflow-x-auto">
@@ -852,13 +844,11 @@ export function OrganizationWorkspace({
             <SheetTitle className="font-manrope text-lg font-bold text-brand-900">
               {editingPeriod ? "Edit Periode Kepengurusan" : "Buat Periode Baru"}
             </SheetTitle>
-            <SheetDescription className="text-xs text-muted-foreground">
-              Atur masa bakti dan arah organisasi.
-            </SheetDescription>
+            <SheetDescription className="sr-only">Form periode</SheetDescription>
           </SheetHeader>
 
           <div className="space-y-4 py-4">
-            <AdminField label="Label periode" hint="Contoh: Periode 2024 - 2027">
+            <AdminField label="Label periode">
               <AdminInput
                 value={periodLabel}
                 onChange={(e) => setPeriodLabel(e.target.value)}
@@ -977,9 +967,7 @@ export function OrganizationWorkspace({
             <SheetTitle className="font-manrope text-lg font-bold text-brand-900">
               {editingPerson ? "Edit Profil orang" : "Tambah Profil Baru"}
             </SheetTitle>
-            <SheetDescription className="text-xs text-muted-foreground">
-              Profil yang tersimpan di sini dapat ditugaskan ke kepengurusan global dan kepanitiaan edisi.
-            </SheetDescription>
+            <SheetDescription className="sr-only">Form profil</SheetDescription>
           </SheetHeader>
 
           <div className="space-y-4 py-4">
@@ -991,7 +979,7 @@ export function OrganizationWorkspace({
               />
             </AdminField>
 
-            <AdminField label="Slug URL (Opsional)" hint="Dibuat otomatis dari nama jika dikosongkan">
+            <AdminField label="Slug URL">
               <AdminInput
                 value={personSlug}
                 onChange={(e) => setPersonSlug(e.target.value)}

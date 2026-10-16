@@ -181,8 +181,9 @@ export function PageSectionsEditor({
                         disabled={Boolean(pending)}
                       />
                     </AdminField>
-                    <AdminField label="Tautan tombol" hint="Gunakan path situs seperti /pendaftaran atau URL http(s) lengkap.">
+                    <AdminField label="Tautan tombol">
                       <AdminInput
+                        placeholder="/pendaftaran atau https://..."
                         value={section.value.actionHref ?? ""}
                         onChange={(event) => updateValue(section.slotKey, "actionHref", event.target.value)}
                         maxLength={2048}

@@ -14,7 +14,6 @@ import { toast } from "sonner";
 
 import {
   AdminBadge,
-  AdminCard,
   AdminEmptyState,
 } from "@/components/admin/primitives";
 import {
@@ -58,7 +57,6 @@ function newsStatusLabel(status: string): string {
 
 export function NewsListClient({
   initialArticles,
-  editionName,
   canEdit,
 }: NewsListClientProps) {
   const [articles, setArticles] = useState<NewsListItem[]>(initialArticles);
@@ -151,17 +149,10 @@ export function NewsListClient({
 
       {/* Article List Grid / Cards */}
       {filteredArticles.length === 0 ? (
-        <AdminCard>
-          <AdminEmptyState
-            icon="file"
-            title={articles.length === 0 ? "Belum ada berita" : "Tidak ada berita yang cocok"}
-            description={
-              articles.length === 0
-                ? `Mulai dengan menulis draft berita pertama untuk edisi ${editionName}.`
-                : "Coba ubah kata kunci pencarian atau filter status yang dipilih."
-            }
-          />
-        </AdminCard>
+        <AdminEmptyState
+          icon="file"
+          title={articles.length === 0 ? "Belum ada berita" : "Berita tidak ditemukan"}
+        />
       ) : (
         <div className="space-y-3">
           {filteredArticles.map((article) => (

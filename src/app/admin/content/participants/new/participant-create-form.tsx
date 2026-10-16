@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import {
   AdminButton,
   AdminCard,
-  AdminCardHeader,
   AdminField,
   AdminInput,
   AdminLinkButton,
@@ -88,81 +87,77 @@ export function ParticipantCreateForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <AdminCard>
-        <AdminCardHeader
-          title="Penempatan pendaftar"
-          description="Pendaftar baru otomatis masuk ke tahap pertama dengan status terdaftar."
-        />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <AdminField label="Tahap seleksi awal" hint="Tahap pertama alur seleksi yang sedang berjalan">
-            <AdminInput
-              value={`${firstStage.name} (target: ${firstStage.targetParticipantCount} peserta)`}
-              readOnly
-              disabled
-            />
-          </AdminField>
-          <AdminField label="Status seleksi" hint="Status default pendaftar baru">
-            <AdminInput value="Pending (terdaftar)" readOnly disabled />
-          </AdminField>
+      <AdminCard className="space-y-6">
+        <div>
+          <h2 className="font-manrope text-base font-semibold text-brand-900">Penempatan</h2>
+          <div className="mt-3 grid gap-4 sm:grid-cols-2">
+            <AdminField label="Tahap seleksi">
+              <AdminInput
+                value={`${firstStage.name} (target: ${firstStage.targetParticipantCount} peserta)`}
+                readOnly
+                disabled
+              />
+            </AdminField>
+            <AdminField label="Status seleksi">
+              <AdminInput value="Pending (terdaftar)" readOnly disabled />
+            </AdminField>
+          </div>
         </div>
-      </AdminCard>
 
-      <AdminCard>
-        <AdminCardHeader
-          title="Identitas pendaftar"
+        <div className="border-t border-brand-100 pt-5">
+          <h2 className="font-manrope text-base font-semibold text-brand-900">Identitas pendaftar</h2>
+          <div className="mt-4 grid gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <AdminField label="Kategori">
+                <AdminSelect
+                  value={categoryId}
+                  onValueChange={setCategoryId}
+                  options={categoryOptions}
+                  aria-label="Pilih kategori"
+                />
+              </AdminField>
 
-        />
-        <div className="grid gap-5">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <AdminField label="Kategori" hint="Pilih kategori peserta">
-              <AdminSelect
-                value={categoryId}
-                onValueChange={setCategoryId}
-                options={categoryOptions}
-                aria-label="Pilih kategori"
-              />
-            </AdminField>
+              <AdminField label="Nomor peserta">
+                <AdminInput
+                  type="number"
+                  min="1"
+                  step="1"
+                  placeholder="Contoh: 1"
+                  value={number}
+                  onChange={(e) => setNumber(e.target.value)}
+                  required
+                />
+              </AdminField>
+            </div>
 
-            <AdminField label="Nomor peserta" hint="Nomor urut peserta per kategori">
-              <AdminInput
-                type="number"
-                min="1"
-                step="1"
-                placeholder="Contoh: 1"
-                value={number}
-                onChange={(e) => setNumber(e.target.value)}
-                required
+            <div className="grid gap-4 sm:grid-cols-2">
+              <AdminField label="Nama lengkap">
+                <AdminInput
+                  placeholder="Nama lengkap"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              </AdminField>
+
+              <AdminField label="Slug tautan (opsional)">
+                <AdminInput
+                  placeholder="Dibuat otomatis dari nama"
+                  value={slug}
+                  onChange={(e) => setSlug(e.target.value)}
+                />
+              </AdminField>
+            </div>
+
+            <AdminField label="Biodata singkat (opsional)">
+              <AdminTextarea
+                placeholder="Tulis ringkasan profil atau biodata pendaftar..."
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                rows={4}
               />
             </AdminField>
           </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <AdminField label="Nama lengkap" hint="Nama lengkap peserta">
-              <AdminInput
-                placeholder="Contoh: Mochammad Fauzan"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </AdminField>
-
-            <AdminField label="Slug tautan (opsional)" hint="Dibuat otomatis dari nama jika kosong">
-              <AdminInput
-                placeholder="Contoh: mochammad-fauzan"
-                value={slug}
-                onChange={(e) => setSlug(e.target.value)}
-              />
-            </AdminField>
-          </div>
-
-          <AdminField label="Biodata singkat (opsional)" hint="Profil ringkas atau latar belakang peserta">
-            <AdminTextarea
-              placeholder="Tulis ringkasan profil atau biodata pendaftar..."
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              rows={4}
-            />
-          </AdminField>
         </div>
       </AdminCard>
 

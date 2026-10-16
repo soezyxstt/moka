@@ -2,7 +2,7 @@ import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { AdminBadge, AdminCard, AdminEmptyState, AdminPage } from "@/components/admin/primitives";
+import { AdminBadge, AdminEmptyState, AdminPage } from "@/components/admin/primitives";
 import { getEffectivePermissions } from "@/server/auth/authorization";
 import { auth } from "@/server/auth/config";
 import { database } from "@/server/db/client";
@@ -33,16 +33,11 @@ export default async function VotingAdminPage() {
 
   if (!currentEdition) {
     return (
-      <AdminPage
-        title="Voting tahunan"
-      >
-        <AdminCard>
-          <AdminEmptyState
-            icon="calendar"
-            title="Belum ada edisi aktif"
-            description="Pilih edisi di bagian atas untuk mulai."
-          />
-        </AdminCard>
+      <AdminPage title="Voting">
+        <AdminEmptyState
+          icon="calendar"
+          title="Pilih edisi terlebih dahulu"
+        />
       </AdminPage>
     );
   }

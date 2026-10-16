@@ -36,15 +36,10 @@ export default async function ParticipantsPage() {
       <AdminPage
         title="Mojang Jajaka"
       >
-        <AdminCard padding="none">
-          <div className="p-8">
-            <AdminEmptyState
-              icon="users"
-              title="Belum ada edisi dipilih"
-              description="Pilih edisi di bagian atas untuk melihat peserta."
-            />
-          </div>
-        </AdminCard>
+        <AdminEmptyState
+          icon="users"
+          title="Belum ada edisi dipilih"
+        />
       </AdminPage>
     );
   }

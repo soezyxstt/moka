@@ -1,6 +1,6 @@
 "use client";
 
-import { FileImage, FileText, UploadCloud, Video, X } from "lucide-react";
+import { FileImage, FileText, Video, X } from "lucide-react";
 import { type ChangeEvent, type DragEvent, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -116,14 +116,9 @@ export function AdminMediaUploader({
       onDrop={handleDrop}
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <span className="grid size-8 shrink-0 place-items-center rounded-md bg-brand text-canvas">
-            <UploadCloud size={15} />
-          </span>
-          <div className="min-w-0">
-            <p className="text-xs font-semibold text-brand-900">Unggah media</p>
-            <p className="truncate text-xs text-muted-foreground">Folder tujuan: {folderName}</p>
-          </div>
+        <div className="min-w-0">
+          <p className="text-xs font-semibold text-brand-900">Unggah media</p>
+          <p className="truncate text-xs text-muted-foreground">Folder tujuan: {folderName}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {allowedKinds.length > 1 ? (
