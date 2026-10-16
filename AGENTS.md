@@ -42,14 +42,15 @@ Use the shared `typography` object from `@/components/custom/typography` for pub
 
 | Export | Renders | Base classes | Use |
 |--------|---------|--------------|-----|
-| `typography.t1` | `h3` | `uppercase text-highlight-400 font-manrope text-base font-bold` | Eyebrow / section label above a heading. |
 | `typography.h1` | `h2` | `text-4xl font-semibold font-manrope` | Section heading. Override size to `text-3xl md:text-5xl` and color to `text-on-media` on photo sections. |
-| `typography.p` | `p` | `text-base font-normal font-inter leading-relaxed text-body` | Body copy. `text-justify` and `text-body` are the established body look. |
+| `typography.p` | `p` | `text-base font-normal font-inter leading-relaxed text-body` | Body copy (`text-left leading-relaxed text-body`). |
+| `typography.t1` | `h3` | `uppercase text-highlight-400 font-manrope text-base font-bold` | Legacy export; **do not use** for eyebrows or section labels on public pages. |
 
 Rules:
+- **No eyebrows, pills, or badge titles**: Never add small uppercase eyebrow text above headings, pill badges, step badges (`Tahap 01`), or numeric counters (`01`, `02`) to sections or items. Let the main `h1`/`h2` heading speak for itself.
 - Headings are Manrope; never use Inter for a title and never use `text-gray-900`-style ad hoc heading colors on the public site.
-- On dark photo heroes use `text-on-media` and muted `text-on-media/85` / `text-on-media/80`; on light sections use `text-body` body text.
-- Body text is left-aligned by default; use `text-justify` only where the design already does.
+- On dark photo heroes use `text-on-media` and muted `text-on-media/85` / `text-on-media/80`; on light sections use `text-body` or `text-neutral-600` body text.
+- Body text is strictly left-aligned (`text-left leading-relaxed`, constrained with `max-w-prose` or `max-w-2xl` where appropriate). Avoid `text-justify` on narrow or medium columns to prevent uneven word spacing (rivers of white space).
 
 ## Color
 
@@ -92,29 +93,42 @@ Sizes: `sm` (h-8), `default` (h-9), `lg` (h-10). For links styled as buttons, wr
 ## Imagery & backgrounds
 
 - Use `next/image` with explicit `width`/`height` (or `fill` inside a sized box) and `object-cover`. Never use plain `<img>` for site assets.
+- **Brand logos on dark vs light surfaces**: Always resolve edition logos with `resolveBrandLogos(identity.assets, identity.edition)` from `@/server/cms/brand-assets`. Use `logos.footer ?? logos.desktop` on dark surfaces (never raw `edition.logoUrl`, which may be a dark navy variant) and always pass `unoptimized={logo.mimeType === "image/svg+xml" || logo.url.endsWith(".svg")}` so remote SVGs render properly.
 - Full-bleed hero sections: `bg-[url(/asset.webp)] bg-cover bg-center` on the `<section>`, with a radial vignette overlay: `bg-radial-[at_50%_50%] from-transparent to-90% to-brand-800` (fixed, `pointer-events-none`, `z-0`).
-- Legibility washes over photo sections: `bg-brand-50/90` or `bg-highlight-50/90` full-section overlays behind content. Use the `Section` component (`background` + `overlay`) for this pattern.
+- **Unified light section transitions**: Do not stack full-bleed low-opacity background photos on every section. Alternate cleanly between `bg-neutral-50` and `bg-background` separated by subtle hairline borders (`border-b border-neutral-200/70`).
 - `BG` (`@/components/next-image-bg`) is the reusable fixed site-texture background; `HeroVideo` + `HeroTextWrapper` (`@/components/custom/hero-video`, `@/components/custom/hero-text`) are the video-hero pattern with a poster fallback; `ImageMaskFade` (`@/components/custom/image-mask`) is the masked edge image.
-- Prefer the established organic crops (`rounded-lg`, `rounded-b-full`, `rounded-t-full`, `rounded-full` circles) for creative compositions; do not invent new shapes.
+- Prefer clean, consistent rounded rectangles (`rounded-2xl` with `gap-4` and `shadow-md`) for multi-photo collages rather than mixing conflicting pill/arch/U-shape border-radius rules.
+
+## UI Composition & Card Discipline (Public)
+
+- **Minimize cards; default to open editorial layouts**: Do not wrap every list item, timeline stage, philosophy pillar, or program into a boxed card (`rounded-xl border bg-canvas p-5`). Overusing cards creates visual clutter.
+- **Use hairline dividers for structure**:
+  - **2-column dual concepts (e.g. Theme Philosophy)**: Use an open 2-column split with a hairline divider (`divide-y divide-neutral-200 border-y border-neutral-200 md:grid-cols-2 md:divide-x md:divide-y-0`).
+  - **Timelines & sequential lists (e.g. Rangkaian Kegiatan, Category links)**: Use full-width interactive rows separated by horizontal hairlines (`divide-y divide-neutral-200 border-y border-neutral-200`).
+  - **Multi-item feature/program grids (e.g. Program Unggulan)**: Use a clean 2-column typographic grid where each item is anchored by a simple top border (`border-t border-neutral-200 pt-4`) with a bold `h3` title and muted `text-neutral-600` description underneath.
+- **Reserve boxed cards for singular focal points**: Only use a bordered card when framing a media-rich focal component (such as a single featured horizontal split news card `md:grid-cols-12` or participant portrait cards).
+- **Section headers**: Stack the section subtitle directly underneath the `h2` heading on the left (`max-w-2xl text-left text-neutral-600`), and place any section-level action link (`Lihat Semua ... ->`) aligned to the right edge of the header row.
 
 ## Layout & motion
 
 - Mobile-first single column: `flex-col` / `grid-cols-1` under `sm:`, switch with `md:` breakpoints (`max-sm:` for mobile-only overrides). Test at 380px.
-- Section rhythm: use the `Section` component (full-bleed, `px-8 md:px-20` / `py-12 md:py-20`, optional `background` + `overlay`); keep existing `min-h-screen` hero rhythm on the homepage.
-- Footer: `bg-linear-to-br from-brand to-highlight` with `text-on-media` content and a `Separator`.
+- Section rhythm: `px-8 md:px-20` and `py-16 md:py-24` with `max-w-7xl mx-auto`; keep existing hero rhythm on the homepage.
+- Footer: `bg-linear-to-br from-brand-600 to-highlight-700` with `text-canvas` content, spelled-out category labels via `formatCategoryName` (`Jajaka Dewasa`, `Mojang Dewasa`, `Jajaka Remaja`, `Mojang Remaja`), a prominent `@mokagarut` Instagram button with icon below the description, and a `Separator`.
+- Floating scroll-to-top button (`ScrollToTopButton`): high-contrast brand highlight (`bg-highlight-400 text-neutral-950 hover:bg-highlight-300 shadow-lg`), positioned above the footer copyright bar (`bottom-16 right-6 md:bottom-12 md:right-8`).
 - Animation: `motion/react` (not `framer-motion`) and Lenis smooth scroll (`@/components/lenis`). Hover transitions use `transition-all`/`transition-colors` with short durations (e.g. `duration-500`, `group-hover:scale-102`); entrance uses the `animate-fade-in` keyframes in `globals.css`.
 - Icons: `lucide-react`, `size-4` default.
 
 ## Radius
 
 - Interactive elements and buttons: `rounded-md`.
-- Media: `rounded-lg`; cards/surfaces: `rounded-xl`.
-- `rounded-full` is allowed for circles, dots, and the site's organic circular compositions, not for elongated pills.
+- Media and photo collages: `rounded-lg` or `rounded-2xl`; featured split cards: `rounded-2xl`.
+- Never use `rounded-full` for elongated pill badges or eyebrow tags.
 
 ## Language & copy
 
 - UI copy is **Bahasa Indonesia**, short labels, sentence case (e.g. `Batal`, `Lanjut`, `Selengkapnya`, `Geser untuk melihat berita lain`).
 - Sundanese brand phrases (`Nu Nyunda Tur Nyakola`, `Ulin Ngaprak Garut`, and so on) are kept verbatim.
+- Spell out participant category abbreviations (`JD`, `MD`, `JR`, `MR`) in public footer and landing page links (`Jajaka Dewasa`, `Mojang Dewasa`, `Jajaka Remaja`, `Mojang Remaja`) so general visitors and sponsors understand them immediately.
 - Numbers over sentences; no exclamation marks, no filler, no em/en dashes.
 
 ---
@@ -205,6 +219,12 @@ All uploads go through **UploadThing** only. There is no R2, S3, or local-blob w
 | 016 | Identitas dan aset Pasanggiri per edisi | DONE (original-source image correction, production preparation and browser QA; deployment separate) |
 
 ### Verified / working
+
+- Pada 2026-10-16, halaman publik `/voting` disederhanakan sesuai arahan operator: tab kategori memakai hook `useSearchParam` berbasis query param `?kategori=` agar pilihan bertahan saat refresh, diikuti judul kampanye, rentang waktu buka voting, grafik batang hasil sementara Recharts (`ChartContainer` shadcn UI), serta tombol `Vote sekarang`. Dialog vote menampilkan pencarian peserta lalu detail ringkas (foto, nama, kode peserta, posisi, jumlah vote, dan QRIS dengan tombol `Unduh QR`) tanpa halaman detail voting terpisah (`/voting/[category]` dialihkan ke `/voting?kategori=...`).
+
+- Pelengkapan foto 2026-10-16 selesai: seluruh 70 semifinalis produksi memiliki portrait dan closeup. Sebanyak 40 WebP baru, total 948.042 byte, diunggah melalui UploadThing; 30 foto existing dipertahankan. Seluruh 70 crop lokal dipulihkan dari asli Patandang di `artifacts/2026 Edition/Patandang WebP/`, rasio 945:1200, maksimal 1200 px tanpa upscale atau generasi wajah. Bingkai/QR poster, bilah layar dan tirai tepi dibuang; sumber asli utuh, 30 crop lama identik. Readback 70 URL/hash, 120 audit/40 revisi, semua data lain/2025 serta bio/prestasi/nomor/QR sama, integrity ok dan nol FK error. Backup AES-256-GCM/DPAPI memulihkan 49 tabel/6.063 baris. Simulasi konflik/idempotensi, typecheck, lint dengan warning TanStack existing dan sampel publik desktop/380 px lulus. Bukti `.tmp/portraits-70/production-verification.json`; scope `plans/annual-brand-assets.md`. Route operasi dihapus; tanpa migrasi, aktivasi atau deployment. Catatan foto parsial di bawah bersifat historis.
+
+- Pada 2026-10-16, operasional kampanye voting di CMS ditingkatkan menjadi CRUD penuh (create, read, update, delete). Operasi updateVotingCampaign dan deleteVotingCampaign ditambahkan ke src/server/voting-operations.ts lengkap dengan validasi slug, perlindungan rentang tanggal terhadap tally yang sudah ada, penguncian versi optimistik, dan pencatatan audit log transaksional. UI VotingConsole (/admin/voting) kini dilengkapi tombol Ubah (dialog pengeditan nama, slug, tahap sumber, harga vote, jadwal) dan tombol Hapus (konfirmasi ketik nama kampanye, alasan tindakan, serta cascade penghapusan tally dan snapshot). Sebanyak 102 unit test database, typecheck, lint, dan build produksi lulus tanpa error.
 
 - Roster produksi 2026 kini lengkap 70 semifinalis aktif, JD 15/MD 15/JR 20/MR 20, sesuai daftar resmi operator pada 2026-10-16. Rahma MD-08, Sonya MD-20 dan M Kautsar JR-09 ditambahkan; Nadilla MR-22 dan Nabila MR-30 dikoreksi pada profil/entry, kuota tahap diselaraskan. Rahma memiliki konten sumber; Yoga, Fachri, Sonya dan Kautsar tetap tanpa bio/prestasi. Total 66 bio dan 193 prestasi. Foto/QR, konten existing, data 2025 dan tabel tidak terkait terjaga. Simulasi, stale-plan rejection, backup restore 49 tabel/6.002 baris dan readback lulus; delapan audit/lima revisi, integrity ok, nol FK error. Lihat `plans/public-content-cms.md` dan `.tmp/semifinal-70/production-verification.json` sebelum mengulang operasi roster. Catatan 67 peserta/Rahma tertunda di bawah bersifat historis. Tanpa upload, migrasi atau deployment.
 

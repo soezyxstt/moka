@@ -11,9 +11,11 @@ import test from "node:test";
 import {
   closeVotingCampaign,
   createVotingCampaign,
+  deleteVotingCampaign,
   saveVotingTally,
   setVotingResultVisibility,
   startVotingCampaign,
+  updateVotingCampaign,
   updateVotingCampaignStage,
 } from "../voting-operations";
 import * as schema from "./schema";
@@ -372,6 +374,292 @@ test("tally hanya menerima peserta snapshot dengan gambar QRIS saat voting aktif
       ),
       /voting aktif/,
     );
+  } finally {
+    client.close();
+  }
+});
+
+test("kampanye voting mendukung pembaruan data dan audit log", async () => {
+  const { client, db } = await createTestDatabase();
+  try {
+    const campaign = await createVotingCampaign(
+      db,
+      "edition-a",
+      {
+        name: "Voting Favorit 2033",
+        slug: "voting-favorit-2033",
+        eligibilityStageId: "stage-a-early",
+        startsAt: new Date("2026-09-01T00:00:00+07:00"),
+        endsAt: new Date("2026-09-15T23:59:00+07:00"),
+        pricePerPoint: 2_000,
+      },
+      actor,
+      now,
+    );
+
+    const updated = await updateVotingCampaign(
+      db,
+      "edition-a",
+      {
+        campaignId: campaign.id,
+        expectedVersion: 1,
+        name: "Voting Favorit 2033 Diperbarui",
+        slug: "voting-favorit-2033-baru",
+        eligibilityStageId: "stage-a-final",
+        startsAt: new Date("2026-09-02T00:00:00+07:00"),
+        endsAt: new Date("2026-09-20T23:59:00+07:00"),
+        pricePerPoint: 2_500,
+      },
+      actor,
+      now,
+    );
+    assert.equal(updated.version, 2);
+
+    const [row] = await db.select().from(votingCampaigns).where(eq(votingCampaigns.id, campaign.id));
+    assert.equal(row.name, "Voting Favorit 2033 Diperbarui");
+    assert.equal(row.slug, "voting-favorit-2033-baru");
+    assert.equal(row.eligibilityStageId, "stage-a-final");
+    assert.equal(row.pricePerPoint, 2_500);
+    assert.equal(row.version, 2);
+
+    const [audit] = await db
+      .select()
+      .from(auditLogs)
+      .where(eq(auditLogs.action, "voting.campaign.update"));
+    assert.equal(audit.resourceId, campaign.id);
+    assert.deepEqual(
+      JSON.parse(audit.changedFieldsJson).sort(),
+      ["eligibilityStageId", "endsAt", "name", "pricePerPoint", "slug", "startsAt", "version"].sort(),
+    );
+
+    const campaign2 = await createVotingCampaign(
+      db,
+      "edition-a",
+      {
+        name: "Voting Kedua 2033",
+        slug: "voting-kedua-2033",
+        eligibilityStageId: "stage-a-final",
+        startsAt: new Date("2026-09-01T00:00:00+07:00"),
+        endsAt: new Date("2026-09-15T23:59:00+07:00"),
+        pricePerPoint: 2_000,
+      },
+      actor,
+      now,
+    );
+    await assert.rejects(
+      updateVotingCampaign(
+        db,
+        "edition-a",
+        {
+          campaignId: campaign2.id,
+          expectedVersion: 1,
+          name: "Voting Kedua",
+          slug: "voting-favorit-2033-baru",
+          startsAt: new Date("2026-09-01T00:00:00+07:00"),
+          endsAt: new Date("2026-09-15T23:59:00+07:00"),
+          pricePerPoint: 2_000,
+        },
+        actor,
+        now,
+      ),
+      /Slug kampanye sudah digunakan/,
+    );
+
+    await assert.rejects(
+      updateVotingCampaign(
+        db,
+        "edition-a",
+        {
+          campaignId: campaign.id,
+          expectedVersion: 1,
+          name: "Stale",
+          slug: "stale-slug",
+          startsAt: new Date("2026-09-01T00:00:00+07:00"),
+          endsAt: new Date("2026-09-15T23:59:00+07:00"),
+          pricePerPoint: 2_000,
+        },
+        actor,
+        now,
+      ),
+      /telah diubah/,
+    );
+
+    await startVotingCampaign(
+      db,
+      "edition-a",
+      {
+        campaignId: campaign.id,
+        expectedVersion: 2,
+        confirmation: "Voting Favorit 2033 Diperbarui",
+        reason: "Mulai voting",
+      },
+      actor,
+      now,
+    );
+    await saveVotingTally(
+      db,
+      "edition-a",
+      {
+        campaignId: campaign.id,
+        participantId: "participant-a",
+        localDate: "2026-09-05",
+        amount: 5_000,
+        expectedVersion: 0,
+        reason: "Tally awal",
+      },
+      actor,
+      now,
+    );
+
+    await assert.rejects(
+      updateVotingCampaign(
+        db,
+        "edition-a",
+        {
+          campaignId: campaign.id,
+          expectedVersion: 3,
+          name: "Voting Favorit 2033 Diperbarui",
+          slug: "voting-favorit-2033-baru",
+          eligibilityStageId: "stage-a-early",
+          startsAt: new Date("2026-09-02T00:00:00+07:00"),
+          endsAt: new Date("2026-09-20T23:59:00+07:00"),
+          pricePerPoint: 2_500,
+        },
+        actor,
+        now,
+      ),
+      /hanya dapat diubah saat kampanye masih draf/,
+    );
+
+    await assert.rejects(
+      updateVotingCampaign(
+        db,
+        "edition-a",
+        {
+          campaignId: campaign.id,
+          expectedVersion: 3,
+          name: "Voting Favorit 2033 Diperbarui",
+          slug: "voting-favorit-2033-baru",
+          startsAt: new Date("2026-09-10T00:00:00+07:00"),
+          endsAt: new Date("2026-09-20T23:59:00+07:00"),
+          pricePerPoint: 2_500,
+        },
+        actor,
+        now,
+      ),
+      /mengecualikan tally/,
+    );
+  } finally {
+    client.close();
+  }
+});
+
+test("kampanye voting mendukung penghapusan kampanye dan cascade data terkait", async () => {
+  const { client, db } = await createTestDatabase();
+  try {
+    const draft = await createVotingCampaign(
+      db,
+      "edition-a",
+      {
+        name: "Voting Draf 2033",
+        slug: "voting-draf-2033",
+        eligibilityStageId: "stage-a-final",
+        startsAt: new Date("2026-09-01T00:00:00+07:00"),
+        endsAt: new Date("2026-09-15T23:59:00+07:00"),
+        pricePerPoint: 2_000,
+      },
+      actor,
+      now,
+    );
+
+    await assert.rejects(
+      deleteVotingCampaign(
+        db,
+        "edition-a",
+        { campaignId: draft.id, expectedVersion: 1, confirmation: "salah", reason: "Hapus draf" },
+        actor,
+      ),
+      /nama kampanye/,
+    );
+    await assert.rejects(
+      deleteVotingCampaign(
+        db,
+        "edition-a",
+        { campaignId: draft.id, expectedVersion: 1, confirmation: "Voting Draf 2033", reason: " " },
+        actor,
+      ),
+      /Alasan tindakan wajib diisi/,
+    );
+
+    await deleteVotingCampaign(
+      db,
+      "edition-a",
+      { campaignId: draft.id, expectedVersion: 1, confirmation: "Voting Draf 2033", reason: "Salah buat draf" },
+      actor,
+    );
+    const [deletedDraft] = await db.select().from(votingCampaigns).where(eq(votingCampaigns.id, draft.id));
+    assert.equal(deletedDraft, undefined);
+
+    const active = await createVotingCampaign(
+      db,
+      "edition-a",
+      {
+        name: "Voting Aktif 2033",
+        slug: "voting-aktif-2033",
+        eligibilityStageId: "stage-a-final",
+        startsAt: new Date("2026-09-01T00:00:00+07:00"),
+        endsAt: new Date("2026-09-15T23:59:00+07:00"),
+        pricePerPoint: 2_000,
+      },
+      actor,
+      now,
+    );
+    await startVotingCampaign(
+      db,
+      "edition-a",
+      { campaignId: active.id, expectedVersion: 1, confirmation: "Voting Aktif 2033", reason: "Mulai" },
+      actor,
+      now,
+    );
+    await saveVotingTally(
+      db,
+      "edition-a",
+      {
+        campaignId: active.id,
+        participantId: "participant-a",
+        localDate: "2026-09-05",
+        amount: 10_000,
+        expectedVersion: 0,
+        reason: "Tally",
+      },
+      actor,
+      now,
+    );
+
+    const talliesBefore = await db.select().from(voteDailyTallies).where(eq(voteDailyTallies.campaignId, active.id));
+    const participantsBefore = await db.select().from(votingCampaignParticipants).where(eq(votingCampaignParticipants.campaignId, active.id));
+    assert.equal(talliesBefore.length, 1);
+    assert.equal(participantsBefore.length, 3);
+
+    await deleteVotingCampaign(
+      db,
+      "edition-a",
+      { campaignId: active.id, expectedVersion: 2, confirmation: "Voting Aktif 2033", reason: "Reset seluruh kampanye" },
+      actor,
+    );
+
+    const [deletedActive] = await db.select().from(votingCampaigns).where(eq(votingCampaigns.id, active.id));
+    assert.equal(deletedActive, undefined);
+    const talliesAfter = await db.select().from(voteDailyTallies).where(eq(voteDailyTallies.campaignId, active.id));
+    assert.equal(talliesAfter.length, 0);
+    const participantsAfter = await db.select().from(votingCampaignParticipants).where(eq(votingCampaignParticipants.campaignId, active.id));
+    assert.equal(participantsAfter.length, 0);
+
+    const deleteAudits = await db
+      .select()
+      .from(auditLogs)
+      .where(eq(auditLogs.action, "voting.campaign.delete"));
+    assert.equal(deleteAudits.length, 2);
   } finally {
     client.close();
   }

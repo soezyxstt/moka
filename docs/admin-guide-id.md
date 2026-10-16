@@ -8,6 +8,8 @@ Konten 2025 produksi sudah disamakan dengan CMS lokal pada 16 Oktober 2026. Edis
 
 ## Profil dan fase 2026
 
+Seluruh 70 semifinalis kini memiliki foto profil dan closeup di produksi. Potret dipotong dari foto asli Patandang tanpa bingkai/QR poster, memakai WebP dengan rasio seragam. Berkas hasil tersedia di `artifacts/2026 Edition/Patandang WebP/`. Koreksi berikutnya menggunakan editor peserta dan pustaka media; QR pembayaran tetap field terpisah dan tidak diambil dari poster foto. Bio/prestasi yang belum bersumber tetap kosong.
+
 Pembaruan daftar resmi: roster produksi lengkap 70 semifinalis, JD 15, MD 15, JR 20 dan MR 20. Rahma sekarang MD-08 dan profilnya sudah dilengkapi dari sumber. Sonya MD-20 serta M Kautsar JR-09 sudah terdaftar; keduanya bersama Yoga dan Fachri tetap tanpa motivasi/prestasi. Nadilla memakai MR-22 dan Nabila MR-30. Gunakan bagian Bio dan daftar Prestasi pada editor peserta saat sumber tambahan tersedia. Catatan jumlah 65/Rahma tertunda berikut adalah riwayat pengisian pertama.
 
 Produksi memakai edisi 2026 aktif sejak 16 Oktober 2026; 2025 tersedia sebagai arsip. Profil semifinalis menampilkan motivasi dan CTA sebagai dua paragraf di Bio, lalu daftar Prestasi. Sebanyak 65 profil sudah diisi dari respons terbaru spreadsheet. Foto dan QR yang belum tersedia tidak dibuat otomatis. Rahma menunggu nomor terverifikasi; Fachri dan Yoga belum mengisi respons.
@@ -215,15 +217,17 @@ Lampiran legalitas dipilih melalui **Teks halaman > Legalitas organisasi > Dokum
 
 ## 12. Operasional Voting Manual
 
-Menu **Voting** (`/admin/voting`) mengelola kampanye voting kameumeut:
-1. **Buat Kampanye**: Pilih tahap sumber dari edisi aktif. Tahap final dipilih otomatis bila tersedia.
-2. **Mulai Manual**: Ketik nama kampanye dan alasan. Sistem membekukan daftar peserta tahap sebagai snapshot.
-3. **Siapkan QRIS**: Unggah atau pilih gambar QRIS eksternal pada profil peserta. PDF dan media yang belum siap tidak dapat menerima tally.
-4. **Catat Tally**: Pilih peserta snapshot dan tanggal, lalu masukkan akumulasi pemasukan harian dari dashboard merchant QRIS.
-5. **Tampilkan Hasil**: Ubah visibilitas dengan alasan. Kampanye draf belum dapat ditampilkan. Nilai legacy yang tidak dikenal dianggap tersembunyi; gunakan **Tetapkan hasil ke tersembunyi** untuk menormalkan nilai itu melalui action audited.
-6. **Tutup Manual**: Tutup kampanye dengan nama dan alasan. Tally terkunci setelah kampanye ditutup.
+Menu **Voting** (`/admin/voting`) mengelola kampanye voting kameumeut dengan siklus CRUD penuh:
+1. **Buat Kampanye**: Buat kampanye draf dengan nama, slug, tahap sumber, harga per vote, serta jadwal mulai dan selesai WIB. Tahap final dipilih otomatis bila tersedia.
+2. **Ubah Kampanye**: Perbarui nama kampanye, slug, harga per vote, dan rentang tanggal melalui tombol **Ubah**. Tahap sumber dapat disesuaikan selama kampanye berstatus draf sebelum snapshot dibuat. Rentang tanggal kampanye terlindungi agar tidak mengecualikan catatan tally yang sudah ada.
+3. **Mulai Manual**: Ketik nama kampanye dan alasan. Sistem membekukan daftar peserta tahap sebagai snapshot.
+4. **Siapkan QRIS**: Unggah atau pilih gambar QRIS eksternal pada profil peserta. PDF dan media yang belum siap tidak dapat menerima tally.
+5. **Catat Tally**: Pilih peserta snapshot dan tanggal, lalu masukkan akumulasi pemasukan harian dari dashboard merchant QRIS.
+6. **Tampilkan Hasil**: Ubah visibilitas dengan alasan. Kampanye draf belum dapat ditampilkan. Nilai legacy yang tidak dikenal dianggap tersembunyi; gunakan **Tetapkan hasil ke tersembunyi** untuk menormalkan nilai itu melalui action audited.
+7. **Tutup Manual**: Tutup kampanye dengan nama dan alasan. Tally terkunci setelah kampanye ditutup.
+8. **Hapus Kampanye**: Hapus kampanye melalui tombol **Hapus** dengan konfirmasi pengetikan nama kampanye dan alasan tindakan. Penghapusan membersihkan seluruh data terkait seperti snapshot peserta dan rekap harian secara transaksional dengan pencatatan audit log.
 
-Halaman publik `/voting` dan route kategori selalu dapat dibuka dan membaca kategori edisi aktif. Jika kampanye belum dibuat dengan jadwal dan harga yang terverifikasi, halaman kategori menampilkan status **Kampanye belum tersedia**. Seed lokal 2025 tidak memuat kampanye atau tally karena sumber tidak menyediakan data terverifikasi. Route lama `/monitor` dialihkan ke `/admin/voting`; halaman admin memeriksa izin `voting.view`.
+Halaman publik `/voting` selalu dapat dibuka, membaca kategori edisi aktif, dan menyimpan tab kategori terpilih pada query param `?kategori=` (route `/voting/[category]` dialihkan ke `/voting?kategori=...`). Di bawah tab kategori tampil judul kampanye, rentang waktu buka voting, grafik batang hasil sementara, serta tombol **Vote sekarang** yang membuka dialog pencarian peserta untuk melihat foto, nama, posisi, jumlah vote, dan mengunduh QRIS tanpa halaman detail terpisah. Jika kampanye belum dibuka, status jadwal ditampilkan dan tombol vote dinonaktifkan. Seed lokal 2025 tidak memuat kampanye atau tally karena sumber tidak menyediakan data terverifikasi. Route lama `/monitor` dialihkan ke `/admin/voting`; halaman admin memeriksa izin `voting.view`.
 
 ---
 

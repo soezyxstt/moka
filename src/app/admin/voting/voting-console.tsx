@@ -7,8 +7,10 @@ import {
   EyeOff,
   Flag,
   LockKeyhole,
+  Pencil,
   QrCode,
   Search,
+  Trash2,
   Vote,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -35,6 +37,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { calculateVotesFromAmount } from "@/lib/voting";
@@ -44,9 +54,11 @@ import type { AdminEditionContext } from "@/server/cms/context";
 import {
   closeCampaignAction,
   createCampaignAction,
+  deleteCampaignAction,
   saveTallyAction,
   setResultVisibilityAction,
   startCampaignAction,
+  updateCampaignAction,
   updateCampaignStageAction,
 } from "./actions";
 
@@ -56,6 +68,7 @@ export type VotingCampaignSummary = {
   editionName: string;
   year: number;
   name: string;
+  slug: string;
   status: string;
   pricePerPoint: number;
   startsAt: string;
@@ -123,6 +136,27 @@ function localInputDate(iso: string) {
   return `${values.year}-${values.month}-${values.day}`;
 }
 
+function localInputDateTime(iso: string) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.valueOf())) return "";
+  const values = Object.fromEntries(
+    new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Asia/Jakarta",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    })
+      .formatToParts(d)
+      .map((part) => [part.type, part.value]),
+  );
+  const hour = values.hour === "24" ? "00" : values.hour;
+  return `${values.year}-${values.month}-${values.day}T${hour}:${values.minute}`;
+}
+
 function statusLabel(value: string) {
   if (value === "active") return "Aktif";
   if (value === "closed") return "Ditutup";
@@ -171,7 +205,8 @@ export function VotingConsole({
   const [stageId, setStageId] = useState(selectedCampaign?.eligibilityStageId ?? "");
   const [query, setQuery] = useState("");
   const [pending, setPending] = useState(false);
-  const [confirmMode, setConfirmMode] = useState<"start" | "close" | null>(null);
+  const [confirmMode, setConfirmMode] = useState<"start" | "close" | "delete" | null>(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [confirmation, setConfirmation] = useState("");
   const [reason, setReason] = useState("");
   const [visibilityReason, setVisibilityReason] = useState("");
@@ -248,6 +283,40 @@ export function VotingConsole({
     }
   }
 
+  async function updateCampaign(formData: FormData) {
+    if (!selectedCampaign) return;
+    setPending(true);
+    try {
+      const result = await updateCampaignAction(formData);
+      const name = String(formData.get("name") ?? "");
+      const slug = String(formData.get("slug") ?? "");
+      const rawStage = formData.get("eligibilityStageId");
+      const nextStageId = rawStage ? String(rawStage) : selectedCampaign.eligibilityStageId;
+      const stage = stages.find((item) => item.id === nextStageId);
+      const pricePerPoint = Number(formData.get("pricePerPoint"));
+      const rawStartsAt = formData.get("startsAt");
+      const rawEndsAt = formData.get("endsAt");
+
+      replaceCampaign({
+        version: result.version,
+        name,
+        slug,
+        eligibilityStageId: nextStageId,
+        stageName: stage?.name ?? selectedCampaign.stageName,
+        pricePerPoint,
+        startsAt: typeof rawStartsAt === "string" ? `${rawStartsAt}:00+07:00` : selectedCampaign.startsAt,
+        endsAt: typeof rawEndsAt === "string" ? `${rawEndsAt}:00+07:00` : selectedCampaign.endsAt,
+      });
+      setIsEditOpen(false);
+      toast.success("Kampanye berhasil diperbarui");
+      router.refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Kampanye gagal diperbarui");
+    } finally {
+      setPending(false);
+    }
+  }
+
   async function confirmLifecycle() {
     if (!selectedCampaign || !confirmMode) return;
     setPending(true);
@@ -261,7 +330,7 @@ export function VotingConsole({
         });
         replaceCampaign({ version: result.version, status: "active", startedAt: new Date().toISOString() });
         toast.success(`Voting dimulai untuk ${result.snapshotCount} peserta`);
-      } else {
+      } else if (confirmMode === "close") {
         const result = await closeCampaignAction({
           campaignId: selectedCampaign.id,
           expectedVersion: selectedCampaign.version,
@@ -270,13 +339,28 @@ export function VotingConsole({
         });
         replaceCampaign({ version: result.version, status: "closed", closedAt: new Date().toISOString() });
         toast.success("Voting ditutup");
+      } else if (confirmMode === "delete") {
+        await deleteCampaignAction({
+          campaignId: selectedCampaign.id,
+          expectedVersion: selectedCampaign.version,
+          confirmation,
+          reason,
+        });
+        const remaining = campaigns.filter((item) => item.id !== selectedCampaign.id);
+        setCampaigns(remaining);
+        if (remaining.length > 0) {
+          chooseCampaign(remaining[0]!.id);
+        } else {
+          setSelectedCampaignId("");
+        }
+        toast.success("Kampanye berhasil dihapus");
       }
       setConfirmMode(null);
       setConfirmation("");
       setReason("");
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Status voting gagal diubah");
+      toast.error(error instanceof Error ? error.message : "Tindakan voting gagal diproses");
     } finally {
       setPending(false);
     }
@@ -401,7 +485,33 @@ export function VotingConsole({
                     {date.format(new Date(selectedCampaign.startsAt))} sampai {date.format(new Date(selectedCampaign.endsAt))}
                   </p>
                 </div>
-                <AdminBadge value={statusLabel(selectedCampaign.status)} />
+                <div className="flex flex-wrap items-center gap-2">
+                  <AdminBadge value={statusLabel(selectedCampaign.status)} />
+                  {canManage ? (
+                    <>
+                      <AdminButton
+                        type="button"
+                        variant="secondary"
+                        onClick={() => setIsEditOpen(true)}
+                        disabled={pending}
+                      >
+                        <Pencil className="size-4" /> Ubah
+                      </AdminButton>
+                      <AdminButton
+                        type="button"
+                        variant="danger"
+                        onClick={() => {
+                          setConfirmation("");
+                          setReason("");
+                          setConfirmMode("delete");
+                        }}
+                        disabled={pending}
+                      >
+                        <Trash2 className="size-4" /> Hapus
+                      </AdminButton>
+                    </>
+                  ) : null}
+                </div>
               </div>
 
               <div className="grid gap-3 border-y border-border py-3 sm:grid-cols-3">
@@ -563,14 +673,120 @@ export function VotingConsole({
         <AdminEmptyState icon="calendar" title="Belum ada kampanye" />
       )}
 
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle className="font-manrope text-lg font-semibold text-brand-900">
+              Ubah kampanye
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Perbarui pengaturan kampanye voting untuk edisi aktif.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedCampaign ? (
+            <form
+              key={`${selectedCampaign.id}:${selectedCampaign.version}`}
+              action={updateCampaign}
+              className="space-y-4"
+            >
+              <input type="hidden" name="campaignId" value={selectedCampaign.id} />
+              <input type="hidden" name="expectedVersion" value={selectedCampaign.version} />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <AdminField label="Nama kampanye">
+                  <AdminInput name="name" defaultValue={selectedCampaign.name} required />
+                </AdminField>
+                <AdminField label="Slug">
+                  <AdminInput name="slug" defaultValue={selectedCampaign.slug} required />
+                </AdminField>
+                <AdminField
+                  label="Tahap sumber"
+                  hint={
+                    selectedCampaign.status !== "draft"
+                      ? "Terkunci karena voting sudah dimulai"
+                      : undefined
+                  }
+                >
+                  {selectedCampaign.status === "draft" ? (
+                    <AdminSelect
+                      name="eligibilityStageId"
+                      defaultValue={selectedCampaign.eligibilityStageId ?? defaultStageId}
+                      required
+                      options={stages.map((stage) => ({ value: stage.id, label: stage.name }))}
+                    />
+                  ) : (
+                    <>
+                      <input
+                        type="hidden"
+                        name="eligibilityStageId"
+                        value={selectedCampaign.eligibilityStageId ?? ""}
+                      />
+                      <AdminInput
+                        value={selectedCampaign.stageName ?? "Tahap belum dipilih"}
+                        disabled
+                      />
+                    </>
+                  )}
+                </AdminField>
+                <AdminField label="Harga per vote">
+                  <AdminInput
+                    type="number"
+                    min="1"
+                    name="pricePerPoint"
+                    defaultValue={selectedCampaign.pricePerPoint}
+                    required
+                  />
+                </AdminField>
+                <AdminField label="Mulai, WIB">
+                  <AdminInput
+                    type="datetime-local"
+                    name="startsAt"
+                    defaultValue={localInputDateTime(selectedCampaign.startsAt)}
+                    required
+                  />
+                </AdminField>
+                <AdminField label="Selesai, WIB">
+                  <AdminInput
+                    type="datetime-local"
+                    name="endsAt"
+                    defaultValue={localInputDateTime(selectedCampaign.endsAt)}
+                    required
+                  />
+                </AdminField>
+              </div>
+              <DialogFooter className="border-t border-border pt-4 sm:flex-row sm:justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsEditOpen(false)}
+                  disabled={pending}
+                >
+                  Batal
+                </Button>
+                <AdminButton type="submit" disabled={pending}>
+                  <Check className="size-4" /> Simpan perubahan
+                </AdminButton>
+              </DialogFooter>
+            </form>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
       <AlertDialog open={confirmMode !== null} onOpenChange={(open) => !open && setConfirmMode(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{confirmMode === "start" ? "Mulai voting" : "Tutup voting"}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {confirmMode === "start"
+                ? "Mulai voting"
+                : confirmMode === "close"
+                  ? "Tutup voting"
+                  : "Hapus kampanye"}
+            </AlertDialogTitle>
             <AlertDialogDescription>
               {confirmMode === "start"
                 ? "Snapshot peserta dibuat sekali dan tidak berubah."
-                : "Tally tidak dapat diubah setelah voting ditutup."}
+                : confirmMode === "close"
+                  ? "Tally tidak dapat diubah setelah voting ditutup."
+                  : "Kampanye beserta data terkait akan dihapus permanen. Tindakan ini tidak dapat dibatalkan."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AdminField label={`Ketik ${selectedCampaign?.name ?? "nama kampanye"}`}>
@@ -587,10 +803,19 @@ export function VotingConsole({
                 void confirmLifecycle();
               }}
               disabled={pending || !reason.trim() || confirmation !== selectedCampaign?.name}
-              className={cn(confirmMode === "close" && "bg-destructive text-destructive-foreground")}
+              className={cn(
+                (confirmMode === "close" || confirmMode === "delete") &&
+                  "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+              )}
             >
-              {confirmMode === "start" ? <Vote className="size-4" /> : <Flag className="size-4" />}
-              {confirmMode === "start" ? "Mulai" : "Tutup"}
+              {confirmMode === "start" ? (
+                <Vote className="size-4" />
+              ) : confirmMode === "close" ? (
+                <Flag className="size-4" />
+              ) : (
+                <Trash2 className="size-4" />
+              )}
+              {confirmMode === "start" ? "Mulai" : confirmMode === "close" ? "Tutup" : "Hapus"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

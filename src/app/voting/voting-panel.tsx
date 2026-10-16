@@ -1,0 +1,153 @@
+'use client';
+import { useMemo, useState, type ReactNode } from 'react';
+import Image from 'next/image';
+import { ArrowLeft, CalendarDays, Download, Search, Vote } from 'lucide-react';
+import { Bar, BarChart, LabelList, XAxis, YAxis } from 'recharts';
+import { Button } from '@/components/custom/button';
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+
+export type VotingPanelCandidate = {
+  id: string;
+  slug: string;
+  name: string;
+  code: string;
+  imageUrl: string | null;
+  qrImageUrl: string | null;
+  votes: number | null;
+  rank: number | null;
+};
+
+export type VotingPanelProps = {
+  title: string;
+  period: string | null;
+  status: string;
+  open: boolean;
+  resultsVisible: boolean;
+  totalVotes: number;
+  results: { name: string; votes: number }[];
+  candidates: VotingPanelCandidate[];
+};
+
+const chartConfig = { votes: { label: 'Vote', color: 'var(--chart-1)' } } satisfies ChartConfig;
+const number = new Intl.NumberFormat('id-ID');
+
+export function VotingPanel({ title, period, status, open, resultsVisible, totalVotes, results, candidates }: VotingPanelProps) {
+  return <div className="mt-8">
+    <div className="flex flex-col gap-6 border-b border-brand-200 pb-8 md:flex-row md:items-end md:justify-between">
+      <div>
+        <h2 className="font-manrope text-2xl font-semibold text-brand-900 md:text-3xl">{title}</h2>
+        <p className="mt-3 flex items-center gap-2 text-left text-neutral-600"><CalendarDays className="size-4 shrink-0" aria-hidden />{period ?? 'Jadwal voting belum tersedia'}</p>
+        <p className="mt-1 text-sm text-neutral-600">{status}</p>
+      </div>
+      <VoteDialog open={open} candidates={candidates} resultsVisible={resultsVisible} />
+    </div>
+    <div className="mt-8">
+      <div className="flex items-end justify-between gap-4">
+        <h3 className="font-manrope text-xl font-semibold text-brand-900">Hasil sementara</h3>
+        {resultsVisible ? <p className="text-sm text-neutral-600">{number.format(totalVotes)} vote</p> : null}
+      </div>
+      {resultsVisible && totalVotes > 0 ? <ChartContainer config={chartConfig} className="mt-6 aspect-auto w-full" style={{ height: Math.max(160, results.length * 40) }}>
+        <BarChart accessibilityLayer data={results} layout="vertical" margin={{ left: 0, right: 48 }}>
+          <XAxis type="number" dataKey="votes" hide />
+          <YAxis type="category" dataKey="name" width={150} tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value: string) => value.length > 20 ? `${value.slice(0, 19)}...` : value} />
+          <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
+          <Bar dataKey="votes" fill="var(--color-votes)" radius={4}>
+            <LabelList dataKey="votes" position="right" offset={8} className="fill-foreground" fontSize={12} formatter={(value: ReactNode) => number.format(Number(value))} />
+          </Bar>
+        </BarChart>
+      </ChartContainer> : <p className="mt-4 text-left text-neutral-600">{resultsVisible ? 'Belum ada vote tercatat untuk kategori ini.' : 'Hasil sementara belum ditampilkan panitia.'}</p>}
+    </div>
+  </div>;
+}
+
+function VoteDialog({ open, candidates, resultsVisible }: { open: boolean; candidates: VotingPanelCandidate[]; resultsVisible: boolean }) {
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selected = candidates.find((candidate) => candidate.id === selectedId) ?? null;
+  const filtered = useMemo(() => {
+    const term = query.trim().toLowerCase();
+    return term ? candidates.filter((candidate) => `${candidate.name} ${candidate.code}`.toLowerCase().includes(term)) : candidates;
+  }, [candidates, query]);
+  const onOpenChange = (next: boolean) => {
+    setDialogOpen(next);
+    if (!next) { setQuery(''); setSelectedId(null); }
+  };
+
+  return <>
+    <Button size="lg" disabled={!open || !candidates.length} onClick={() => setDialogOpen(true)} className="w-full justify-center gap-2 disabled:opacity-60 md:w-auto"><Vote className="size-4" aria-hidden />Vote sekarang</Button>
+    <Dialog open={dialogOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-md" data-lenis-prevent>
+        {selected ? <CandidateDetail candidate={selected} total={candidates.length} resultsVisible={resultsVisible} onBack={() => setSelectedId(null)} /> : <>
+          <DialogHeader className="text-left">
+            <DialogTitle>Pilih peserta</DialogTitle>
+            <DialogDescription>Cari nama atau nomor peserta.</DialogDescription>
+          </DialogHeader>
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+            <Input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Cari peserta" aria-label="Cari peserta" className="h-10 pl-9" />
+          </div>
+          <ul className="-mx-2 max-h-80 overflow-y-auto" data-lenis-prevent>
+            {filtered.map((candidate) => <li key={candidate.id}>
+              <button type="button" onClick={() => setSelectedId(candidate.id)} className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left transition-colors hover:bg-brand-50 focus-visible:bg-brand-50 focus-visible:outline-none">
+                <Avatar candidate={candidate} />
+                <span className="min-w-0 flex-1"><span className="block truncate font-medium text-brand-900">{candidate.name}</span><span className="block text-xs text-neutral-600">{candidate.code}</span></span>
+              </button>
+            </li>)}
+            {!filtered.length ? <li className="px-2 py-6 text-center text-sm text-neutral-600">Peserta tidak ditemukan.</li> : null}
+          </ul>
+        </>}
+      </DialogContent>
+    </Dialog>
+  </>;
+}
+
+function CandidateDetail({ candidate, total, resultsVisible, onBack }: { candidate: VotingPanelCandidate; total: number; resultsVisible: boolean; onBack: () => void }) {
+  const [downloading, setDownloading] = useState(false);
+  const downloadQr = async () => {
+    if (!candidate.qrImageUrl) return;
+    setDownloading(true);
+    try {
+      const blob = await (await fetch(candidate.qrImageUrl)).blob();
+      const href = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = href;
+      link.download = `qr-${candidate.code.toLowerCase()}-${candidate.slug}.${blob.type.split('/')[1]?.replace('jpeg', 'jpg') || 'png'}`;
+      link.click();
+      URL.revokeObjectURL(href);
+    } catch {
+      window.open(candidate.qrImageUrl, '_blank', 'noopener');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  return <>
+    <button type="button" onClick={onBack} className="flex w-fit items-center gap-1.5 rounded-md text-sm text-neutral-600 hover:text-brand-900"><ArrowLeft className="size-4" aria-hidden />Kembali</button>
+    <div className="flex items-center gap-4">
+      <div className="relative aspect-[4/5] w-24 shrink-0 overflow-hidden rounded-lg bg-brand-100">
+        {candidate.imageUrl ? <Image src={candidate.imageUrl} alt={candidate.name} fill sizes="96px" className="object-cover object-top" /> : null}
+      </div>
+      <DialogHeader className="min-w-0 text-left">
+        <DialogTitle className="text-xl leading-tight">{candidate.name}</DialogTitle>
+        <DialogDescription>{candidate.code}</DialogDescription>
+      </DialogHeader>
+    </div>
+    <dl className="grid grid-cols-2 divide-x divide-neutral-200 border-y border-neutral-200 py-3">
+      <div className="pr-4"><dt className="text-xs text-neutral-600">Posisi</dt><dd className="mt-1 font-manrope text-lg font-semibold text-brand-900">{resultsVisible && candidate.rank ? `${candidate.rank} dari ${total}` : 'Belum tampil'}</dd></div>
+      <div className="pl-4"><dt className="text-xs text-neutral-600">Jumlah vote</dt><dd className="mt-1 font-manrope text-lg font-semibold text-brand-900">{resultsVisible && candidate.votes !== null ? number.format(candidate.votes) : 'Belum tampil'}</dd></div>
+    </dl>
+    {candidate.qrImageUrl ? <div className="flex flex-col items-center gap-4">
+      <Image src={candidate.qrImageUrl} alt={`QR voting ${candidate.name}`} width={224} height={224} className="aspect-square rounded-lg border border-neutral-200 bg-canvas object-contain p-2" />
+      <Button size="lg" onClick={downloadQr} disabled={downloading} className="w-full justify-center gap-2"><Download className="size-4" aria-hidden />{downloading ? 'Mengunduh' : 'Unduh QR'}</Button>
+    </div> : <p className="text-sm text-neutral-600">QR voting belum tersedia.</p>}
+  </>;
+}
+
+function Avatar({ candidate }: { candidate: VotingPanelCandidate }) {
+  return <span className="relative size-10 shrink-0 overflow-hidden rounded-md bg-brand-100">
+    {candidate.imageUrl ? <Image src={candidate.imageUrl} alt="" fill sizes="40px" className="object-cover object-top" /> : <span className="grid size-full place-items-center text-xs font-semibold text-brand-800">{candidate.name.split(/\s+/).map((part) => part[0]).slice(0, 2).join('')}</span>}
+  </span>;
+}

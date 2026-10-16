@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { env } from '@/env';
-import { getPublicGalleryAlbums, getPublicNavigation, getPublicNews, getPublicVotingCategoryBySlug, getPublicVotingResults } from '@/server/cms/public-readers';
+import { getPublicGalleryAlbums, getPublicNavigation, getPublicNews, getPublicVotingResults } from '@/server/cms/public-readers';
 import { getPublicParticipantCategory } from '@/server/cms/public-participant-readers';
 
 export const dynamic = 'force-dynamic';
@@ -35,29 +35,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   const votingRoutes = await Promise.all(categories.map(async (category) => {
-    const [voting, results] = await Promise.all([
-      getPublicVotingCategoryBySlug(category.slug),
-      getPublicVotingResults(category.slug),
-    ]);
-    return [
-      ...(voting?.campaign ? [
-        { url: baseUrl + '/voting/' + category.slug, changeFrequency: 'weekly' as const, priority: 0.95 },
-        ...voting.candidates.map((candidate) => ({
-          url: baseUrl + '/voting/' + category.slug + '/' + candidate.slug,
-          changeFrequency: 'weekly' as const,
-          priority: 0.85,
-        })),
-      ] : []),
-      ...(results?.visible ? [
-        { url: baseUrl + '/voting/hasil/' + category.slug, changeFrequency: 'weekly' as const, priority: 0.9 },
-      ] : []),
-    ];
+    const results = await getPublicVotingResults(category.slug);
+    return results?.visible ? [
+      { url: baseUrl + '/voting/hasil/' + category.slug, changeFrequency: 'weekly' as const, priority: 0.9 },
+    ] : [];
   }));
 
   const staticRoutes = [
     ...(navigation.registrationVisible ? [{ url: baseUrl + '/pendaftaran', changeFrequency: 'weekly' as const, priority: 0.9 }] : []),
     { url: baseUrl + '/', changeFrequency: 'monthly' as const, priority: 1.0 },
     { url: baseUrl + '/tentang', changeFrequency: 'monthly' as const, priority: 0.8 },
+    { url: baseUrl + '/voting', changeFrequency: 'weekly' as const, priority: 0.95 },
     { url: baseUrl + '/galeri', changeFrequency: galleries.length ? 'weekly' as const : 'monthly' as const, priority: 0.8 },
   ];
   const eventRoutes = navigation.events.map((event) => ({

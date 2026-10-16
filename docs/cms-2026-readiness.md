@@ -1,5 +1,7 @@
 # Kesiapan CMS untuk edisi 2026
 
+Kesiapan foto terbaru: 70/70 portrait dan closeup semifinalis sudah tersedia di produksi, dengan 40 foto baru dan 30 existing dipertahankan. Semua URL media mengembalikan HTTP 200 dan cocok hash/byte dengan crop WebP lokal. Bio/prestasi/nomor/QR tidak berubah. Bukti `.tmp/portraits-70/production-verification.json`, cakupan `plans/annual-brand-assets.md`. Pernyataan foto belum lengkap di bawah adalah riwayat sebelum operasi 2026-10-16.
+
 Roster resmi terbaru sudah lengkap 70 semifinalis aktif di produksi: JD 15, MD 15, JR 20, MR 20. Rahma MD-08 sudah terisi; empat peserta tanpa respons tetap kosong (Yoga, Fachri, Sonya dan Kautsar). Ada 66 bio dan 193 prestasi, dengan foto/QR existing dipertahankan. Semifinal aktif, final belum dibuka. Bukti `.tmp/semifinal-70/production-verification.json`, cakupan `plans/public-content-cms.md`. Status roster 67 atau Rahma tertunda berikut adalah riwayat sebelum rekonsiliasi daftar resmi.
 
 ## Hasil terbaru 2026-10-16

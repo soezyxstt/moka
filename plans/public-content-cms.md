@@ -1,5 +1,7 @@
 # Plan 014: CMS Dinamis untuk Konten Publik dan Siklus Tahunan
 
+Foto roster resmi 70 semifinalis sudah lengkap di produksi pada 2026-10-16. Empat puluh portrait/closeup ditambahkan dari crop asli Patandang melalui UploadThing dan CMS berizin; 30 foto existing dipertahankan. Seluruh 70 URL/hash lulus verifikasi, konten/nomor/QR tetap sama. Cakupan dan bukti ada di `plans/annual-brand-assets.md` dan `.tmp/portraits-70/production-verification.json`. Catatan foto belum tersedia di bawah merupakan riwayat sebelum pelengkapan ini.
+
 ## Roster resmi 70 semifinalis, 2026-10-16
 
 Sesuai permintaan operator, daftar resmi pada spreadsheet `1dWRPjxpnw-8or_nSeRMia6ZXYi13UxKFULTM7rZAwnI`, tab `Data Semifinalist `, menjadi acuan identitas dan nomor 2026. Produksi kini memiliki tepat 70 semifinalis aktif: JD 15, MD 15, JR 20, MR 20. Rahma MD-08, Sonya MD-20 dan M Kautsar JR-09 ditambahkan; Nadilla dikoreksi MR-21 ke MR-22 dan Nabila MR-27 ke MR-30 pada participant dan stage entry. Kuota tahap diselaraskan menjadi 70 dengan jumlah kategori tersebut. M Nur Ramdhani Hermawan tetap JR-13: tulisan JD-13 pada blok JR merupakan typo yang tidak mengganti identitas/category existing. Varian nama singkat/ejaan daftar dicocokkan dengan identitas terverifikasi; nama dan slug existing dipertahankan.

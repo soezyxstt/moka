@@ -44,11 +44,13 @@ Rapikan pengalaman halaman publik PAMOKA Garut lewat perubahan kecil pada hierar
 - `src/app/profil-finalis/[category]/[name]/page.tsx`
 - `src/app/profil-semifinalis/[category]/page.tsx`
 - `src/app/profil-semifinalis/[category]/[name]/page.tsx`
-- `src/app/voting/page.tsx` (header foto dan informasi kategori, tanpa perubahan campaign, tally, atau pembayaran)
+- `src/hooks/use-search-param.ts`
+- `src/app/voting/page.tsx` (header foto, judul kampanye, rentang waktu, grafik hasil sementara, dan dialog vote)
 - `src/app/voting/voting-categories.tsx`
-- `src/app/voting/[category]/page.tsx`
-- `src/app/voting/[category]/[name]/page.tsx`
+- `src/app/voting/voting-panel.tsx`
+- `src/app/voting/[category]/page.tsx` (redirect ke `/voting?kategori=...`)
 - `src/app/voting/hasil/[category]/page.tsx`
+- `src/app/sitemap.ts`
 - `plans/README.md`
 - `AGENTS.md`
 - `plans/public-site-refresh.md`
@@ -59,7 +61,7 @@ Rapikan pengalaman halaman publik PAMOKA Garut lewat perubahan kecil pada hierar
 - Periksa route beranda, Tentang, satu halaman detail tiap jenis profil, dan halaman terlindungi untuk memastikan perilaku tetap sesuai.
 - Uji navigasi menu, tombol ekspansi profil, kontrol carousel, dialog unduhan, tautan dokumen, dan pemutar video di browser.
 - Periksa lebar dokumen, gambar rusak, nama aksesibel kontrol, serta render awal berita beranda.
-- Periksa tombol kategori pada `/voting`, termasuk navigasi keyboard, status terpilih, dan tautan finalis.
+- Periksa tombol kategori pada `/voting`, persistensi query param `?kategori=`, grafik hasil sementara, serta dialog pencarian peserta dan unduh QR.
 - Jalankan `npm.cmd run lint` dan `npm.cmd run typecheck`.
 
 ## Kondisi berhenti
@@ -73,6 +75,8 @@ Rapikan pengalaman halaman publik PAMOKA Garut lewat perubahan kecil pada hierar
 - Route voting publik membaca kategori edisi aktif. Tanpa kampanye terverifikasi, tampilkan status belum tersedia; jangan membuat transaksi, tally, atau status kampanye.
 
 ## Catatan verifikasi
+
+Penataan ulang `/voting`, 2026-10-16: sesuai permintaan operator, tab kategori kini memakai hook `useSearchParam` berbasis query param `?kategori=` sehingga tetap bertahan saat halaman di-refresh. Di bawah tab kategori tampil judul kampanye, rentang waktu buka voting, grafik batang hasil sementara berbasis Recharts dan `ChartContainer` shadcn UI, serta tombol `Vote sekarang`. Saat tombol diklik, dialog minimal terbuka dengan kolom pencarian nama/nomor peserta; saat peserta dipilih, dialog menampilkan foto, nama, kode peserta, posisi, jumlah vote, dan QRIS dengan tombol `Unduh QR`. Halaman detail voting per peserta dihapus dan `/voting/[category]` dialihkan ke `/voting?kategori=<slug>`.
 
 Koreksi loading, 2026-10-16: source selesai. Sesuai permintaan operator, loading diganti tiga titik 20 px pada mobile dan 24 px pada desktop, bergantian meloncat di tengah viewport. Tanpa teks terlihat, spinner, atau foto; status tetap memiliki label aksesibel. Animasi CSS scoped mengikuti reduced motion tanpa JavaScript tambahan. Opsi loading yang sudah tidak dipakai pada SiteStatus dihapus. Typegen, TypeScript, lint dengan warning TanStack existing, serta diff whitespace lulus memakai Node bawaan Codex karena shim sistem gagal. Browser dan build tidak dijalankan. Plan 013 tetap IN PROGRESS; tidak mengubah data, global tokens, autentikasi, atau deployment.
 

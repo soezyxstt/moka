@@ -172,8 +172,6 @@ export default async function Home() {
     : '/voting';
   const philosophyHeading = cta?.title?.trim() || navigation.edition.slogan || 'Niti Harti, Nanjeur Bukti';
   const philosophyCards = resolvePhilosophyCards(philosophyHeading, cta?.body);
-  const allNewsHref = newsItems[0]?.link ?? '#section-2';
-  const allNewsExternal = /^https?:\/\//i.test(allNewsHref);
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -434,9 +432,7 @@ export default async function Home() {
               </div>
               {newsItems.length ? (
                 <Link
-                  href={allNewsHref}
-                  target={allNewsExternal ? '_blank' : undefined}
-                  rel={allNewsExternal ? 'noopener noreferrer' : undefined}
+                  href="/berita"
                   className="inline-flex w-fit shrink-0 items-center gap-2 font-inter text-sm font-semibold text-brand transition-colors hover:text-highlight-700"
                 >
                   Lihat Semua Berita <ArrowRight className="size-4" aria-hidden="true" />

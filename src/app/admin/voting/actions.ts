@@ -7,9 +7,11 @@ import { getAdminEditionContext } from "@/server/cms/context";
 import {
   closeVotingCampaign,
   createVotingCampaign,
+  deleteVotingCampaign,
   saveVotingTally,
   setVotingResultVisibility,
   startVotingCampaign,
+  updateVotingCampaign,
   updateVotingCampaignStage,
 } from "@/server/voting-operations";
 
@@ -48,6 +50,106 @@ export async function createCampaignAction(formData: FormData) {
   );
   revalidatePath("/admin");
   revalidatePath("/admin/voting");
+  revalidatePath("/voting");
+}
+
+export async function updateCampaignAction(
+  input:
+    | FormData
+    | {
+        campaignId: string;
+        expectedVersion: number;
+        name: string;
+        slug: string;
+        eligibilityStageId?: string;
+        startsAt: string | Date;
+        endsAt: string | Date;
+        pricePerPoint: number;
+      },
+) {
+  const actor = await requirePermission("voting.manage");
+  const editionId = await requireEditionId();
+
+  let campaignId: string;
+  let expectedVersion: number;
+  let name: string;
+  let slug: string;
+  let eligibilityStageId: string | undefined;
+  let startsAt: Date;
+  let endsAt: Date;
+  let pricePerPoint: number;
+
+  if (input instanceof FormData) {
+    campaignId = String(input.get("campaignId") ?? "");
+    expectedVersion = Number(input.get("expectedVersion"));
+    name = String(input.get("name") ?? "");
+    slug = String(input.get("slug") ?? "");
+    const rawStage = input.get("eligibilityStageId");
+    eligibilityStageId = rawStage ? String(rawStage) : undefined;
+    startsAt = parseWibDateTime(input.get("startsAt"));
+    endsAt = parseWibDateTime(input.get("endsAt"));
+    pricePerPoint = Number(input.get("pricePerPoint"));
+  } else {
+    campaignId = input.campaignId;
+    expectedVersion = input.expectedVersion;
+    name = input.name;
+    slug = input.slug;
+    eligibilityStageId = input.eligibilityStageId;
+    startsAt =
+      typeof input.startsAt === "string"
+        ? input.startsAt.includes("T") && !input.startsAt.includes("+") && !input.startsAt.endsWith("Z")
+          ? parseWibDateTime(input.startsAt)
+          : new Date(input.startsAt)
+        : input.startsAt;
+    endsAt =
+      typeof input.endsAt === "string"
+        ? input.endsAt.includes("T") && !input.endsAt.includes("+") && !input.endsAt.endsWith("Z")
+          ? parseWibDateTime(input.endsAt)
+          : new Date(input.endsAt)
+        : input.endsAt;
+    pricePerPoint = input.pricePerPoint;
+  }
+
+  const result = await updateVotingCampaign(
+    database,
+    editionId,
+    {
+      campaignId,
+      expectedVersion,
+      name,
+      slug,
+      eligibilityStageId,
+      startsAt,
+      endsAt,
+      pricePerPoint,
+    },
+    actorFromSession(actor),
+    new Date(),
+  );
+  revalidatePath("/admin");
+  revalidatePath("/admin/voting");
+  revalidatePath("/voting");
+  return result;
+}
+
+export async function deleteCampaignAction(input: {
+  campaignId: string;
+  expectedVersion: number;
+  confirmation: string;
+  reason: string;
+}) {
+  const actor = await requirePermission("voting.manage");
+  const editionId = await requireEditionId();
+  const result = await deleteVotingCampaign(
+    database,
+    editionId,
+    input,
+    actorFromSession(actor),
+  );
+  revalidatePath("/admin");
+  revalidatePath("/admin/voting");
+  revalidatePath("/voting");
+  return result;
 }
 
 export async function updateCampaignStageAction(input: {

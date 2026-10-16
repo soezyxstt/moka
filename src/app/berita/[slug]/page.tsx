@@ -31,8 +31,8 @@ export default async function NewsArticlePage({ params }: NewsPageProps) {
   return (
     <main className="min-h-screen bg-background px-6 pb-16 pt-28 md:px-10 md:pt-36">
       <article className="mx-auto max-w-3xl">
-        <Link href="/" className="mb-6 inline-flex text-sm font-medium text-brand hover:underline">
-          Kembali ke beranda
+        <Link href="/berita" className="mb-6 inline-flex text-sm font-medium text-brand hover:underline">
+          Kembali ke semua berita
         </Link>
         <time
           dateTime={article.publishedAt.toISOString()}
