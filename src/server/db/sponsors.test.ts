@@ -8,6 +8,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import test from "node:test";
 
+import { validateWebsiteUrl } from "../../app/admin/content/sponsors/utils";
 import { appendAuditLog } from "../auth/audit";
 import * as schema from "./schema";
 import {
@@ -346,3 +347,30 @@ test("tindakan sponsor mencatat audit log secara transaksional", async () => {
     client.close();
   }
 });
+
+test("validateWebsiteUrl menormalisasi URL, domain tanpa protokol, handle instagram, dan menolak input tidak valid", () => {
+  // Empty or null
+  assert.equal(validateWebsiteUrl(null), null);
+  assert.equal(validateWebsiteUrl(undefined), null);
+  assert.equal(validateWebsiteUrl(""), null);
+  assert.equal(validateWebsiteUrl("   "), null);
+
+  // Direct URLs
+  assert.equal(validateWebsiteUrl("https://bankbjb.co.id"), "https://bankbjb.co.id/");
+  assert.equal(validateWebsiteUrl("http://garutkab.go.id"), "http://garutkab.go.id/");
+  assert.equal(validateWebsiteUrl("https://instagram.com/mokagarut?igsh=123"), "https://instagram.com/mokagarut?igsh=123");
+
+  // Domain without protocol
+  assert.equal(validateWebsiteUrl("bankbjb.co.id"), "https://bankbjb.co.id/");
+  assert.equal(validateWebsiteUrl("www.bankbjb.co.id"), "https://www.bankbjb.co.id/");
+  assert.equal(validateWebsiteUrl("instagram.com/mokagarut"), "https://instagram.com/mokagarut");
+
+  // @handle shorthand for Instagram
+  assert.equal(validateWebsiteUrl("@mokagarut"), "https://instagram.com/mokagarut");
+
+  // Invalid inputs
+  assert.throws(() => validateWebsiteUrl("bukan url valid"), /URL website tidak valid/);
+  assert.throws(() => validateWebsiteUrl("javascript:alert(1)"), /Format URL tidak valid/);
+  assert.throws(() => validateWebsiteUrl("@"), /Handle sosial tidak boleh kosong/);
+});
+

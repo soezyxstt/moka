@@ -53,7 +53,7 @@ Panduan operasional sistem manajemen konten (CMS) resmi **Paguyuban Mojang Jajak
 1. Buka `/admin/login` dan pilih **Lanjut dengan Google**. Tombol menampilkan status menghubungkan; jika gagal, pesan muncul dan Anda dapat mencoba lagi.
 2. Pengguna baru berstatus **Menunggu**. Pada halaman **Minta akses**, jelaskan kebutuhan Anda dan pilih area yang diperlukan.
 3. Administrator dengan izin `access.approve` akan meninjau dan menyetujui permintaan dari menu **Pengguna** (`/admin/users`).
-4. Satu pengguna dapat memegang kombinasi role (misalnya: *Content Editor*, *Media Manager*, *Voting Operator*).
+4. Satu pengguna dapat memegang kombinasi peran (misalnya: *Editor Konten*, *Operator Voting*, *Auditor*) baik saat persetujuan awal maupun diperbarui kapan saja melalui bagian **Daftar pengguna** di `/admin/users`.
 5. Super admin di-bootstrap manual melalui Turso database sesuai runbook; tidak ada bootstrap otomatis.
 
 Navigasi desktop memakai sidebar terang; pada ponsel, buka menu di kiri atas. Menu **Konten** dapat dibuka atau ditutup. Pilihan edisi berada di header. Dialog, pilihan, tombol, formulir, dan disclosure memakai primitive lokal dengan warna serta font situs publik. Nama kolom dan label dibuat ringkas; batas input, alasan perubahan, serta peringatan penghapusan tetap ditampilkan.
@@ -279,3 +279,6 @@ Pada edisi mulai 2026, buka **Konten > Teks halaman > Pendaftaran**. Tersedia pe
 - Terbitkan setiap bagian setelah ditinjau. Menu publik, footer dan sitemap menampilkan Pendaftaran ketika pengantar edisi terkait sudah terbit dan memiliki judul serta isi. Menerbitkan isian pengantar kosong menyembunyikan halaman dari publik.
 
 Materi awal 2026 mengikuti naskah operator. Cocokkan perubahan jadwal, status sertifikat prestasi, raksukan, biaya dan tautan formulir dengan keputusan panitia sebelum publikasi. Halaman ini menyajikan informasi; data pendaftar tetap dikelola melalui alur existing.
+
+### QRIS bersama 2026
+JD dan MD memakai qris-dewasa-2026.png; JR dan MR memakai qris-rumaja-2026.png. Dua aset tersedia di folder Edisi 2026. Pada Mojang Jajaka, buka peserta, tab QRIS, pilih aset sesuai kelompok dan simpan dengan alasan. Penetapan ini tersimpan per peserta; peserta baru harus dipasangkan melalui formulir yang sama. Aset lama tidak dihapus.

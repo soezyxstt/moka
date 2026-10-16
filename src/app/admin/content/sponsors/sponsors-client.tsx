@@ -44,6 +44,7 @@ import { cn } from "@/lib/utils";
 
 import { createSponsorAction, deleteSponsorAction, toggleSponsorActiveAction, updateSponsorAction } from "./actions";
 import { SPONSOR_TIERS, type SponsorTier } from "./constants";
+import { validateWebsiteUrl } from "./utils";
 
 const sponsorTierLabels: Record<SponsorTier, string> = {
   utama: "Utama",
@@ -180,10 +181,18 @@ export function SponsorsClient({
       return;
     }
 
+    let normalizedWebsite: string | null = null;
+    try {
+      normalizedWebsite = validateWebsiteUrl(formWebsite);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "URL website tidak valid");
+      return;
+    }
+
     const formData = new FormData();
     formData.set("name", name);
     formData.set("tier", formTier);
-    formData.set("website", formWebsite.trim());
+    formData.set("website", normalizedWebsite ?? "");
     formData.set("logoMediaId", formLogoAsset?.id ?? "");
     formData.set("displayOrder", String(formDisplayOrder));
     formData.set("active", editingSponsor ? String(formActive) : "false");
@@ -506,11 +515,15 @@ export function SponsorsClient({
                   />
                 </AdminField>
 
-                <AdminField label="Website (opsional)">
+                <AdminField
+                  label="Website (opsional)"
+                  hint="Tautan lengkap (https://...), nama domain (mis. bankbjb.co.id), atau profil Instagram (@sponsor / instagram.com/sponsor)"
+                >
                   <AdminInput
                     name="website"
-                    type="url"
-                    placeholder="https://contoh.co.id"
+                    type="text"
+                    inputMode="url"
+                    placeholder="https://contoh.co.id atau instagram.com/sponsor"
                     value={formWebsite}
                     onChange={(event) => setFormWebsite(event.target.value)}
                   />

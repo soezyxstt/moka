@@ -1,10 +1,13 @@
 import { and, eq } from "drizzle-orm";
 
-import { accessRequests, adminProfiles, roles, userRoles } from "@/server/db/schema";
+import { accessRequests, adminProfiles } from "@/server/db/schema";
 import { database } from "@/server/db/client";
 
 import { appendAuditLog } from "./audit";
-import { requireRoleAdministrator, requireSession } from "./authorization";
+import { requirePermission, requireRoleAdministrator, requireSession } from "./authorization";
+import { approveAccessRequestWithDb, updateUserRolesWithDb } from "./user-roles";
+
+export { approveAccessRequestWithDb, updateUserRolesWithDb };
 
 export async function submitAccessRequest(reason: string, requestedAreas: string[]) {
   const session = await requireSession();
@@ -45,34 +48,26 @@ export async function submitAccessRequest(reason: string, requestedAreas: string
   });
 }
 
-export async function approveAccessRequest(requestId: string, roleSlug: string, note?: string) {
+export async function approveAccessRequest(requestId: string, roleInput: string | readonly string[], note?: string) {
   const reviewer = await requireRoleAdministrator();
-  if (roleSlug === "super_admin") throw new Error("Super admin can only be assigned through the manual Turso runbook");
-
-  await database.transaction(async (tx) => {
-    const request = await tx.query.accessRequests.findFirst({ where: eq(accessRequests.id, requestId) });
-    if (!request || request.status !== "open") throw new Error("Open access request not found");
-    const role = await tx.query.roles.findFirst({ where: eq(roles.slug, roleSlug) });
-    if (!role || role.slug === "super_admin") throw new Error("Requested role is not assignable");
-
-    await tx.insert(userRoles).values({ userId: request.userId, roleId: role.id, grantedByUserId: reviewer.session.user.id, grantedAt: new Date() })
-      .onConflictDoNothing();
-    await tx.update(adminProfiles).set({ status: "active", statusReason: note?.trim() || null, updatedAt: new Date() })
-      .where(eq(adminProfiles.userId, request.userId));
-    await tx.update(accessRequests).set({ status: "approved", reviewedByUserId: reviewer.session.user.id, reviewNote: note?.trim() || null, reviewedAt: new Date(), updatedAt: new Date() })
-      .where(eq(accessRequests.id, requestId));
-    await appendAuditLog(tx, {
-      actorUserId: reviewer.session.user.id,
-      actorLabel: reviewer.session.user.email,
-      action: "access.request.approve",
-      resourceType: "accessRequest",
-      resourceId: requestId,
-      resourceLabel: request.userId,
-      before: { status: "open" },
-      after: { status: "approved", role: role.slug, profileStatus: "active" },
-      changedFields: ["status", "role", "profileStatus"],
-      source: "admin-users",
-      reason: note?.trim() || null,
-    });
-  });
+  await approveAccessRequestWithDb(
+    database,
+    { id: reviewer.session.user.id, email: reviewer.session.user.email },
+    requestId,
+    roleInput,
+    note,
+  );
 }
+
+export async function updateUserRoles(targetUserId: string, roleInput: string | readonly string[], reason?: string) {
+  const { session } = await requirePermission("access.manage");
+  await updateUserRolesWithDb(
+    database,
+    { id: session.user.id, email: session.user.email },
+    targetUserId,
+    roleInput,
+    reason,
+  );
+}
+
+

@@ -149,3 +149,6 @@ WHERE (mediaId IS NULL AND youtubeId IS NULL)
 ```
 
 Migration 0015 adds per-category selection quotas. Migration 0016 adds stage-entry number and display order. Generate SQL from `src/server/db/schema.ts`, review it, run `db:check`, and never hand-edit migration SQL.
+
+### QRIS 2026, 2026-10-16
+QRIS bersama 2026 selesai melalui CMS pamokagarut.com pada 2026-10-16. Dua PNG 600 x 600 hasil crop presisi asli dengan quiet zone putih, tanpa bingkai, total 343.792 byte, diunggah melalui UI UploadThing. Seluruh 70 peserta terverifikasi: JD 15/MD 15 memakai dewasa, JR 20/MR 20 memakai rumaja. Hash URL cocok, field peserta lainnya dan data 2025 terjaga, integrity ok dan nol FK error. Backup AES-256-GCM/DPAPI lulus restore 49 tabel/6.323 baris. Sebanyak 70 audit participant.qris.update dan dua media upload, tanpa revisi karena action QRIS existing memakai audit. Perubahan kampanye paralel dikecualikan dari klaim preservasi. Bukti .tmp/qris-2026/production-verification.json dan final-mapping.json. Tidak ada migrasi atau deployment. Scan aplikasi pembayaran belum diuji.

@@ -10,22 +10,7 @@ import { database } from "@/server/db/client";
 import { mediaAssets, sponsors } from "@/server/db/schema";
 
 import { SPONSOR_TIERS, type SponsorTier } from "./constants";
-
-function validateWebsiteUrl(urlStr: string | null | undefined): string | null {
-  if (!urlStr) return null;
-  const trimmed = urlStr.trim();
-  if (trimmed.length === 0) return null;
-
-  try {
-    const parsed = new URL(trimmed);
-    if (parsed.protocol !== "https:") {
-      throw new Error();
-    }
-    return trimmed;
-  } catch {
-    throw new Error("URL website tidak valid, gunakan format https://...");
-  }
-}
+import { validateWebsiteUrl } from "./utils";
 
 export async function createSponsorAction(formData: FormData) {
   const actor = await requirePermission("content.edit");
