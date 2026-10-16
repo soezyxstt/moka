@@ -14,6 +14,14 @@ test("nominal pembayaran QRIS menambahkan nomor peserta sebagai kode unik", () =
   assert.throws(() => calculateVotePaymentAmount(0, 2_000, 2));
 });
 
+test("nominal pembayaran QRIS untuk kategori dewasa mengakomodasi offset total rumaja", () => {
+  // Misalnya 40 peserta rumaja (total JR + MR = 40), peserta dewasa nomor 1 mendapatkan offset + 40
+  assert.equal(calculateVotePaymentAmount(20, 2_000, 1, 40), 40_041);
+  assert.equal(calculateVotePaymentAmount(1, 2_000, 15, 40), 2_055);
+  assert.throws(() => calculateVotePaymentAmount(20, 2_000, 1, -1));
+  assert.throws(() => calculateVotePaymentAmount(20, 2_000, 1, 1.5));
+});
+
 test("nominal atau harga kampanye yang tidak valid ditolak", () => {
   assert.throws(() => calculateVotesFromAmount(-1, 2_000));
   assert.throws(() => calculateVotesFromAmount(2_000, 0));

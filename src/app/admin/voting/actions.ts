@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requirePermission } from "@/server/auth/authorization";
+import { getEffectivePermissions, requirePermission } from "@/server/auth/authorization";
 import { database } from "@/server/db/client";
 import { getAdminEditionContext } from "@/server/cms/context";
 import {
@@ -261,11 +261,19 @@ export async function saveBatchTallyAction(input: {
   reason: string;
 }) {
   const actor = await requirePermission("voting.tally");
+  const effectivePermissions = await getEffectivePermissions(actor.session.user.id);
+  const canManageTally =
+    effectivePermissions.has("voting.tally.manage") ||
+    effectivePermissions.has("voting.manage");
+
   const editionId = await requireEditionId();
   const result = await saveVotingTalliesBatch(
     database,
     editionId,
-    input,
+    {
+      ...input,
+      canManageTally,
+    },
     actorFromSession(actor),
     new Date(),
   );
@@ -274,4 +282,5 @@ export async function saveBatchTallyAction(input: {
   revalidatePath("/voting");
   return result;
 }
+
 

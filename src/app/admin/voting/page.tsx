@@ -230,6 +230,10 @@ export default async function VotingAdminPage() {
         auditEntries={auditEntries}
         canManage={effectivePermissions.has("voting.manage")}
         canTally={effectivePermissions.has("voting.tally")}
+        canManageTally={
+          effectivePermissions.has("voting.tally.manage") ||
+          effectivePermissions.has("voting.manage")
+        }
       />
     </AdminPage>
   );

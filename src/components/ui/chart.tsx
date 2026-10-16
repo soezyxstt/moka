@@ -236,11 +236,15 @@ function ChartTooltipContent({
                         {itemConfig?.label || item.name}
                       </span>
                     </div>
-                    {item.value && (
+                    {typeof item.value === "number" ? (
                       <span className="text-foreground font-inter font-medium tabular-nums">
-                        {item.value.toLocaleString()}%
+                        {item.value.toLocaleString("id-ID", { maximumFractionDigits: 2 })}%
                       </span>
-                    )}
+                    ) : item.value ? (
+                      <span className="text-foreground font-inter font-medium tabular-nums">
+                        {String(item.value)}%
+                      </span>
+                    ) : null}
                   </div>
                 </>
               )}

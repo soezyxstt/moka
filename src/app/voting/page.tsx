@@ -20,6 +20,11 @@ export default async function VotingPage() {
   }))).filter((item) => item !== null);
   const poster = assets['site.voting.bg'] ?? details.find(({ category }) => category.poster)?.category.poster;
   const now = new Date();
+  const rumajaCount = details.reduce((total, { category }) => {
+    return category.code === 'JR' || category.code === 'MR'
+      ? total + category.candidates.length
+      : total;
+  }, 0);
   return <main className="relative min-h-screen">
     <section className="relative overflow-hidden bg-brand-900 px-8 pb-12 pt-32 md:px-20 md:pb-16 md:pt-44">
       {poster ? <Image src={poster.url} alt={poster.alt ?? ""} fill preload sizes="100vw" className="object-cover object-center" /> : null}
@@ -30,22 +35,37 @@ export default async function VotingPage() {
       </div>
     </section>
     <Section className="bg-brand-50" contentClassName="mx-auto max-w-7xl">
-      {details.length ? <VotingCategories categories={details.map(({ category, results }) => ({
-        slug: category.slug, name: category.code,
-        content: <VotingPanel {...toPanelProps(category, results, now)} />,
-      }))} /> : <typography.p>Belum ada kategori voting untuk edisi ini.</typography.p>}
+      {details.length ? <VotingCategories categories={details.map(({ category, results }) => {
+        const isDewasa = category.code === 'JD' || category.code === 'MD';
+        const candidateNumberOffset = isDewasa ? rumajaCount : 0;
+        return {
+          slug: category.slug,
+          name: category.code,
+          content: <VotingPanel {...toPanelProps(category, results, now, candidateNumberOffset)} />,
+        };
+      })} /> : <typography.p>Belum ada kategori voting untuk edisi ini.</typography.p>}
     </Section>
   </main>;
 }
 
-function toPanelProps(category: PublicVotingCategory, results: PublicVotingResults, now: Date): VotingPanelProps {
+function toPanelProps(
+  category: PublicVotingCategory,
+  results: PublicVotingResults,
+  now: Date,
+  candidateNumberOffset = 0,
+): VotingPanelProps {
   const campaign = category.campaign ?? results.campaign;
   const price = campaign?.pricePerPoint ?? 0;
   const toVotes = (amount: number) => price > 0 && amount >= 0 ? calculateVotesFromAmount(amount, price) : 0;
+  const totalVotes = results.candidates.reduce((total, candidate) => total + toVotes(candidate.amount), 0);
   const ranked = results.candidates
-    .map((candidate) => ({ id: candidate.id, name: candidate.name, votes: toVotes(candidate.amount) }))
-    .sort((a, b) => b.votes - a.votes || a.name.localeCompare(b.name, 'id'));
-  const byId = new Map(ranked.map((candidate, index) => [candidate.id, { votes: candidate.votes, rank: index + 1 }]));
+    .map((candidate) => {
+      const votes = toVotes(candidate.amount);
+      const percentage = candidate.percentage ?? (totalVotes > 0 ? Math.round((votes / totalVotes) * 10000) / 100 : 0);
+      return { id: candidate.id, name: candidate.name, votes, percentage };
+    })
+    .sort((a, b) => b.percentage - a.percentage || b.votes - a.votes || a.name.localeCompare(b.name, 'id'));
+  const byId = new Map(ranked.map((candidate, index) => [candidate.id, { votes: candidate.votes, percentage: candidate.percentage, rank: index + 1 }]));
   return {
     title: campaign?.name ?? `Voting ${category.code}`,
     period: campaign ? `${formatDate(campaign.startsAt, campaign.timezone)} sampai ${formatDate(campaign.endsAt, campaign.timezone)}` : null,
@@ -53,8 +73,9 @@ function toPanelProps(category: PublicVotingCategory, results: PublicVotingResul
     open: Boolean(category.campaign),
     pricePerVote: price,
     resultsVisible: results.visible,
-    totalVotes: ranked.reduce((total, candidate) => total + candidate.votes, 0),
-    results: ranked.map(({ name, votes }) => ({ name, votes })),
+    totalVotes,
+    results: ranked.map(({ name, percentage }) => ({ name, percentage })),
+    candidateNumberOffset,
     candidates: category.candidates.map((candidate) => ({
       id: candidate.id,
       slug: candidate.slug,
@@ -64,6 +85,7 @@ function toPanelProps(category: PublicVotingCategory, results: PublicVotingResul
       imageUrl: candidate.imageUrl,
       qrImageUrl: candidate.qrImageUrl,
       votes: byId.get(candidate.id)?.votes ?? null,
+      percentage: byId.get(candidate.id)?.percentage ?? null,
       rank: byId.get(candidate.id)?.rank ?? null,
     })),
   };

@@ -157,6 +157,17 @@ const dateTime = new Intl.DateTimeFormat("id-ID", {
   timeZone: "Asia/Jakarta",
 });
 
+function formatVotePercentage(votes: number, total: number) {
+  if (total <= 0 || votes <= 0) return "0%";
+  const pct = (votes / total) * 100;
+  if (pct < 0.01) return "<0,01%";
+  return (
+    pct.toLocaleString("id-ID", {
+      maximumFractionDigits: 2,
+    }) + "%"
+  );
+}
+
 function localInputDate(iso: string) {
   const values = Object.fromEntries(
     new Intl.DateTimeFormat("en-US", {
@@ -220,6 +231,7 @@ type VotingConsoleProps = {
   auditEntries?: VotingAuditEntry[];
   canManage: boolean;
   canTally: boolean;
+  canManageTally?: boolean;
 };
 
 export function VotingConsole(props: VotingConsoleProps) {
@@ -239,6 +251,7 @@ function VotingConsoleInner({
   auditEntries = [],
   canManage,
   canTally,
+  canManageTally = false,
 }: VotingConsoleProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useTabUrl(VOTING_TABS, "input");
@@ -366,6 +379,15 @@ function VotingConsoleInner({
     [allStandings],
   );
 
+  const totalHasilVotes = useMemo(
+    () => hasilStandings.reduce((sum, item) => sum + item.votes, 0),
+    [hasilStandings],
+  );
+  const totalHasilAmount = useMemo(
+    () => hasilStandings.reduce((sum, item) => sum + item.amount, 0),
+    [hasilStandings],
+  );
+
   const pricePerVote = selectedCampaign?.pricePerPoint ?? 0;
 
   const filledEntries = useMemo(() => {
@@ -376,36 +398,48 @@ function VotingConsoleInner({
       name: string;
       code: string;
       totalVotes: number;
-      existingTodayVotes: number;
       projectedVotes: number;
+      deltaVotes: number;
     }> = [];
 
     for (const p of tallyReadyParticipants) {
       const raw = voteInputs[p.id];
-      if (raw === undefined || raw === "") continue;
-      const votes = Number.parseInt(raw.trim(), 10);
-      if (!Number.isSafeInteger(votes) || votes < 0) continue;
-      if (inputMode === "add" && votes === 0) continue;
+      if (raw === undefined || raw === "" || raw === "-") continue;
+      const num = Number.parseInt(raw.trim(), 10);
+      if (Number.isNaN(num)) continue;
 
       const code = formatParticipantCode(p.categoryCode, p.number);
       const totalAmount = participantTotals.get(p.id) ?? 0;
       const totalVotes = pricePerVote > 0 ? calculateVotesFromAmount(totalAmount, pricePerVote) : 0;
       const todayTally = todayTalliesMap.get(p.id);
-      const existingTodayAmount = todayTally?.amount ?? 0;
-      const existingTodayVotes =
-        pricePerVote > 0 ? calculateVotesFromAmount(existingTodayAmount, pricePerVote) : 0;
-      const projectedVotes =
-        inputMode === "add" ? totalVotes + votes : totalVotes - existingTodayVotes + votes;
+
+      let deltaVotes = 0;
+      let projectedVotes = totalVotes;
+      let votesToSubmit = 0;
+
+      if (inputMode === "add") {
+        deltaVotes = num;
+        projectedVotes = totalVotes + deltaVotes;
+        votesToSubmit = num;
+        if (!canManageTally && deltaVotes <= 0) continue;
+        if (deltaVotes === 0 || projectedVotes < 0) continue;
+      } else {
+        projectedVotes = num;
+        deltaVotes = projectedVotes - totalVotes;
+        votesToSubmit = num;
+        if (projectedVotes < 0) continue;
+        if (deltaVotes === 0) continue;
+      }
 
       list.push({
         participantId: p.id,
-        votes,
+        votes: votesToSubmit,
         expectedVersion: todayTally?.version ?? 0,
         name: p.name,
         code,
         totalVotes,
-        existingTodayVotes,
         projectedVotes,
+        deltaVotes,
       });
     }
 
@@ -417,13 +451,14 @@ function VotingConsoleInner({
     participantTotals,
     todayTalliesMap,
     pricePerVote,
+    canManageTally,
   ]);
 
-  const totalDraftVotes = useMemo(
-    () => filledEntries.reduce((sum, item) => sum + item.votes, 0),
+  const totalNetDeltaVotes = useMemo(
+    () => filledEntries.reduce((sum, item) => sum + item.deltaVotes, 0),
     [filledEntries],
   );
-  const totalDraftAmount = totalDraftVotes * pricePerVote;
+  const totalNetDeltaAmount = totalNetDeltaVotes * pricePerVote;
 
   const filteredInputParticipants = useMemo(() => {
     const q = inputSearchQuery.trim().toLowerCase();
@@ -441,23 +476,48 @@ function VotingConsoleInner({
 
   function handleVoteInputChange(participantId: string, value: string) {
     setVoteInputs((prev) => {
-      if (value === "" || value === "0") {
+      if (value === "") {
         const next = { ...prev };
         delete next[participantId];
         return next;
       }
+      if (canManageTally && inputMode === "add" && value === "-") {
+        return { ...prev, [participantId]: "-" };
+      }
       const num = Number.parseInt(value, 10);
-      if (Number.isNaN(num) || num < 0) return prev;
+      if (Number.isNaN(num)) return prev;
+      if (!canManageTally && num <= 0) return prev;
+      if (inputMode === "set" && num < 0) return prev;
       return { ...prev, [participantId]: String(num) };
     });
   }
 
-  function handleIncrement(participantId: string, step: number) {
+  function handleIncrement(participantId: string, step: number, currentTotal: number) {
     setVoteInputs((prev) => {
-      const current = Number.parseInt(prev[participantId] ?? "0", 10) || 0;
-      const nextVal = Math.max(0, current + step);
-      return { ...prev, [participantId]: String(nextVal) };
+      if (inputMode === "set") {
+        const current =
+          prev[participantId] !== undefined
+            ? Number.parseInt(prev[participantId]!, 10) || 0
+            : currentTotal;
+        const nextVal = Math.max(0, current + step);
+        return { ...prev, [participantId]: String(nextVal) };
+      } else {
+        const current = Number.parseInt(prev[participantId] ?? "0", 10) || 0;
+        const nextVal = canManageTally
+          ? Math.max(-currentTotal, current + step)
+          : Math.max(0, current + step);
+        if (nextVal === 0) {
+          const next = { ...prev };
+          delete next[participantId];
+          return next;
+        }
+        return { ...prev, [participantId]: String(nextVal) };
+      }
     });
+  }
+
+  function handleSetZero(participantId: string) {
+    setVoteInputs((prev) => ({ ...prev, [participantId]: "0" }));
   }
 
   function handleClearParticipantInput(participantId: string) {
@@ -845,32 +905,44 @@ function VotingConsoleInner({
                       <h3 className="font-manrope text-base font-semibold text-brand-900">
                         Input voting
                       </h3>
-                      <div className="inline-flex rounded-md border border-brand-100 bg-brand-50/50 p-0.5">
-                        <button
-                          type="button"
-                          onClick={() => setInputMode("add")}
-                          className={cn(
-                            "rounded px-2.5 py-1 text-xs font-semibold transition-colors",
-                            inputMode === "add"
-                              ? "bg-brand text-canvas"
-                              : "text-brand-800 hover:bg-brand-100/60",
-                          )}
-                        >
-                          Tambah vote
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setInputMode("set")}
-                          className={cn(
-                            "rounded px-2.5 py-1 text-xs font-semibold transition-colors",
-                            inputMode === "set"
-                              ? "bg-brand text-canvas"
-                              : "text-brand-800 hover:bg-brand-100/60",
-                          )}
-                        >
-                          Atur total
-                        </button>
-                      </div>
+                      {canManageTally ? (
+                        <div className="inline-flex rounded-md border border-brand-100 bg-brand-50/50 p-0.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setInputMode("add");
+                              setVoteInputs({});
+                            }}
+                            className={cn(
+                              "rounded px-2.5 py-1 text-xs font-semibold transition-colors",
+                              inputMode === "add"
+                                ? "bg-brand text-canvas"
+                                : "text-brand-800 hover:bg-brand-100/60",
+                            )}
+                          >
+                            Tambah vote
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setInputMode("set");
+                              setVoteInputs({});
+                            }}
+                            className={cn(
+                              "rounded px-2.5 py-1 text-xs font-semibold transition-colors",
+                              inputMode === "set"
+                                ? "bg-brand text-canvas"
+                                : "text-brand-800 hover:bg-brand-100/60",
+                            )}
+                          >
+                            Atur total
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="rounded bg-brand-50 px-2 py-0.5 font-manrope text-xs font-medium text-brand-800">
+                          Mode tambah vote
+                        </span>
+                      )}
                     </div>
 
                     {/* Filter & Search Toolbar */}
@@ -946,25 +1018,39 @@ function VotingConsoleInner({
                           const totalVotes =
                             pricePerVote > 0 ? calculateVotesFromAmount(totalAmount, pricePerVote) : 0;
                           const rawDraft = voteInputs[participant.id];
-                          const draftVotes = rawDraft ? Number.parseInt(rawDraft, 10) || 0 : 0;
-                          const hasInput = rawDraft !== undefined && rawDraft !== "";
-                          const todayTally = todayTalliesMap.get(participant.id);
-                          const existingTodayAmount = todayTally?.amount ?? 0;
-                          const existingTodayVotes =
-                            pricePerVote > 0 ? calculateVotesFromAmount(existingTodayAmount, pricePerVote) : 0;
-                          const projectedVotes =
-                            inputMode === "add"
-                              ? totalVotes + draftVotes
-                              : totalVotes - existingTodayVotes + draftVotes;
+                          const hasInput = rawDraft !== undefined && rawDraft !== "" && rawDraft !== "-";
+                          const draftNum = hasInput ? Number.parseInt(rawDraft, 10) : 0;
+
+                          let projectedVotes = totalVotes;
+                          let deltaVotes = 0;
+                          let hasChange = false;
+
+                          if (hasInput && !Number.isNaN(draftNum)) {
+                            if (inputMode === "add") {
+                              deltaVotes = draftNum;
+                              projectedVotes = totalVotes + deltaVotes;
+                              hasChange = canManageTally
+                                ? deltaVotes !== 0 && projectedVotes >= 0
+                                : deltaVotes > 0;
+                            } else {
+                              projectedVotes = draftNum;
+                              deltaVotes = projectedVotes - totalVotes;
+                              hasChange = projectedVotes >= 0 && deltaVotes !== 0;
+                            }
+                          }
 
                           return (
                             <div
                               key={participant.id}
                               className={cn(
                                 "rounded-lg border p-3 transition-colors",
-                                hasInput
-                                  ? "border-brand-300 bg-brand-50/50"
-                                  : "border-border bg-card hover:bg-brand-50/20",
+                                hasChange
+                                  ? deltaVotes < 0
+                                    ? "border-warning-300 bg-warning-50/40"
+                                    : "border-brand-300 bg-brand-50/50"
+                                  : hasInput
+                                    ? "border-border bg-brand-50/20"
+                                    : "border-border bg-card hover:bg-brand-50/20",
                               )}
                             >
                               <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
@@ -981,9 +1067,26 @@ function VotingConsoleInner({
                                     <span>
                                       Total: <strong className="text-brand-900">{totalVotes.toLocaleString("id-ID")}</strong> vote
                                     </span>
-                                    {hasInput && draftVotes > 0 ? (
-                                      <span className="font-semibold text-brand">
-                                        → {projectedVotes.toLocaleString("id-ID")} vote ({inputMode === "add" ? `+${draftVotes}` : `set ${draftVotes}`} · {currency.format(draftVotes * pricePerVote)})
+                                    {hasChange ? (
+                                      <span
+                                        className={cn(
+                                          "font-semibold",
+                                          deltaVotes >= 0 ? "text-brand-700" : "text-warning-700",
+                                        )}
+                                      >
+                                        → {projectedVotes.toLocaleString("id-ID")} vote (
+                                        {deltaVotes >= 0
+                                          ? `+${deltaVotes.toLocaleString("id-ID")}`
+                                          : deltaVotes.toLocaleString("id-ID")}{" "}
+                                        ·{" "}
+                                        {deltaVotes >= 0
+                                          ? currency.format(deltaVotes * pricePerVote)
+                                          : `-${currency.format(Math.abs(deltaVotes * pricePerVote))}`}
+                                        )
+                                      </span>
+                                    ) : hasInput && inputMode === "set" && draftNum === totalVotes ? (
+                                      <span className="text-muted-foreground">
+                                        (tetap {totalVotes.toLocaleString("id-ID")} vote)
                                       </span>
                                     ) : null}
                                   </div>
@@ -992,9 +1095,9 @@ function VotingConsoleInner({
                                 <div className="flex flex-wrap items-center gap-1.5 sm:justify-end">
                                   <div className="flex items-center gap-1">
                                     <AdminInput
-                                      type="number"
-                                      min="0"
-                                      placeholder="0"
+                                      type={inputMode === "add" && canManageTally ? "text" : "number"}
+                                      min={inputMode === "set" ? "0" : undefined}
+                                      placeholder={inputMode === "set" ? String(totalVotes) : "0"}
                                       value={voteInputs[participant.id] ?? ""}
                                       onChange={(event) =>
                                         handleVoteInputChange(participant.id, event.target.value)
@@ -1003,23 +1106,49 @@ function VotingConsoleInner({
                                     />
                                     <span className="text-xs text-muted-foreground">vote</span>
                                   </div>
-                                  <div className="flex items-center gap-1">
+                                  <div className="flex flex-wrap items-center gap-1">
+                                    {canManageTally
+                                      ? [-10, -5, -1].map((step) => (
+                                          <button
+                                            key={step}
+                                            type="button"
+                                            onClick={() =>
+                                              handleIncrement(participant.id, step, totalVotes)
+                                            }
+                                            className="h-8 rounded border border-border bg-background px-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:px-2"
+                                          >
+                                            {step}
+                                          </button>
+                                        ))
+                                      : null}
                                     {[1, 5, 10].map((step) => (
                                       <button
                                         key={step}
                                         type="button"
-                                        onClick={() => handleIncrement(participant.id, step)}
-                                        className="h-8 rounded border border-brand-200 bg-background px-2 text-xs font-semibold text-brand-800 transition-colors hover:bg-brand-50"
+                                        onClick={() =>
+                                          handleIncrement(participant.id, step, totalVotes)
+                                        }
+                                        className="h-8 rounded border border-brand-200 bg-background px-1.5 text-xs font-semibold text-brand-800 transition-colors hover:bg-brand-50 sm:px-2"
                                       >
                                         +{step}
                                       </button>
                                     ))}
+                                    {canManageTally && inputMode === "set" ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleSetZero(participant.id)}
+                                        className="h-8 rounded border border-border bg-background px-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-destructive sm:px-2"
+                                        title="Atur jadi 0"
+                                      >
+                                        0
+                                      </button>
+                                    ) : null}
                                     {hasInput ? (
                                       <button
                                         type="button"
                                         onClick={() => handleClearParticipantInput(participant.id)}
                                         className="h-8 rounded border border-border px-2 text-xs text-muted-foreground hover:bg-muted"
-                                        title="Hapus"
+                                        title="Batal"
                                       >
                                         ×
                                       </button>
@@ -1038,20 +1167,33 @@ function VotingConsoleInner({
                   {filledEntries.length > 0 ? (
                     <div className="sticky bottom-3 z-20 rounded-xl border border-brand-200 bg-card/95 p-3.5 shadow-xl backdrop-blur sm:p-4">
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
+                        <div className="min-w-0">
                           <p className="font-manrope text-sm font-semibold text-brand-900">
-                            {filledEntries.length} peserta akan diperbarui · Total {inputMode === "add" ? `+${totalDraftVotes}` : `${totalDraftVotes}`} vote
+                            {filledEntries.length} peserta akan diperbarui · Perubahan bersih:{" "}
+                            <span
+                              className={
+                                totalNetDeltaVotes >= 0 ? "text-brand-700" : "text-warning-700"
+                              }
+                            >
+                              {totalNetDeltaVotes >= 0
+                                ? `+${totalNetDeltaVotes.toLocaleString("id-ID")}`
+                                : totalNetDeltaVotes.toLocaleString("id-ID")}{" "}
+                              vote
+                            </span>
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            Nominal: {currency.format(totalDraftAmount)}
+                            Nominal:{" "}
+                            {totalNetDeltaAmount >= 0
+                              ? `+${currency.format(totalNetDeltaAmount)}`
+                              : `-${currency.format(Math.abs(totalNetDeltaAmount))}`}
                           </p>
                         </div>
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                           <AdminInput
                             value={inputReason}
                             onChange={(event) => setInputReason(event.target.value)}
-                            placeholder="Catatan audit (wajib)"
-                            className="h-9 w-full text-xs sm:w-64"
+                            placeholder="Catatan audit (wajib), contoh: Koreksi input / transfer"
+                            className="h-9 w-full text-xs sm:w-72"
                           />
                           <div className="flex items-center gap-2">
                             <Button
@@ -1272,8 +1414,17 @@ function VotingConsoleInner({
                       Podium peringkat voting
                     </h3>
                     <p className="text-xs text-muted-foreground">
-                      Total suara terkumpul: {totalCampaignVotes.toLocaleString("id-ID")} vote (
-                      {currency.format(totalCampaignAmount)})
+                      {hasilCategory === "ALL" ? (
+                        <>
+                          Total suara terkumpul: {totalCampaignVotes.toLocaleString("id-ID")} vote (
+                          {currency.format(totalCampaignAmount)})
+                        </>
+                      ) : (
+                        <>
+                          Total suara kategori {hasilCategory}: {totalHasilVotes.toLocaleString("id-ID")} vote (
+                          {currency.format(totalHasilAmount)}) · Total kampanye: {totalCampaignVotes.toLocaleString("id-ID")} vote
+                        </>
+                      )}
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-1.5">
@@ -1364,23 +1515,38 @@ function VotingConsoleInner({
                                 </p>
                               </div>
                               <div className="mt-3 border-t border-current/10 pt-2.5 tabular-nums">
-                                <p
-                                  className={cn(
-                                    "font-manrope text-xl font-bold",
-                                    isFirst ? "text-highlight-300 sm:text-2xl" : "text-brand-900",
-                                  )}
-                                >
-                                  {p.votes.toLocaleString("id-ID")}{" "}
-                                  <span className="text-xs font-normal">vote</span>
-                                </p>
-                                <p
-                                  className={cn(
-                                    "text-[11px]",
-                                    isFirst ? "text-canvas/75" : "text-muted-foreground",
-                                  )}
-                                >
-                                  {currency.format(p.amount)}
-                                </p>
+                                <div className="flex items-baseline justify-between gap-2">
+                                  <div>
+                                    <p
+                                      className={cn(
+                                        "font-manrope text-xl font-bold",
+                                        isFirst ? "text-highlight-300 sm:text-2xl" : "text-brand-900",
+                                      )}
+                                    >
+                                      {p.votes.toLocaleString("id-ID")}{" "}
+                                      <span className="text-xs font-normal">vote</span>
+                                    </p>
+                                    <p
+                                      className={cn(
+                                        "text-[11px]",
+                                        isFirst ? "text-canvas/75" : "text-muted-foreground",
+                                      )}
+                                    >
+                                      {currency.format(p.amount)}
+                                    </p>
+                                  </div>
+                                  <div className="text-right">
+                                    <span
+                                      className={cn(
+                                        "font-manrope text-base font-bold sm:text-lg",
+                                        isFirst ? "text-highlight-300" : "text-brand-900",
+                                      )}
+                                      title="Persentase suara"
+                                    >
+                                      {formatVotePercentage(p.votes, totalHasilVotes)}
+                                    </span>
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           );
@@ -1392,10 +1558,9 @@ function VotingConsoleInner({
                       <div className="divide-y divide-border rounded-lg border border-border">
                         {hasilStandings.slice(3).map((participant, idx) => {
                           const rank = idx + 4;
-                          const maxVotes = hasilStandings[0]?.votes || 1;
                           const pct =
-                            maxVotes > 0
-                              ? Math.min(100, Math.round((participant.votes / maxVotes) * 100))
+                            totalHasilVotes > 0
+                              ? Math.min(100, (participant.votes / totalHasilVotes) * 100)
                               : 0;
                           return (
                             <div
@@ -1419,16 +1584,19 @@ function VotingConsoleInner({
                                     <div className="mt-1 h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-brand-50">
                                       <div
                                         className="h-full bg-brand"
-                                        style={{ width: `${pct}%` }}
+                                        style={{ width: `${Math.max(1, pct)}%` }}
                                       />
                                     </div>
                                   ) : null}
                                 </div>
                               </div>
                               <div className="shrink-0 text-right tabular-nums">
-                                <span className="font-manrope text-sm font-semibold text-brand-900">
+                                <p className="font-manrope text-sm font-semibold text-brand-900">
                                   {participant.votes.toLocaleString("id-ID")} vote
-                                </span>
+                                </p>
+                                <p className="text-[11px] font-medium text-muted-foreground">
+                                  {formatVotePercentage(participant.votes, totalHasilVotes)}
+                                </p>
                               </div>
                             </div>
                           );

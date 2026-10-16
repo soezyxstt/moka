@@ -12,6 +12,7 @@ export function calculateVotePaymentAmount(
   voteCount: number,
   pricePerVote: number,
   participantNumber: number,
+  offset = 0,
 ) {
   if (!Number.isSafeInteger(voteCount) || voteCount <= 0) {
     throw new Error("Jumlah vote harus berupa bilangan bulat positif");
@@ -22,7 +23,10 @@ export function calculateVotePaymentAmount(
   if (!Number.isSafeInteger(participantNumber) || participantNumber < 0) {
     throw new Error("Nomor peserta tidak valid");
   }
-  return pricePerVote * voteCount + participantNumber;
+  if (!Number.isSafeInteger(offset) || offset < 0) {
+    throw new Error("Offset nomor peserta tidak valid");
+  }
+  return pricePerVote * voteCount + offset + participantNumber;
 }
 
 export function formatLocalDate(date: Date, timeZone: string) {

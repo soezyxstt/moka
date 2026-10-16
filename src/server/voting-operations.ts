@@ -734,6 +734,7 @@ export async function saveVotingTalliesBatch(
       expectedVersion?: number;
     }>;
     reason: string;
+    canManageTally?: boolean;
   },
   actor: AuditActor,
   now: Date,
@@ -756,8 +757,12 @@ export async function saveVotingTalliesBatch(
 
     const validEntries = input.entries.filter((entry) => {
       const mode = entry.mode ?? "add";
-      if (!Number.isSafeInteger(entry.votes) || entry.votes < 0) return false;
+      if (!Number.isSafeInteger(entry.votes)) return false;
+      if (!input.canManageTally && (mode === "set" || entry.votes <= 0)) {
+        throw new Error("Izin voting.tally.manage diperlukan untuk mengatur atau mengurangi vote");
+      }
       if (mode === "add" && entry.votes === 0) return false;
+      if (mode === "set" && entry.votes < 0) return false;
       return true;
     });
 
@@ -788,18 +793,30 @@ export async function saveVotingTalliesBatch(
 
     const snapshotMap = new Map(snapshots.map((s) => [s.participantId, s]));
 
-    const existingTallies = await tx
+    const allExistingTallies = await tx
       .select()
       .from(voteDailyTallies)
       .where(
         and(
           eq(voteDailyTallies.campaignId, campaign.id),
           inArray(voteDailyTallies.participantId, participantIds),
-          eq(voteDailyTallies.localDate, localDate),
         ),
       );
 
-    const tallyMap = new Map(existingTallies.map((t) => [t.participantId, t]));
+    const todayTallyMap = new Map<string, typeof voteDailyTallies.$inferSelect>();
+    const otherDaysAmountMap = new Map<string, number>();
+
+    for (const tally of allExistingTallies) {
+      if (tally.localDate === localDate) {
+        todayTallyMap.set(tally.participantId, tally);
+      } else {
+        otherDaysAmountMap.set(
+          tally.participantId,
+          (otherDaysAmountMap.get(tally.participantId) ?? 0) + tally.amount,
+        );
+      }
+    }
+
     const results = [];
 
     for (const entry of validEntries) {
@@ -813,7 +830,7 @@ export async function saveVotingTalliesBatch(
         throw new Error(`Peserta ${snapshot.name} belum memiliki gambar QRIS yang siap`);
       }
 
-      const before = tallyMap.get(entry.participantId);
+      const before = todayTallyMap.get(entry.participantId);
       if (
         entry.expectedVersion !== undefined &&
         (before?.version ?? 0) !== entry.expectedVersion
@@ -821,17 +838,58 @@ export async function saveVotingTalliesBatch(
         throw new Error(`Data tally untuk ${snapshot.name} telah diubah. Muat ulang halaman.`);
       }
 
+      const otherDaysAmount = otherDaysAmountMap.get(entry.participantId) ?? 0;
+      const currentTotalAmount = otherDaysAmount + (before?.amount ?? 0);
       const mode = entry.mode ?? "add";
-      let targetAmount: number;
+
+      let targetTodayAmount: number;
+      let targetTotalAmount: number;
+
       if (mode === "set") {
-        targetAmount = entry.votes * campaign.pricePerPoint;
+        if (!input.canManageTally) {
+          throw new Error("Izin voting.tally.manage diperlukan untuk mengatur total vote");
+        }
+        targetTotalAmount = entry.votes * campaign.pricePerPoint;
+        targetTodayAmount = targetTotalAmount - otherDaysAmount;
       } else {
         const delta = entry.votes * campaign.pricePerPoint;
-        targetAmount = (before?.amount ?? 0) + delta;
+        if (!input.canManageTally && delta < 0) {
+          throw new Error("Izin voting.tally.manage diperlukan untuk mengurangi vote");
+        }
+        targetTotalAmount = currentTotalAmount + delta;
+        targetTodayAmount = (before?.amount ?? 0) + delta;
       }
 
-      if (!Number.isSafeInteger(targetAmount) || targetAmount < 0) {
-        throw new Error(`Jumlah vote untuk ${snapshot.name} tidak valid`);
+      if (!Number.isSafeInteger(targetTotalAmount) || targetTotalAmount < 0) {
+        throw new Error(`Total vote untuk ${snapshot.name} tidak boleh kurang dari 0`);
+      }
+
+      // If target today amount is negative (e.g. setting total lower than votes from previous days),
+      // set today to 0 and deduct the difference from other days' tallies.
+      if (targetTodayAmount < 0) {
+        let deficit = -targetTodayAmount;
+        targetTodayAmount = 0;
+
+        const otherTallies = allExistingTallies
+          .filter((t) => t.participantId === entry.participantId && t.localDate !== localDate)
+          .sort((a, b) => b.localDate.localeCompare(a.localDate));
+
+        for (const prevTally of otherTallies) {
+          if (deficit <= 0) break;
+          const reduction = Math.min(prevTally.amount, deficit);
+          const newAmount = prevTally.amount - reduction;
+          deficit -= reduction;
+
+          await tx
+            .update(voteDailyTallies)
+            .set({ amount: newAmount, version: prevTally.version + 1, updatedAt: now })
+            .where(
+              and(
+                eq(voteDailyTallies.id, prevTally.id),
+                eq(voteDailyTallies.version, prevTally.version),
+              ),
+            );
+        }
       }
 
       const id = before?.id ?? crypto.randomUUID();
@@ -840,7 +898,7 @@ export async function saveVotingTalliesBatch(
       if (before) {
         const [updated] = await tx
           .update(voteDailyTallies)
-          .set({ amount: targetAmount, version: nextVersion, updatedAt: now })
+          .set({ amount: targetTodayAmount, version: nextVersion, updatedAt: now })
           .where(
             and(
               eq(voteDailyTallies.id, before.id),
@@ -857,17 +915,15 @@ export async function saveVotingTalliesBatch(
           campaignId: campaign.id,
           participantId: entry.participantId,
           localDate,
-          amount: targetAmount,
+          amount: targetTodayAmount,
           version: nextVersion,
           createdAt: now,
           updatedAt: now,
         });
       }
 
-      const votes = calculateVotesFromAmount(targetAmount, campaign.pricePerPoint);
-      const beforeVotes = before
-        ? calculateVotesFromAmount(before.amount, campaign.pricePerPoint)
-        : null;
+      const finalTotalVotes = calculateVotesFromAmount(targetTotalAmount, campaign.pricePerPoint);
+      const beforeTotalVotes = calculateVotesFromAmount(currentTotalAmount, campaign.pricePerPoint);
 
       await appendAuditLog(tx, {
         actorUserId: actor.userId,
@@ -876,27 +932,25 @@ export async function saveVotingTalliesBatch(
         resourceType: "voteDailyTally",
         resourceId: id,
         resourceLabel: snapshot.name,
-        before: before
-          ? {
-              campaignId: campaign.id,
-              participantId: entry.participantId,
-              localDate,
-              amount: before.amount,
-              votes: beforeVotes,
-              version: before.version,
-            }
-          : null,
+        before: {
+          campaignId: campaign.id,
+          participantId: entry.participantId,
+          localDate,
+          amount: before?.amount ?? 0,
+          totalAmount: currentTotalAmount,
+          votes: beforeTotalVotes,
+          version: before?.version ?? 0,
+        },
         after: {
           campaignId: campaign.id,
           participantId: entry.participantId,
           localDate,
-          amount: targetAmount,
-          votes,
+          amount: targetTodayAmount,
+          totalAmount: targetTotalAmount,
+          votes: finalTotalVotes,
           version: nextVersion,
         },
-        changedFields: before
-          ? ["amount", "votes", "version"]
-          : ["campaignId", "participantId", "localDate", "amount", "votes", "version"],
+        changedFields: ["amount", "votes", "version"],
         source: "admin-voting",
         reason,
       });

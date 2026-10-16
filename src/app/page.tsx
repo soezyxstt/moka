@@ -231,7 +231,7 @@ export default async function Home() {
                   alt={heroImage.alt ?? ''}
                   width={1600}
                   height={900}
-                  className="h-auto max-h-[65svh] w-full object-contain"
+                  className="h-auto max-h-[65svh] w-full object-contain translate-y-[10vh]"
                   preload
                   sizes="(max-width: 768px) calc(100vw - 64px), (max-width: 1280px) 50vw, 672px"
                 />

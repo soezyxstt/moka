@@ -18,6 +18,7 @@ export type VotingPanelCandidate = {
   imageUrl: string | null;
   qrImageUrl: string | null;
   votes: number | null;
+  percentage: number | null;
   rank: number | null;
 };
 
@@ -29,14 +30,27 @@ export type VotingPanelProps = {
   pricePerVote: number;
   resultsVisible: boolean;
   totalVotes: number;
-  results: { name: string; votes: number }[];
+  results: { name: string; percentage: number }[];
   candidates: VotingPanelCandidate[];
+  candidateNumberOffset?: number;
 };
 
-const chartConfig = { votes: { label: 'Vote', color: 'var(--chart-1)' } } satisfies ChartConfig;
+const chartConfig = { percentage: { label: 'Persentase', color: 'var(--chart-1)' } } satisfies ChartConfig;
 const number = new Intl.NumberFormat('id-ID');
+const percentFormat = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 
-export function VotingPanel({ title, period, status, open, pricePerVote, resultsVisible, totalVotes, results, candidates }: VotingPanelProps) {
+export function VotingPanel({
+  title,
+  period,
+  status,
+  open,
+  pricePerVote,
+  resultsVisible,
+  totalVotes,
+  results,
+  candidates,
+  candidateNumberOffset = 0,
+}: VotingPanelProps) {
   return <div className="mt-8">
     <div className="flex flex-col gap-6 border-b border-brand-200 pb-8 md:flex-row md:items-end md:justify-between">
       <div>
@@ -44,7 +58,13 @@ export function VotingPanel({ title, period, status, open, pricePerVote, results
         <p className="mt-3 flex items-center gap-2 text-left text-neutral-600"><CalendarDays className="size-4 shrink-0" aria-hidden />{period ?? 'Jadwal voting belum tersedia'}</p>
         <p className="mt-1 text-sm text-neutral-600">{status}</p>
       </div>
-      <VoteDialog open={open} pricePerVote={pricePerVote} candidates={candidates} resultsVisible={resultsVisible} />
+      <VoteDialog
+        open={open}
+        pricePerVote={pricePerVote}
+        candidates={candidates}
+        resultsVisible={resultsVisible}
+        candidateNumberOffset={candidateNumberOffset}
+      />
     </div>
     <div className="mt-8">
       <div className="flex items-end justify-between gap-4">
@@ -52,12 +72,12 @@ export function VotingPanel({ title, period, status, open, pricePerVote, results
         {resultsVisible ? <p className="text-sm text-neutral-600">{number.format(totalVotes)} vote</p> : null}
       </div>
       {resultsVisible && totalVotes > 0 ? <ChartContainer config={chartConfig} className="mt-6 aspect-auto w-full" style={{ height: Math.max(160, results.length * 40) }}>
-        <BarChart accessibilityLayer data={results} layout="vertical" margin={{ left: 0, right: 48 }}>
-          <XAxis type="number" dataKey="votes" hide />
+        <BarChart accessibilityLayer data={results} layout="vertical" margin={{ left: 0, right: 56 }}>
+          <XAxis type="number" dataKey="percentage" hide />
           <YAxis type="category" dataKey="name" width={150} tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value: string) => value.length > 20 ? `${value.slice(0, 19)}...` : value} />
           <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
-          <Bar dataKey="votes" fill="var(--color-votes)" radius={4}>
-            <LabelList dataKey="votes" position="right" offset={8} className="fill-foreground" fontSize={12} formatter={(value: ReactNode) => number.format(Number(value))} />
+          <Bar dataKey="percentage" fill="var(--color-percentage)" radius={4}>
+            <LabelList dataKey="percentage" position="right" offset={8} className="fill-foreground" fontSize={12} formatter={(value: ReactNode) => `${percentFormat.format(Number(value))}%`} />
           </Bar>
         </BarChart>
       </ChartContainer> : <p className="mt-4 text-left text-neutral-600">{resultsVisible ? 'Belum ada vote tercatat untuk kategori ini.' : 'Hasil sementara belum ditampilkan panitia.'}</p>}
@@ -65,7 +85,19 @@ export function VotingPanel({ title, period, status, open, pricePerVote, results
   </div>;
 }
 
-function VoteDialog({ open, pricePerVote, candidates, resultsVisible }: { open: boolean; pricePerVote: number; candidates: VotingPanelCandidate[]; resultsVisible: boolean }) {
+function VoteDialog({
+  open,
+  pricePerVote,
+  candidates,
+  resultsVisible,
+  candidateNumberOffset = 0,
+}: {
+  open: boolean;
+  pricePerVote: number;
+  candidates: VotingPanelCandidate[];
+  resultsVisible: boolean;
+  candidateNumberOffset?: number;
+}) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -83,7 +115,17 @@ function VoteDialog({ open, pricePerVote, candidates, resultsVisible }: { open: 
     <Button size="lg" disabled={!open || !candidates.length} onClick={() => setDialogOpen(true)} className="w-full justify-center gap-2 disabled:opacity-60 md:w-auto"><Vote className="size-4" aria-hidden />Vote sekarang</Button>
     <Dialog open={dialogOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-md" data-lenis-prevent>
-        {selected ? <CandidateDetail key={selected.id} candidate={selected} total={candidates.length} pricePerVote={pricePerVote} resultsVisible={resultsVisible} onBack={() => setSelectedId(null)} /> : <>
+        {selected ? (
+          <CandidateDetail
+            key={selected.id}
+            candidate={selected}
+            total={candidates.length}
+            pricePerVote={pricePerVote}
+            resultsVisible={resultsVisible}
+            candidateNumberOffset={candidateNumberOffset}
+            onBack={() => setSelectedId(null)}
+          />
+        ) : <>
           <DialogHeader className="text-left">
             <DialogTitle>Pilih peserta</DialogTitle>
             <DialogDescription>Cari nama atau nomor peserta.</DialogDescription>
@@ -107,7 +149,21 @@ function VoteDialog({ open, pricePerVote, candidates, resultsVisible }: { open: 
   </>;
 }
 
-function CandidateDetail({ candidate, total, pricePerVote, resultsVisible, onBack }: { candidate: VotingPanelCandidate; total: number; pricePerVote: number; resultsVisible: boolean; onBack: () => void }) {
+function CandidateDetail({
+  candidate,
+  total,
+  pricePerVote,
+  resultsVisible,
+  candidateNumberOffset = 0,
+  onBack,
+}: {
+  candidate: VotingPanelCandidate;
+  total: number;
+  pricePerVote: number;
+  resultsVisible: boolean;
+  candidateNumberOffset?: number;
+  onBack: () => void;
+}) {
   const [voteCountInput, setVoteCountInput] = useState('1');
   const [confirmedVotes, setConfirmedVotes] = useState<number | null>(null);
   const [downloading, setDownloading] = useState(false);
@@ -115,7 +171,7 @@ function CandidateDetail({ candidate, total, pricePerVote, resultsVisible, onBac
   const parsedVotes = Number.parseInt(voteCountInput.trim(), 10);
   const validVotes = Number.isSafeInteger(parsedVotes) && parsedVotes >= 1 && /^\d+$/.test(voteCountInput.trim()) ? parsedVotes : null;
   const paymentAmount = confirmedVotes !== null && pricePerVote > 0
-    ? calculateVotePaymentAmount(confirmedVotes, pricePerVote, candidate.number)
+    ? calculateVotePaymentAmount(confirmedVotes, pricePerVote, candidate.number, candidateNumberOffset)
     : null;
 
   const downloadQr = async () => {
@@ -147,7 +203,7 @@ function CandidateDetail({ candidate, total, pricePerVote, resultsVisible, onBac
         <p className="text-xs text-neutral-600">Nominal pembayaran QRIS</p>
         <p className="mt-1 font-manrope text-2xl font-semibold text-brand-900">Rp {number.format(paymentAmount)}</p>
         <p className="mt-1 text-xs text-neutral-600">
-          {number.format(confirmedVotes)} vote x Rp {number.format(pricePerVote)} + kode peserta {candidate.number}
+          {number.format(confirmedVotes)} vote x Rp {number.format(pricePerVote)} + kode unik {candidate.number + candidateNumberOffset}
         </p>
         <p className="mt-2 text-xs text-neutral-600">
           Masukkan nominal tepat hingga digit terakhir saat membayar dengan QRIS.
@@ -173,7 +229,7 @@ function CandidateDetail({ candidate, total, pricePerVote, resultsVisible, onBac
     </div>
     <dl className="grid grid-cols-2 divide-x divide-neutral-200 border-y border-neutral-200 py-3">
       <div className="pr-4"><dt className="text-xs text-neutral-600">Posisi</dt><dd className="mt-1 font-manrope text-lg font-semibold text-brand-900">{resultsVisible && candidate.rank ? `${candidate.rank} dari ${total}` : 'Belum tampil'}</dd></div>
-      <div className="pl-4"><dt className="text-xs text-neutral-600">Jumlah vote</dt><dd className="mt-1 font-manrope text-lg font-semibold text-brand-900">{resultsVisible && candidate.votes !== null ? number.format(candidate.votes) : 'Belum tampil'}</dd></div>
+      <div className="pl-4"><dt className="text-xs text-neutral-600">Persentase vote</dt><dd className="mt-1 font-manrope text-lg font-semibold text-brand-900">{resultsVisible && candidate.percentage !== null ? `${percentFormat.format(candidate.percentage)}%` : 'Belum tampil'}</dd></div>
     </dl>
     <form
       onSubmit={(event) => {
