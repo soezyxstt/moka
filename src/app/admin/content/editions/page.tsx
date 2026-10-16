@@ -25,13 +25,13 @@ export default async function EditionsPage() {
       <div className="grid gap-6 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
         <div className="space-y-6">
           <AdminCard>
-            <AdminCardHeader title="Buat edisi" description="Empat kategori dibuat otomatis. Isi konten melalui pilihan edisi di header sebelum aktivasi." />
+            <AdminCardHeader title="Buat edisi" />
             <EditionForm action={createEditionAction} className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-[120px_1fr]">
                 <AdminField label="Tahun"><AdminInput type="number" name="year" placeholder="2026" required min={2020} max={2100} /></AdminField>
                 <AdminField label="Nama edisi"><AdminInput name="name" placeholder="Pasanggiri 2026" required maxLength={200} /></AdminField>
               </div>
-              <AdminButton type="submit" disabled={!canManage}><Plus size={16} /> Buat draf edisi</AdminButton>
+              <AdminButton type="submit" disabled={!canManage}><Plus size={16} /> Buat draf</AdminButton>
             </EditionForm>
           </AdminCard>
           <AdminCard>
@@ -44,9 +44,9 @@ export default async function EditionsPage() {
           </AdminCard>
         </div>
         <AdminCard>
-          <AdminCardHeader title="Kesiapan edisi" description="Pilih edisi di header, lengkapi setiap bagian, lalu periksa pratinjau sebelum aktivasi." />
+          <AdminCardHeader title="Kesiapan edisi" />
           <div className="space-y-3">
-            {rows.length === 0 ? <AdminEmptyState icon="calendar" title="Belum ada edisi" description="Buat edisi pertama dari panel di sebelah kiri." /> : rows.map((edition) => {
+            {rows.length === 0 ? <AdminEmptyState icon="calendar" title="Belum ada edisi" /> : rows.map((edition) => {
               const editionCategories = categoryRows.filter((category) => category.editionId === edition.id);
               return (
                 <AdminListRow key={edition.id} title={edition.name} meta={`${edition.year} · ${editionCategories.length} kategori`} action={<AdminBadge value={edition.lifecycle} />}>

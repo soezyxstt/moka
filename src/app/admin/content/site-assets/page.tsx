@@ -1,6 +1,6 @@
 import { eq, inArray } from "drizzle-orm";
 
-import { AdminCard, AdminEmptyState, AdminPage } from "@/components/admin/primitives";
+import { AdminEmptyState, AdminPage } from "@/components/admin/primitives";
 import { requirePermission } from "@/server/auth/authorization";
 import { getAdminEditionContext } from "@/server/cms/context";
 import { SITE_ASSET_SLOTS } from "@/server/cms/site-asset-manifest";
@@ -17,16 +17,11 @@ export default async function SiteAssetsPage() {
 
   if (!editionContext) {
     return (
-      <AdminPage
-        title="Aset situs"
-      >
-        <AdminCard>
-          <AdminEmptyState
-            icon="images"
-            title="Belum ada edisi dipilih"
-            description="Pilih edisi di bagian atas."
-          />
-        </AdminCard>
+      <AdminPage title="Aset situs">
+        <AdminEmptyState
+          icon="images"
+          title="Pilih edisi terlebih dahulu"
+        />
       </AdminPage>
     );
   }

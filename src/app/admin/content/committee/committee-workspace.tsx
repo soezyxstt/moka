@@ -577,7 +577,7 @@ export function CommitteeWorkspaceClient({
 
                 <span
                   className={cn(
-                    "rounded-xs px-1.5 py-0.5 text-xs font-medium tracking-wide uppercase",
+                    "rounded-md px-1.5 py-0.5 text-xs font-medium",
                     node.level === 1 && "bg-brand-100 text-brand-800",
                     node.level === 2 && "bg-highlight-100 text-highlight-800",
                     node.level === 3 && "bg-info-100 text-info-800",
@@ -861,7 +861,6 @@ export function CommitteeWorkspaceClient({
                     <AdminEmptyState
                       icon="folder"
                       title="Belum ada unit panitia"
-                      description="Tambahkan unit utama pertama untuk memulai struktur kepanitiaan."
                     />
                     {canEdit && (
                       <div className="text-center">
@@ -976,12 +975,7 @@ export function CommitteeWorkspaceClient({
                   <div className="space-y-3">
                     <AdminEmptyState
                       icon="users"
-                      title="Tidak ada anggota panitia"
-                      description={
-                        searchQuery
-                          ? "Tidak ada panitia yang sesuai dengan kata kunci pencarian."
-                          : "Belum ada anggota yang ditugaskan pada unit ini."
-                      }
+                      title={searchQuery ? "Panitia tidak ditemukan" : "Belum ada anggota panitia"}
                     />
                     {canEdit && initialUnits.length > 0 && (
                       <div className="text-center">
@@ -1150,7 +1144,7 @@ export function CommitteeWorkspaceClient({
           {/* Table */}
           <div>
             <Table className="text-xs">
-              <TableHeader className="bg-muted/40 font-manrope text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <TableHeader className="bg-muted/40 text-xs font-medium text-muted-foreground">
                 <TableRow>
                   <TableHead className="px-4 py-3">Panitia</TableHead>
                   <TableHead className="px-4 py-3">Jabatan</TableHead>
@@ -1271,7 +1265,6 @@ export function CommitteeWorkspaceClient({
                 <AdminEmptyState
                   icon="folder"
                   title="Struktur panitia belum diatur"
-                  description="Tambahkan unit panitia dan tugaskan anggota untuk melihat bagan struktur."
                 />
               ) : (
                 <div className="space-y-8">
@@ -1502,7 +1495,7 @@ export function CommitteeWorkspaceClient({
             </DialogHeader>
 
             <div className="space-y-4 py-4">
-              <AdminField label="Unit induk" hint="Kosongkan untuk unit tingkat utama.">
+              <AdminField label="Unit induk">
                 <AdminSelect
                   aria-label="Pilih unit induk"
                   value={unitParentId}
@@ -1521,11 +1514,11 @@ export function CommitteeWorkspaceClient({
                 />
               </AdminField>
 
-              <AdminField label="Nama unit" hint="Contoh: Panitia Inti, Divisi Acara, Seksi Logistik.">
+              <AdminField label="Nama unit">
                 <AdminInput
                   value={unitName}
                   onChange={(e) => setUnitName(e.target.value)}
-                  placeholder="Masukkan nama unit..."
+                  placeholder="Nama unit..."
                   required
                 />
               </AdminField>
@@ -1642,11 +1635,11 @@ export function CommitteeWorkspaceClient({
                   />
               </div>
 
-              <AdminField label="Jabatan" hint="Contoh: Ketua Pelaksana atau Koordinator Acara.">
+              <AdminField label="Jabatan">
                 <AdminInput
                   value={memberTitle}
                   onChange={(e) => setMemberTitle(e.target.value)}
-                  placeholder="Masukkan jabatan..."
+                  placeholder="Jabatan..."
                   required
                 />
               </AdminField>

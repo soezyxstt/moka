@@ -64,7 +64,6 @@ export type GalleriesListClientProps = {
 
 export function GalleriesListClient({
   initialGalleries,
-  editionName,
   filterEventId,
   canEdit,
 }: GalleriesListClientProps) {
@@ -175,11 +174,6 @@ export function GalleriesListClient({
         <AdminEmptyState
           icon="gallery"
           title="Tidak ada album galeri"
-          description={
-            search || ownerFilter !== "all" || statusFilter !== "all"
-              ? "Tidak ada album galeri yang sesuai dengan filter pencarian."
-              : `Belum ada album galeri untuk ${editionName}. Klik Tambah album untuk memulai.`
-          }
         />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

@@ -25,6 +25,7 @@ import {
   AdminLinkButton,
   AdminPage,
   AdminSelect,
+  AdminStatCard,
   AdminTextarea,
 } from "@/components/admin/primitives";
 import {
@@ -483,30 +484,16 @@ export function StageSelectionWorkspace({
 
         {/* Statistics Banner */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-          <div className="rounded-xl border border-brand-100 bg-card p-4">
-            <p className="text-xs font-medium text-muted-foreground">Target kategori</p>
-            <p className="mt-1 text-sm font-semibold text-brand-900">
-              {categoryTargets
-                ? categoryValues.map((code) => `${code} ${categoryTargets[code]}`).join(" · ")
-                : `${stage.targetParticipantCount} total; kuota kategori belum diatur`}
-            </p>
-          </div>
-          <div className="rounded-xl border border-brand-100 bg-card p-4">
-            <p className="text-xs font-medium text-muted-foreground">Total peserta</p>
-            <p className="mt-1 font-manrope text-2xl font-semibold text-brand-900">{totalCount}</p>
-          </div>
-          <div className="rounded-xl border border-warning-200 bg-warning-50/40 p-4">
-            <p className="text-xs font-medium text-warning-700">Pending</p>
-            <p className="mt-1 font-manrope text-2xl font-semibold text-warning-900">{pendingCount}</p>
-          </div>
-          <div className="rounded-xl border border-success-200 bg-success-50/40 p-4">
-            <p className="text-xs font-medium text-success-700">Lolos</p>
-            <p className="mt-1 font-manrope text-2xl font-semibold text-success-900">{advancedCount}</p>
-          </div>
-          <div className="rounded-xl border border-danger-200 bg-danger-50/40 p-4">
-            <p className="text-xs font-medium text-danger-700">Tidak lolos</p>
-            <p className="mt-1 font-manrope text-2xl font-semibold text-danger-900">{eliminatedCount}</p>
-          </div>
+          <AdminStatCard
+            label="Target kategori"
+            value={categoryTargets
+              ? categoryValues.map((code) => `${code} ${categoryTargets[code]}`).join(" · ")
+              : `${stage.targetParticipantCount} total`}
+          />
+          <AdminStatCard label="Total peserta" value={totalCount} />
+          <AdminStatCard label="Pending" value={pendingCount} />
+          <AdminStatCard label="Lolos" value={advancedCount} />
+          <AdminStatCard label="Tidak lolos" value={eliminatedCount} />
         </div>
 
         {/* Filter Bar */}
@@ -583,13 +570,10 @@ export function StageSelectionWorkspace({
 
         {/* Table of Entries */}
         {filteredEntries.length === 0 ? (
-          <AdminCard padding="none">
-            <AdminEmptyState
-              icon="users"
-              title="Tidak ada peserta"
-              description="Ubah filter pencarian atau pastikan peserta sudah masuk ke tahap ini."
-            />
-          </AdminCard>
+          <AdminEmptyState
+            icon="users"
+            title="Tidak ada peserta"
+          />
         ) : (
           <div
             className={cn(

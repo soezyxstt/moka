@@ -1,7 +1,7 @@
 import { and, asc, eq } from "drizzle-orm";
 import { ArrowLeft } from "lucide-react";
 
-import { AdminCard, AdminEmptyState, AdminLinkButton, AdminPage } from "@/components/admin/primitives";
+import { AdminEmptyState, AdminLinkButton, AdminPage } from "@/components/admin/primitives";
 import { requirePermission } from "@/server/auth/authorization";
 import { getAdminEditionContext } from "@/server/cms/context";
 import { database } from "@/server/db/client";
@@ -24,9 +24,7 @@ export default async function ParticipantTitlesPage() {
   if (!currentEdition) {
     return (
       <AdminPage title="Gelar Pasanggiri">
-        <AdminCard padding="none">
-          <AdminEmptyState icon="award" title="Belum ada edisi dipilih" description="Pilih edisi pada header." />
-        </AdminCard>
+        <AdminEmptyState icon="award" title="Belum ada edisi dipilih" />
       </AdminPage>
     );
   }

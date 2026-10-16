@@ -2,7 +2,6 @@ import { asc, eq } from "drizzle-orm";
 import { ArrowLeft } from "lucide-react";
 
 import {
-  AdminCard,
   AdminEmptyState,
   AdminLinkButton,
   AdminPage,
@@ -25,15 +24,10 @@ export default async function SelectionStagesPage() {
       <AdminPage
         title="Tahap seleksi"
       >
-        <AdminCard padding="none">
-          <div className="p-8">
-            <AdminEmptyState
-              icon="settings"
-              title="Belum ada edisi dipilih"
-              description="Pilih edisi aktif pada header untuk mengelola tahap seleksi."
-            />
-          </div>
-        </AdminCard>
+        <AdminEmptyState
+          icon="settings"
+          title="Belum ada edisi dipilih"
+        />
       </AdminPage>
     );
   }

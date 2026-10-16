@@ -455,8 +455,7 @@ export function TipTapEditor({
         onOpenChange={setMediaPickerOpen}
         onSelect={handleInsertMedia}
         acceptType="image"
-        title="Sisipkan gambar ke artikel"
-        description="Pilih gambar dari pustaka media atau unggah file baru untuk dimasukkan ke dalam berita."
+        title="Sisipkan gambar"
         canManageMedia={canManageMedia}
         activeEditionId={activeEditionId}
       />

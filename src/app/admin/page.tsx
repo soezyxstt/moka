@@ -3,7 +3,6 @@ import {
   ArrowRight,
   ArrowUpRight,
   CheckCircle2,
-  ClipboardList,
   XCircle,
 } from "lucide-react";
 import { headers } from "next/headers";
@@ -12,11 +11,9 @@ import { redirect } from "next/navigation";
 
 import { AdminIcon, type AdminIconName } from "@/components/admin/icons";
 import {
-  AdminCard,
-  AdminCardHeader,
   AdminLinkButton,
-  AdminListRow,
   AdminPage,
+  AdminSection,
   AdminStatCard,
 } from "@/components/admin/primitives";
 import { getAdminEditionContext } from "@/server/cms/context";
@@ -48,66 +45,17 @@ export const metadata = { title: "Ringkasan admin" };
 const quickActions: Array<{
   href: string;
   label: string;
-  description: string;
   icon: AdminIconName;
   permission: PermissionKey;
 }> = [
-  {
-    href: "/admin/content/editions",
-    label: "Kelola edisi",
-    description: "Atur periode, kategori, dan aktivasi tahunan",
-    icon: "calendar",
-    permission: "content.view",
-  },
-  {
-    href: "/admin/content/edition-settings",
-    label: "Identitas edisi",
-    description: "Logo, slogan, dan program unggulan",
-    icon: "award",
-    permission: "content.view",
-  },
-  {
-    href: "/admin/content/site-assets",
-    label: "Aset situs",
-    description: "Atur foto dan video halaman publik",
-    icon: "layout",
-    permission: "content.view",
-  },
-  {
-    href: "/admin/content/participants",
-    label: "Mojang Jajaka",
-    description: "Kelola profil peserta dan QRIS",
-    icon: "users",
-    permission: "content.view",
-  },
-  {
-    href: "/admin/content/news",
-    label: "Berita",
-    description: "Tulis dan pratinjau berita",
-    icon: "newspaper",
-    permission: "content.view",
-  },
-  {
-    href: "/admin/content/galleries",
-    label: "Galeri",
-    description: "Kelola album dan dokumentasi acara",
-    icon: "gallery",
-    permission: "content.view",
-  },
-  {
-    href: "/admin/voting",
-    label: "Voting",
-    description: "Kelola kampanye, rekap harian, dan hasil",
-    icon: "bar-chart",
-    permission: "voting.view",
-  },
-  {
-    href: "/admin/audit",
-    label: "Riwayat audit",
-    description: "Jejak perubahan data dan keputusan admin",
-    icon: "clock",
-    permission: "audit.view",
-  },
+  { href: "/admin/content/editions", label: "Kelola edisi", icon: "calendar", permission: "content.view" },
+  { href: "/admin/content/edition-settings", label: "Identitas edisi", icon: "award", permission: "content.view" },
+  { href: "/admin/content/site-assets", label: "Aset situs", icon: "layout", permission: "content.view" },
+  { href: "/admin/content/participants", label: "Mojang Jajaka", icon: "users", permission: "content.view" },
+  { href: "/admin/content/news", label: "Berita", icon: "newspaper", permission: "content.view" },
+  { href: "/admin/content/galleries", label: "Galeri", icon: "gallery", permission: "content.view" },
+  { href: "/admin/voting", label: "Voting", icon: "bar-chart", permission: "voting.view" },
+  { href: "/admin/audit", label: "Riwayat audit", icon: "clock", permission: "audit.view" },
 ];
 
 export default async function AdminDashboard() {
@@ -257,73 +205,63 @@ export default async function AdminDashboard() {
   const readinessItems = [
     {
       label: "Identitas edisi",
-      description: "Logo edisi dan slogan Pasanggiri",
       ready: isIdentityReady,
       href: "/admin/content/edition-settings",
-      detail: isIdentityReady ? "Lengkap" : "Logo/slogan belum diisi",
+      detail: isIdentityReady ? "Lengkap" : "Belum diisi",
     },
     {
       label: "Program unggulan",
-      description: "Program utama edisi",
       ready: isProgramsReady,
       href: "/admin/content/edition-settings",
-      detail: `${totalPrograms} program aktif`,
+      detail: `${totalPrograms} aktif`,
     },
     {
       label: "Aset situs",
-      description: "Slot gambar hero, banner, dan kategori",
       ready: isSiteAssetsReady,
       href: "/admin/content/site-assets",
-      detail: `${boundSiteAssets}/${totalManifestSlots} slot terisi`,
+      detail: `${boundSiteAssets}/${totalManifestSlots} terisi`,
     },
     {
       label: "Struktur panitia",
-      description: "Susunan panitia pelaksana edisi",
       ready: isCommitteeReady,
       href: "/admin/content/committee",
-      detail: `${totalCommittee} penugasan panitia`,
+      detail: `${totalCommittee} panitia`,
     },
     {
-      label: "Peserta Pasanggiri",
-      description: "Peserta aktif edisi",
+      label: "Peserta",
       ready: isParticipantsReady,
       href: "/admin/content/participants",
-      detail: `${totalActiveParticipants}/${totalParticipants} peserta aktif`,
+      detail: `${totalActiveParticipants}/${totalParticipants} aktif`,
     },
     {
       label: "Rangkaian acara",
-      description: "Agenda edisi",
       ready: isEventsReady,
       href: "/admin/content/events",
       detail: `${totalEvents} acara`,
     },
     {
-      label: "Kampanye voting",
-      description: "Kampanye voting kameumeut edisi aktif",
+      label: "Voting",
       ready: isVotingReady,
       href: "/admin/voting",
-      detail: `${totalVoting} kampanye terdaftar`,
+      detail: `${totalVoting} kampanye`,
     },
     {
-      label: "Sponsor dan mitra",
-      description: "Logo dan partner pendukung acara",
+      label: "Sponsor",
       ready: isSponsorsReady,
       href: "/admin/content/sponsors",
-      detail: `${totalSponsors} sponsor terdaftar`,
+      detail: `${totalSponsors} mitra`,
     },
     {
       label: "Berita",
-      description: "Artikel yang telah dipublikasikan",
       ready: isNewsReady,
       href: "/admin/content/news",
-      detail: `${totalNews} berita terbit`,
+      detail: `${totalNews} terbit`,
     },
     {
       label: "Galeri",
-      description: "Album foto dan video",
       ready: isGalleriesReady,
       href: "/admin/content/galleries",
-      detail: `${totalGalleries} album galeri`,
+      detail: `${totalGalleries} album`,
     },
   ];
 
@@ -347,7 +285,6 @@ export default async function AdminDashboard() {
         </AdminLinkButton>
       }
     >
-      {/* Top Stats Cards */}
       <section
         className="grid gap-x-6 gap-y-4 sm:grid-cols-2 xl:grid-cols-4"
         aria-label="Ringkasan data"
@@ -358,203 +295,145 @@ export default async function AdminDashboard() {
           note={
             currentEdition
               ? `${currentEdition.name} (${editionStatusLabel})`
-              : "Pilih edisi dari header selector"
+              : "Pilih edisi dari header"
           }
-          icon="calendar"
         />
         <AdminStatCard
           label="Peserta aktif"
           value={totalActiveParticipants}
           note={
             currentEdition
-              ? `${totalActiveParticipants} dari ${totalParticipants} peserta terdaftar`
-              : "Pilih edisi untuk melihat data"
+              ? `${totalActiveParticipants} dari ${totalParticipants} terdaftar`
+              : undefined
           }
-          icon="users"
-          accent="gold"
         />
         <AdminStatCard
-          label="Berita"
+          label="Berita terbit"
           value={totalNews}
-          note={
-            currentEdition
-              ? `${totalNews} artikel terbit`
-              : "Pilih edisi untuk melihat data"
-          }
-          icon="newspaper"
-          accent="blue"
+          note={currentEdition ? `${totalNews} artikel` : undefined}
         />
         <AdminStatCard
           label="Sponsor"
           value={totalSponsors}
-          note={
-            currentEdition
-              ? `${totalSponsors} sponsor edisi ${currentEdition.year}`
-              : "Pilih edisi untuk melihat data"
-          }
-          icon="handshake"
-          accent="green"
+          note={currentEdition ? `${totalSponsors} mitra` : undefined}
         />
       </section>
 
-      {/* Edition Readiness Checklist Panel */}
-      {currentEdition && (
-        <div className="mt-6">
-          <AdminCard className="space-y-4 p-4 sm:p-5">
-            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="grid size-7 place-items-center rounded-md bg-highlight/10 text-highlight-700 font-bold">
-                    <ClipboardList size={16} />
-                  </span>
-                  <h3 className="font-manrope text-base font-semibold text-foreground">
-                    Kesiapan konten
-                  </h3>
+      {currentEdition ? (
+        <AdminSection
+          title="Kesiapan konten"
+          action={
+            <div className="flex items-center gap-3 text-sm">
+              <span className="font-semibold text-foreground">{readinessPercent}%</span>
+              <span className="text-xs text-muted-foreground">({readyCount}/{readinessItems.length} siap)</span>
+              <progress
+                value={readyCount}
+                max={readinessItems.length}
+                aria-label="Kesiapan konten"
+                className="h-1.5 w-24 overflow-hidden rounded-md bg-muted accent-brand [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:bg-brand [&::-moz-progress-bar]:bg-brand"
+              />
+            </div>
+          }
+          className="mt-6"
+        >
+          {editionDetailRow?.organizationPeriodLabel ? (
+            <p className="mb-3 text-xs text-muted-foreground">
+              Periode kepengurusan:{" "}
+              <span className="font-medium text-foreground">
+                {editionDetailRow.organizationPeriodLabel} ({editionDetailRow.organizationPeriodStartYear}-{editionDetailRow.organizationPeriodEndYear})
+              </span>
+            </p>
+          ) : null}
+
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+            {readinessItems.map((item) => (
+              <Link
+                key={item.label}
+                href={item.href}
+                className="group flex items-center justify-between rounded-lg border border-border bg-card p-3 transition-colors hover:bg-muted/50"
+              >
+                <div className="min-w-0 pr-2">
+                  <p className="truncate text-sm font-medium text-foreground">{item.label}</p>
+                  <p className={`mt-0.5 text-xs ${item.ready ? "text-muted-foreground" : "font-medium text-highlight-700"}`}>
+                    {item.detail}
+                  </p>
                 </div>
-              </div>
+                {item.ready ? (
+                  <CheckCircle2 size={16} className="shrink-0 text-brand" />
+                ) : (
+                  <XCircle size={16} className="shrink-0 text-highlight-700" />
+                )}
+              </Link>
+            ))}
+          </div>
+        </AdminSection>
+      ) : null}
 
-              <div className="flex items-center gap-3">
-                <div className="text-right">
-                  <span className="font-manrope text-lg font-bold text-foreground">
-                    {readinessPercent}%
-                  </span>
-                  <span className="block text-xs text-muted-foreground">
-                    {readyCount} dari {readinessItems.length} modul siap
-                  </span>
-                </div>
-                <progress value={readyCount} max={readinessItems.length} aria-label="Kesiapan konten" className="h-2 w-28 overflow-hidden rounded-md bg-muted accent-brand [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:bg-brand [&::-moz-progress-bar]:bg-brand" />
-              </div>
-            </div>
-
-            <div className="rounded-lg border border-border bg-muted/40 px-4 py-3">
-              <p className="text-xs text-muted-foreground">Periode kepengurusan terkait</p>
-              <p className="mt-1 font-manrope text-sm font-semibold text-foreground">
-                {editionDetailRow?.organizationPeriodLabel
-                  ? `${editionDetailRow.organizationPeriodLabel} (${editionDetailRow.organizationPeriodStartYear}-${editionDetailRow.organizationPeriodEndYear})`
-                  : "Belum terhubung"}
-              </p>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {readinessItems.map((item) => (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  className={`group flex flex-col justify-between rounded-lg border p-3.5 transition-colors ${
-                    item.ready
-                      ? "border-brand-200 bg-brand-50/30 hover:border-brand-300"
-                      : "border-highlight-200 bg-highlight-50/30 hover:border-highlight-300"
-                  }`}
-                >
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <span className="font-manrope text-xs font-semibold text-foreground">
-                        {item.label}
-                      </span>
-                      {item.ready ? (
-                        <CheckCircle2 size={15} className="text-brand shrink-0" />
-                      ) : (
-                        <XCircle size={15} className="text-highlight-700 shrink-0" />
-                      )}
-                    </div>
-                    <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-                      {item.description}
-                    </p>
-                  </div>
-
-                  <div className="mt-3 flex items-center justify-between border-t border-border/40 pt-2 text-xs">
-                    <span
-                      className={`font-medium ${
-                        item.ready ? "text-brand-700" : "text-highlight-700 font-semibold"
-                      }`}
-                    >
-                      {item.detail}
-                    </span>
-                    <ArrowRight
-                      size={12}
-                      className="text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all"
-                    />
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </AdminCard>
-        </div>
-      )}
-
-      {/* Quick Navigation and Recent Audit Grid */}
-      <div className="mt-5 grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-        <AdminCard>
-          <AdminCardHeader
-            title="Pintasan modul"
-          />
-          <div className="grid border-t border-brand-100 sm:grid-cols-2">
+      <div className="mt-8 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+        <AdminSection title="Pintasan modul">
+          <div className="grid gap-2 sm:grid-cols-2">
             {quickActions
               .filter((item) => permissions.has(item.permission))
               .map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="group flex gap-3 border-b border-brand-100 p-4 transition-colors hover:bg-brand-50/40 sm:odd:border-r"
+                  className="group flex items-center justify-between rounded-md border border-brand-100 bg-card p-3 transition-colors hover:bg-brand-50/40"
                 >
-                  <span className="grid size-10 shrink-0 place-items-center border border-brand-100 text-brand">
-                    <AdminIcon name={item.icon} size={17} />
+                  <span className="flex items-center gap-2.5 text-sm font-semibold text-brand-900">
+                    <AdminIcon name={item.icon} size={16} className="text-brand" />
+                    {item.label}
                   </span>
-                  <span className="min-w-0">
-                    <span className="flex items-center gap-2 font-manrope text-sm font-semibold text-brand-900">
-                      {item.label}
-                      <ArrowRight className="size-3.5 text-highlight-600 transition-transform group-hover:translate-x-0.5" />
-                    </span>
-                    <span className="mt-1 block text-xs leading-5 text-muted-foreground">
-                      {item.description}
-                    </span>
-                  </span>
+                  <ArrowRight className="size-3.5 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
                 </Link>
               ))}
           </div>
-        </AdminCard>
+        </AdminSection>
 
-        {/* Recent Audit Log Feed */}
-        <AdminCard>
-          <AdminCardHeader
-            title="Riwayat audit"
-            description="Waktu dalam WIB."
-            action={
-              permissions.has("audit.view") ? (
-                <Link
-                  href="/admin/audit"
-                  className="text-xs font-semibold text-brand hover:text-brand-600"
-                >
-                  Lihat semua
-                </Link>
-              ) : null
-            }
-          />
-          <div className="space-y-2 border-t border-brand-100 pt-3">
+        <AdminSection
+          title="Riwayat audit"
+          action={
+            permissions.has("audit.view") ? (
+              <Link
+                href="/admin/audit"
+                className="text-xs font-semibold text-brand hover:text-brand-600"
+              >
+                Lihat semua
+              </Link>
+            ) : null
+          }
+        >
+          <div className="divide-y divide-brand-100">
             {recentLogs.length ? (
               recentLogs.map((log) => (
-                <AdminListRow
+                <div
                   key={log.id}
-                  title={log.resourceLabel ?? log.resourceType}
-                  meta={`${log.action} · ${log.actorLabel}`}
-                  action={
-                    <time className="text-xs text-muted-foreground font-inter">
-                      {log.createdAt.toLocaleString("id-ID", {
-                        timeZone: "Asia/Jakarta",
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                      })}
-                    </time>
-                  }
-                />
+                  className="flex items-center justify-between py-2.5 text-sm"
+                >
+                  <div className="min-w-0 pr-2">
+                    <p className="truncate font-medium text-brand-900">
+                      {log.resourceLabel ?? log.resourceType}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {log.action} · {log.actorLabel}
+                    </p>
+                  </div>
+                  <time className="shrink-0 text-xs text-muted-foreground font-inter">
+                    {log.createdAt.toLocaleString("id-ID", {
+                      timeZone: "Asia/Jakarta",
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    })}
+                  </time>
+                </div>
               ))
             ) : (
-              <p className="border-y border-dashed border-brand-200 bg-brand-50/30 px-5 py-9 text-center text-sm text-muted-foreground">
-                Belum ada aktivitas yang tercatat.
+              <p className="py-6 text-center text-sm text-muted-foreground">
+                Belum ada aktivitas.
               </p>
             )}
           </div>
-        </AdminCard>
+        </AdminSection>
       </div>
     </AdminPage>
   );

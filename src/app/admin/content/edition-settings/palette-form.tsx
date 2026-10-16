@@ -9,7 +9,7 @@ export function EditionPaletteForm({ editionId, year, version, palette, canEdit 
 }) {
   const [state, action, pending] = useActionState(saveEditionPaletteAction, { message: "", error: false });
   return <AdminCard className="mt-6">
-    <AdminCardHeader title={`Palet ${year}`} description="Warna mengikuti edisi publik atau pratinjau. Menyimpan palet tidak mengaktifkan edisi." />
+    <AdminCardHeader title={`Palet ${year}`} />
     <form action={action} className="space-y-4">
       <input type="hidden" name="editionId" value={editionId} />
       <input type="hidden" name="version" value={version ?? ""} />

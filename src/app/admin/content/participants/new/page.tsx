@@ -2,7 +2,6 @@ import { and, asc, eq } from "drizzle-orm";
 import { ArrowLeft } from "lucide-react";
 
 import {
-  AdminCard,
   AdminEmptyState,
   AdminLinkButton,
   AdminPage,
@@ -21,18 +20,11 @@ export default async function NewParticipantPage() {
 
   if (!currentEdition) {
     return (
-      <AdminPage
-        title="Tambah pendaftar"
-      >
-        <AdminCard padding="none">
-          <div className="p-8">
-            <AdminEmptyState
-              icon="users"
-              title="Belum ada edisi dipilih"
-              description="Pilih edisi aktif pada header untuk menambahkan pendaftar."
-            />
-          </div>
-        </AdminCard>
+      <AdminPage title="Tambah pendaftar">
+        <AdminEmptyState
+          icon="users"
+          title="Pilih edisi terlebih dahulu"
+        />
       </AdminPage>
     );
   }
@@ -72,35 +64,29 @@ export default async function NewParticipantPage() {
       }
     >
       {!firstStage ? (
-        <AdminCard padding="none">
-          <div className="p-8">
-            <AdminEmptyState
-              icon="settings"
-              title="Tahap seleksi belum tersedia"
-              description="Buat tahap seleksi pertama sebelum menambahkan pendaftar."
-            />
-            <div className="mt-6 flex justify-center">
-              <AdminLinkButton href="/admin/content/participants/stages">
-                Atur tahap seleksi
-              </AdminLinkButton>
-            </div>
+        <div className="space-y-4">
+          <AdminEmptyState
+            icon="settings"
+            title="Tahap seleksi belum tersedia"
+          />
+          <div className="flex justify-center">
+            <AdminLinkButton href="/admin/content/participants/stages">
+              Atur tahap seleksi
+            </AdminLinkButton>
           </div>
-        </AdminCard>
+        </div>
       ) : firstStage.lifecycle === "closed" ? (
-        <AdminCard padding="none">
-          <div className="p-8">
-            <AdminEmptyState
-              icon="settings"
-              title="Tahap pertama sudah ditutup"
-              description={`Tahap ${firstStage.name} sudah ditutup dan tidak menerima pendaftar baru.`}
-            />
-            <div className="mt-6 flex justify-center">
-              <AdminLinkButton href="/admin/content/participants/stages" variant="secondary">
-                Kelola tahap seleksi
-              </AdminLinkButton>
-            </div>
+        <div className="space-y-4">
+          <AdminEmptyState
+            icon="settings"
+            title={`Tahap ${firstStage.name} sudah ditutup`}
+          />
+          <div className="flex justify-center">
+            <AdminLinkButton href="/admin/content/participants/stages" variant="secondary">
+              Kelola tahap seleksi
+            </AdminLinkButton>
           </div>
-        </AdminCard>
+        </div>
       ) : (
         <ParticipantCreateForm
           categories={categoryRows}

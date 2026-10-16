@@ -68,7 +68,7 @@ export function EventsDirectory({ initialEvents, canEdit }: { initialEvents: Eve
         <p className="text-sm text-muted-foreground">{events.length} acara</p>
         {canEdit ? <AdminLinkButton href="/admin/content/events/new"><Plus className="size-4" />Tambah acara</AdminLinkButton> : null}
       </div>
-      {events.length === 0 ? <AdminCard padding="none"><AdminEmptyState icon="gallery" title="Belum ada acara" description="Tambahkan acara pertama." /></AdminCard> : (
+      {events.length === 0 ? <AdminEmptyState icon="gallery" title="Belum ada acara" /> : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {events.map((event, index) => (
             <AdminCard key={event.id} padding="none" className="overflow-hidden">

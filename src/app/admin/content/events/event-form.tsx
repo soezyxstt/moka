@@ -98,7 +98,6 @@ export function EventForm({ editionId, initialValue, canEdit, canManageMedia }: 
         <AdminMediaField
           name="heroMediaId"
           label="Foto hero"
-          hint="Pilih gambar siap pakai dari pustaka media."
           value={heroMediaId}
           initialAsset={heroMedia}
           onChange={(asset) => { setHeroMediaId(asset?.id ?? null); setHeroMedia(asset); }}

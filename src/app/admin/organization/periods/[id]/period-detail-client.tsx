@@ -24,7 +24,6 @@ import { toast } from "sonner";
 import {
   AdminBadge,
   AdminButton,
-  AdminCard,
   AdminEmptyState,
   AdminField,
   AdminInput,
@@ -731,22 +730,19 @@ export function PeriodDetailClient({
           </div>
 
           {treeRoots.length === 0 ? (
-            <AdminCard padding="none">
-              <div className="p-8">
-                <AdminEmptyState
-                  icon="building"
-                  title="Belum ada unit kerja"
-                  description="Mulai susun struktur organisasi dengan menambahkan unit kerja utama (level 1)."
-                />
-                {canEditPeriod ? (
-                  <div className="mt-4 flex justify-center">
-                    <AdminButton onClick={openCreateRootUnit} className="gap-1.5">
-                      <Plus size={14} /> Tambah unit pertama
-                    </AdminButton>
-                  </div>
-                ) : null}
-              </div>
-            </AdminCard>
+            <div>
+              <AdminEmptyState
+                icon="building"
+                title="Belum ada unit kerja"
+              />
+              {canEditPeriod ? (
+                <div className="mt-4 flex justify-center">
+                  <AdminButton onClick={openCreateRootUnit} className="gap-1.5">
+                    <Plus size={14} /> Tambah unit pertama
+                  </AdminButton>
+                </div>
+              ) : null}
+            </div>
           ) : (
             <div className="space-y-3">
               {treeRoots.map((root, index) => (
@@ -800,7 +796,7 @@ export function PeriodDetailClient({
             <DialogTitle className="font-manrope text-lg font-bold text-brand-900">
               Edisi terhubung
             </DialogTitle>
-            <DialogDescription>Pilih edisi untuk periode ini.</DialogDescription>
+            <DialogDescription className="sr-only">Edisi terhubung</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-2 py-2">
@@ -884,15 +880,11 @@ export function PeriodDetailClient({
             <SheetTitle className="font-manrope text-lg font-bold text-brand-900">
               {editingUnit ? "Edit Unit Organisasi" : "Tambah Unit Baru"}
             </SheetTitle>
-            <SheetDescription className="text-xs text-muted-foreground">
-              {unitParentId
-                ? "Unit ini akan menjadi sub-unit di bawah unit induk terpilih."
-                : "Unit utama tingkat 1 (Root)."}
-            </SheetDescription>
+            <SheetDescription className="sr-only">Form unit organisasi</SheetDescription>
           </SheetHeader>
 
           <div className="space-y-4 py-4">
-            <AdminField label="Nama unit organisasi" hint="Contoh: Bidang Pengembangan Budaya & Pariwisata">
+            <AdminField label="Nama unit organisasi">
               <AdminInput
                 value={unitName}
                 onChange={(e) => setUnitName(e.target.value)}
@@ -968,9 +960,7 @@ export function PeriodDetailClient({
             <SheetTitle className="font-manrope text-lg font-bold text-brand-900">
               {editingMember ? "Edit Penugasan Pengurus" : "Tugaskan Pengurus ke Unit"}
             </SheetTitle>
-            <SheetDescription className="text-xs text-muted-foreground">
-              Pilih profil orang dari direktori dan tentukan nama jabatan pengurus.
-            </SheetDescription>
+            <SheetDescription className="sr-only">Form penugasan pengurus</SheetDescription>
           </SheetHeader>
 
           <div className="space-y-4 py-4">
@@ -1042,7 +1032,7 @@ export function PeriodDetailClient({
               </div>
             </div>
 
-            <AdminField label="Nama jabatan" hint="Contoh: Ketua Umum, Koordinator Divisi, Anggota">
+            <AdminField label="Nama jabatan">
               <AdminInput
                 value={memberTitle}
                 onChange={(e) => setMemberTitle(e.target.value)}
@@ -1348,7 +1338,7 @@ function UnitTreeRow({
           <div className="flex items-center gap-2">
             <span
               className={cn(
-                "rounded-md px-1.5 py-0.5 text-xs font-bold uppercase",
+                "rounded-md px-1.5 py-0.5 text-xs font-semibold",
                 node.depth === 1
                   ? "bg-brand text-canvas"
                   : node.depth === 2
@@ -1557,7 +1547,7 @@ function VisualOrganogramNode({ node }: { node: TreeNode }) {
       {/* Unit Box */}
       <div className="w-56 rounded-xl border border-brand-200 bg-canvas p-3.5 shadow-sm text-left">
         <div className="flex items-center justify-between">
-          <span className="rounded-sm bg-brand-50 px-1.5 py-0.2 text-xs font-bold text-brand uppercase">
+          <span className="rounded-md bg-brand-50 px-1.5 py-0.5 text-xs font-semibold text-brand">
             Level {node.depth}
           </span>
           <span className="text-xs text-muted-foreground font-semibold">

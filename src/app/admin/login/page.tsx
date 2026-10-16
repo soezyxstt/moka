@@ -24,10 +24,7 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <AdminAuthShell
-      title="Masuk ke admin"
-      description="Kelola konten PAMOKA Garut dengan akun Google Anda."
-    >
+    <AdminAuthShell title="Masuk ke admin">
       <Button
         type="button"
         variant="outline"

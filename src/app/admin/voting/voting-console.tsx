@@ -404,23 +404,21 @@ export function VotingConsole({
                 <AdminBadge value={statusLabel(selectedCampaign.status)} />
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-lg bg-muted p-3">
+              <div className="grid gap-3 border-y border-border py-3 sm:grid-cols-3">
+                <div>
                   <p className="text-xs text-muted-foreground">Snapshot peserta</p>
-                  <p className="mt-1 font-manrope text-xl font-semibold">{snapshotParticipants.length}</p>
+                  <p className="mt-0.5 font-manrope text-xl font-semibold">{snapshotParticipants.length}</p>
                 </div>
-                <div className="rounded-lg bg-muted p-3">
+                <div>
                   <p className="text-xs text-muted-foreground">QRIS siap</p>
-                  <p className="mt-1 font-manrope text-xl font-semibold">{tallyReadyParticipants.length}</p>
+                  <p className="mt-0.5 font-manrope text-xl font-semibold">{tallyReadyParticipants.length}</p>
                 </div>
-                <div className="rounded-lg bg-muted p-3">
+                <div>
                   <p className="text-xs text-muted-foreground">Hasil</p>
-                  <p className="mt-1 font-manrope text-sm font-semibold">
+                  <p className="mt-0.5 font-manrope text-sm font-semibold">
                     {selectedCampaign.resultVisibility === "visible"
                       ? "Ditampilkan"
-                      : selectedCampaign.resultVisibility === "hidden"
-                        ? "Disembunyikan"
-                        : "Nilai lama, diperlakukan tersembunyi"}
+                      : "Disembunyikan"}
                   </p>
                 </div>
               </div>
@@ -522,16 +520,13 @@ export function VotingConsole({
                 </form>
               </AdminCard>
             ) : selectedCampaign.status === "active" && canTally ? (
-              <AdminCard>
-                <AdminEmptyState icon="gallery" title="QRIS belum siap" description="Tambahkan gambar QRIS pada peserta kampanye." />
-              </AdminCard>
+              <AdminEmptyState icon="gallery" title="QRIS belum siap" />
             ) : null}
 
             <AdminCard className="space-y-4 p-5 sm:p-5">
               <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
                   <h3 className="font-manrope text-lg font-semibold">Rekap peserta</h3>
-                  <p className="mt-1 text-xs text-muted-foreground">Peserta terkunci saat voting dimulai</p>
                 </div>
                 <label className="relative block w-full sm:w-64">
                   <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -539,7 +534,7 @@ export function VotingConsole({
                 </label>
               </div>
               {standings.length === 0 ? (
-                <AdminEmptyState icon="users" title="Peserta belum tersedia" description="Mulai voting untuk menetapkan peserta kampanye." />
+                <AdminEmptyState icon="users" title="Belum ada peserta" />
               ) : (
                 <div className="divide-y divide-border">
                   {standings.map((participant, index) => (
@@ -565,9 +560,7 @@ export function VotingConsole({
           </div>
         </div>
       ) : (
-        <AdminCard>
-          <AdminEmptyState icon="calendar" title="Belum ada kampanye" description="Buat kampanye draf untuk edisi aktif." />
-        </AdminCard>
+        <AdminEmptyState icon="calendar" title="Belum ada kampanye" />
       )}
 
       <AlertDialog open={confirmMode !== null} onOpenChange={(open) => !open && setConfirmMode(null)}>

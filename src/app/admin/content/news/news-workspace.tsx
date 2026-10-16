@@ -740,7 +740,6 @@ export function NewsWorkspace({
             <AdminMediaField
               name="coverMediaId"
               label="Foto sampul"
-              hint="Gunakan gambar lanskap 16:9."
               aspectRatioHint="16:9"
               value={coverMediaId}
               initialAsset={coverAsset}

@@ -70,13 +70,10 @@ function StatusTag({ ready, label }: { ready: boolean; label?: string }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-semibold",
-        ready
-          ? "border-success-200 bg-success-50 text-success-700"
-          : "border-warning-200 bg-warning-50 text-warning-800",
+        "inline-flex shrink-0 items-center gap-1.5 text-xs font-medium before:size-1.5 before:shrink-0 before:rounded-full before:content-['']",
+        ready ? "text-brand-700 before:bg-brand" : "text-highlight-800 before:bg-highlight-500",
       )}
     >
-      {ready ? <CheckCircle2 className="size-3.5" /> : <CircleAlert className="size-3.5" />}
       {label ?? (ready ? "Siap" : "Perlu dilengkapi")}
     </span>
   );
@@ -249,7 +246,6 @@ export function EditionSettingsClient({
               <AdminMediaField
                 name="logoMediaId"
                 label="Logo resmi"
-                hint="Gunakan gambar persegi dengan latar transparan bila tersedia."
                 aspectRatioHint="1:1"
                 acceptType="image"
                 initialAsset={logoAsset}
@@ -258,7 +254,7 @@ export function EditionSettingsClient({
                 activeEditionId={edition.id}
               />
 
-              <AdminField label="Slogan" hint="Kalimat singkat yang mewakili edisi ini.">
+              <AdminField label="Slogan">
                 <AdminInput
                   value={slogan}
                   onChange={(e) => setSlogan(e.target.value)}
@@ -268,8 +264,7 @@ export function EditionSettingsClient({
                 />
               </AdminField>
 
-              <div className="flex flex-col gap-3 border-t border-border/70 pt-4 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-xs text-muted-foreground">Perubahan berlaku untuk edisi yang dipilih.</p>
+              <div className="flex justify-end border-t border-border/70 pt-4">
                 <AdminButton type="submit" disabled={!canManageContent || isPending}>
                   {isPending ? "Menyimpan..." : "Simpan perubahan"}
                 </AdminButton>
@@ -333,7 +328,6 @@ export function EditionSettingsClient({
             <AdminEmptyState
               icon="award"
               title="Belum ada program"
-              description="Tambahkan program unggulan yang ingin ditampilkan pada edisi ini."
             />
           </div>
         ) : (
@@ -433,7 +427,7 @@ export function EditionSettingsClient({
               />
             </AdminField>
 
-            <AdminField label="Deskripsi singkat" hint="Jelaskan tujuan atau agenda utama program.">
+            <AdminField label="Deskripsi singkat">
               <AdminTextarea
                 value={programDescription}
                 onChange={(e) => setProgramDescription(e.target.value)}

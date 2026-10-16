@@ -1,6 +1,6 @@
 import { asc, eq } from "drizzle-orm";
 
-import { AdminCard, AdminEmptyState, AdminPage } from "@/components/admin/primitives";
+import { AdminEmptyState, AdminPage } from "@/components/admin/primitives";
 import { requirePermission } from "@/server/auth/authorization";
 import { getAdminEditionContext } from "@/server/cms/context";
 import { database } from "@/server/db/client";
@@ -29,13 +29,10 @@ export default async function CommitteePage() {
       <AdminPage
         title="Panitia"
       >
-        <AdminCard padding="none">
-          <AdminEmptyState
-            icon="clipboard"
-            title="Pilih edisi"
-            description="Gunakan pemilih edisi di bagian atas."
-          />
-        </AdminCard>
+        <AdminEmptyState
+          icon="clipboard"
+          title="Pilih edisi terlebih dahulu"
+        />
       </AdminPage>
     );
   }

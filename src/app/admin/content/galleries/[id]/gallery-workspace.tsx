@@ -533,7 +533,6 @@ export function GalleryWorkspace({
                     }}
                     activeEditionId={editionId}
                     canManageMedia={canEdit}
-                    hint="Foto sampul utama yang mewakili keseluruhan album ini."
                   />
                 </div>
 
@@ -558,9 +557,6 @@ export function GalleryWorkspace({
                   <h3 className="font-manrope text-sm font-semibold text-foreground">
                     Foto dan video ({items.length})
                   </h3>
-                  <p className="text-xs text-muted-foreground">
-                    Pilih beberapa foto sekaligus atau tambahkan video YouTube.
-                  </p>
                 </div>
 
                 {canEdit && (
@@ -589,7 +585,6 @@ export function GalleryWorkspace({
                 <AdminEmptyState
                   icon="gallery"
                   title="Album masih kosong"
-                  description="Pilih foto atau tambahkan video YouTube."
                 />
               ) : (
                 <div className="space-y-3">
@@ -712,7 +707,7 @@ export function GalleryWorkspace({
           <div className={`${viewMode === "split" ? "lg:col-span-5" : "max-w-4xl mx-auto w-full"} space-y-4`}>
             <div className="rounded-xl border border-border bg-card p-4 shadow-xs sticky top-4 space-y-4">
               <div className="flex items-center justify-between border-b border-border pb-3">
-                <span className="font-manrope text-xs font-bold uppercase tracking-wider text-highlight-700">
+                <span className="font-manrope text-xs font-semibold text-foreground">
                   Pratinjau publik
                 </span>
                 <span className="text-xs text-muted-foreground font-inter">
@@ -724,7 +719,7 @@ export function GalleryWorkspace({
               <div className="grid grid-cols-12 gap-3 min-h-[420px] rounded-lg border border-border/60 bg-background p-3">
                 {/* Left Mini Sidebar Index */}
                 <div className="col-span-4 border-r border-border/60 pr-2 space-y-2">
-                  <p className="text-xs font-bold uppercase text-muted-foreground tracking-wider">
+                  <p className="text-xs font-semibold text-muted-foreground">
                     Daftar album
                   </p>
                   <div className="space-y-1">

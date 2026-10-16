@@ -513,14 +513,12 @@ export function ParticipantDetailWorkspace({
             </Link>
           </Button>
           <div>
-            <div className="flex items-center gap-2">
-              <span className="font-inter text-sm font-semibold uppercase text-highlight-500">
-                Peserta #{String(participant.number).padStart(2, "0")}
-              </span>
-              <span className="text-muted-foreground">·</span>
-              <span className="text-xs text-muted-foreground">{participant.categoryLabel}</span>
-              <span className="text-muted-foreground">·</span>
-              <span className="text-xs text-muted-foreground">{edition.name}</span>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>Peserta #{String(participant.number).padStart(2, "0")}</span>
+              <span>·</span>
+              <span>{participant.categoryLabel}</span>
+              <span>·</span>
+              <span>{edition.name}</span>
             </div>
             <h1 className="font-manrope text-xl font-bold text-brand-900 sm:text-2xl">
               {participant.name}
@@ -529,19 +527,9 @@ export function ParticipantDetailWorkspace({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-md border border-brand-200 bg-brand-50 px-2.5 py-1 font-inter text-xs font-semibold text-brand-900">
-            v{participant.version}
-          </span>
+          <span className="text-xs text-muted-foreground">v{participant.version}</span>
           <AdminBadge value={participant.currentStageName ?? "Tahap belum terhubung"} />
-          <span
-            className={`rounded-md border px-2.5 py-1 text-xs font-semibold ${
-              participant.active
-                ? "border-success-200 bg-success-50 text-success-800"
-                : "border-danger-200 bg-danger-50 text-danger-800"
-            }`}
-          >
-            {participant.active ? "Aktif" : "Nonaktif"}
-          </span>
+          <AdminBadge value={participant.active ? "Aktif" : "Nonaktif"} />
         </div>
       </div>
 
@@ -648,7 +636,7 @@ export function ParticipantDetailWorkspace({
                     />
                   </AdminField>
 
-                  <AdminField label="Slug profil" hint="URL slug unik per tahap">
+                  <AdminField label="Slug profil">
                     <AdminInput
                       value={slug}
                       onChange={(e) => setSlug(e.target.value)}
@@ -684,11 +672,8 @@ export function ParticipantDetailWorkspace({
                       checked={active}
                       onCheckedChange={(checked) => setActive(checked === true)}
                     />
-                    <label htmlFor="participant-active-toggle" className="cursor-pointer text-xs">
-                      <span className="font-semibold text-foreground">Status aktif</span>
-                      <p className="text-muted-foreground">
-                        Peserta aktif akan muncul dalam daftar seleksi dan halaman profil publik.
-                      </p>
+                    <label htmlFor="participant-active-toggle" className="cursor-pointer text-xs font-semibold text-foreground">
+                      Status aktif
                     </label>
                   </div>
 
@@ -701,7 +686,7 @@ export function ParticipantDetailWorkspace({
                     />
                   </AdminField>
 
-                  <AdminField label="Alasan perubahan (opsional)" className="sm:col-span-2">
+                  <AdminField label="Alasan perubahan" className="sm:col-span-2">
                     <AdminInput
                       placeholder="Misal: Penyesuaian nomor urut dan kategori"
                       value={identityReason}
@@ -757,7 +742,7 @@ export function ParticipantDetailWorkspace({
                 {/* Achievements List */}
                 {achievements.length === 0 ? (
                   <div className="py-6 text-center text-xs text-muted-foreground">
-                    Belum ada prestasi yang ditambahkan. Gunakan input di atas untuk menambahkan.
+                    Belum ada prestasi yang ditambahkan.
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -818,7 +803,7 @@ export function ParticipantDetailWorkspace({
                   </div>
                 )}
 
-                <AdminField label="Alasan perubahan (opsional)">
+                <AdminField label="Alasan perubahan">
                   <AdminInput
                     placeholder="Misal: Menambahkan gelar kejuaraan terbaru"
                     value={achievementsReason}
@@ -864,7 +849,7 @@ export function ParticipantDetailWorkspace({
 
                 {socialLinks.length === 0 ? (
                   <div className="py-6 text-center text-xs text-muted-foreground">
-                    Belum ada tautan sosial media. Klik tombol di atas untuk menambahkan.
+                    Belum ada tautan sosial media.
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -956,7 +941,7 @@ export function ParticipantDetailWorkspace({
                   </div>
                 )}
 
-                <AdminField label="Alasan perubahan (opsional)">
+                <AdminField label="Alasan perubahan">
                   <AdminInput
                     placeholder="Misal: Update link akun Instagram resmi"
                     value={socialReason}
@@ -1009,7 +994,7 @@ export function ParticipantDetailWorkspace({
                 {/* Media Items List */}
                 {mediaItems.length === 0 ? (
                   <div className="py-8 text-center text-xs text-muted-foreground">
-                    Belum ada media peserta. Pilih jenis media lalu tambahkan aset dari pustaka.
+                    Belum ada media peserta.
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -1152,13 +1137,11 @@ export function ParticipantDetailWorkspace({
             <AdminCard className="p-4 sm:p-5">
               <AdminCardHeader
                 title="Gambar QRIS"
-                description="Unggah atau pilih gambar QRIS yang dibuat di luar website."
               />
               <form onSubmit={handleSaveQris} className="space-y-4 pt-2">
                 <AdminMediaField
                   name="qrisMediaId"
                   label="Gambar QRIS"
-                  hint="Gunakan gambar siap pakai dari pustaka media."
                   aspectRatioHint="1:1"
                   initialAsset={
                     qrisAsset
@@ -1276,7 +1259,7 @@ export function ParticipantDetailWorkspace({
               <div className="p-4 space-y-3 text-xs">
                 {bio ? (
                   <div>
-                    <span className="text-xs font-semibold uppercase text-muted-foreground">Bio</span>
+                    <span className="text-xs font-medium text-muted-foreground">Bio</span>
                     <p className="text-xs text-foreground/90 line-clamp-3 mt-0.5">{bio}</p>
                   </div>
                 ) : null}
@@ -1284,7 +1267,7 @@ export function ParticipantDetailWorkspace({
                 {/* Achievements Chips */}
                 {achievements.length > 0 ? (
                   <div>
-                    <span className="text-xs font-semibold uppercase text-muted-foreground">Prestasi</span>
+                    <span className="text-xs font-medium text-muted-foreground">Prestasi</span>
                     <ul className="mt-1 space-y-1">
                       {achievements.slice(0, 3).map((a, i) => (
                         <li key={i} className="flex items-start gap-1.5 text-xs text-foreground">
@@ -1303,7 +1286,7 @@ export function ParticipantDetailWorkspace({
 
                 {participant.titles.length > 0 ? (
                   <div>
-                    <span className="text-xs font-semibold uppercase text-muted-foreground">Gelar</span>
+                    <span className="text-xs font-medium text-muted-foreground">Gelar</span>
                     <p className="mt-0.5 text-xs font-semibold text-brand-900">
                       {participant.titles.map((title) => title.name).join(", ")}
                     </p>
@@ -1313,7 +1296,7 @@ export function ParticipantDetailWorkspace({
                 {/* Social Icons */}
                 {socialLinks.length > 0 ? (
                   <div>
-                    <span className="text-xs font-semibold uppercase text-muted-foreground">Media sosial</span>
+                    <span className="text-xs font-medium text-muted-foreground">Media sosial</span>
                     <div className="mt-1 flex flex-wrap gap-1.5">
                       {socialLinks.map((s, i) => (
                         <a

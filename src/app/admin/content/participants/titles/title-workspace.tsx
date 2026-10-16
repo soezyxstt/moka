@@ -1,12 +1,12 @@
 "use client";
 
-import { ArrowDown, ArrowUp, Award, Pencil, Plus, Power, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Pencil, Plus, Power, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { adminNativeScrollbarClassName } from "@/components/admin/admin-scroll-area";
-import { AdminBadge, AdminButton, AdminCard, AdminEmptyState, AdminField, AdminInput, AdminTextarea } from "@/components/admin/primitives";
+import { AdminBadge, AdminButton, AdminCard, AdminEmptyState, AdminField, AdminInput, AdminStatCard, AdminTextarea } from "@/components/admin/primitives";
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -168,15 +168,15 @@ export function TitleWorkspace({ finalStage, finalists, initialTitles, finalists
   }
 
   if (!finalStage) {
-    return <AdminCard padding="none"><AdminEmptyState icon="award" title="Tahap final belum ditetapkan" description="Tandai satu tahap sebagai final sebelum mengelola gelar." /></AdminCard>;
+    return <AdminEmptyState icon="award" title="Tahap final belum ditetapkan" />;
   }
 
   return (
     <div className="space-y-5">
       <div className="grid gap-3 sm:grid-cols-3">
-        <AdminCard><p className="text-xs text-muted-foreground">Tahap final</p><p className="mt-1 font-manrope text-lg font-semibold text-brand-900">{finalStage.name}</p></AdminCard>
-        <AdminCard><p className="text-xs text-muted-foreground">Peserta final</p><p className="mt-1 font-manrope text-2xl font-semibold text-brand-900">{finalists.length}</p></AdminCard>
-        <AdminCard><p className="text-xs text-muted-foreground">Belum menerima gelar</p><p className="mt-1 font-manrope text-2xl font-semibold text-highlight-700">{finalistsWithoutTitle}</p></AdminCard>
+        <AdminStatCard label="Tahap final" value={finalStage.name} />
+        <AdminStatCard label="Peserta final" value={finalists.length} />
+        <AdminStatCard label="Belum menerima gelar" value={finalistsWithoutTitle} />
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -185,7 +185,7 @@ export function TitleWorkspace({ finalStage, finalists, initialTitles, finalists
       </div>
 
       {titles.length === 0 ? (
-        <AdminCard padding="none"><AdminEmptyState icon="award" title="Belum ada gelar" description="Tambahkan gelar untuk peserta tahap final." /></AdminCard>
+        <AdminEmptyState icon="award" title="Belum ada gelar" />
       ) : (
         <div className="space-y-4">
           {titles.map((title, index) => {
@@ -195,7 +195,6 @@ export function TitleWorkspace({ finalStage, finalists, initialTitles, finalists
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="min-w-0 space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="grid size-9 place-items-center rounded-md bg-brand-50 text-brand"><Award className="size-4" /></span>
                       <h2 className="font-manrope text-lg font-semibold text-brand-900">{title.name}</h2>
                       <AdminBadge value={title.active ? "Aktif" : "Nonaktif"} />
                       <AdminBadge value={`${title.participantIds.length}/${title.capacity} terisi`} />
@@ -235,10 +234,10 @@ export function TitleWorkspace({ finalStage, finalists, initialTitles, finalists
 
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent className="overflow-y-auto sm:max-w-lg">
-          <SheetHeader><SheetTitle>{editTarget ? "Edit gelar" : "Tambah gelar"}</SheetTitle><SheetDescription>Nama dan jumlah slot gelar.</SheetDescription></SheetHeader>
+          <SheetHeader><SheetTitle>{editTarget ? "Edit gelar" : "Tambah gelar"}</SheetTitle><SheetDescription className="sr-only">Form gelar</SheetDescription></SheetHeader>
           <form onSubmit={submitTitle} className="space-y-5 px-4 pb-6">
             <AdminField label="Nama gelar"><AdminInput value={name} onChange={(event) => setName(event.target.value)} required /></AdminField>
-            <AdminField label="Deskripsi (opsional)"><AdminTextarea value={description} onChange={(event) => setDescription(event.target.value)} rows={3} /></AdminField>
+            <AdminField label="Deskripsi"><AdminTextarea value={description} onChange={(event) => setDescription(event.target.value)} rows={3} /></AdminField>
             <AdminField label="Jumlah slot"><AdminInput type="number" min="1" step="1" value={capacity} onChange={(event) => setCapacity(event.target.value)} required /></AdminField>
             <SheetFooter><AdminButton type="button" variant="secondary" onClick={() => setSheetOpen(false)} disabled={pending}>Batal</AdminButton><AdminButton type="submit" disabled={pending}>{pending ? "Menyimpan..." : "Simpan gelar"}</AdminButton></SheetFooter>
           </form>

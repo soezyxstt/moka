@@ -283,8 +283,8 @@ export function MediaExplorer({
       <div className="grid min-h-[38rem] overflow-hidden border-y border-brand-100 bg-card xl:grid-cols-[240px_minmax(0,1fr)_320px]">
         <aside className="border-b border-border bg-brand-50/35 p-3 xl:border-b-0 xl:border-r">
           <div className="flex items-center justify-between px-2 py-2">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-700">Folder media</p>
-            <FolderOpen size={15} className="text-highlight-600" />
+            <p className="text-xs font-semibold text-muted-foreground">Folder media</p>
+            <FolderOpen size={15} className="text-muted-foreground" />
           </div>
 
           <div className="mb-2 flex rounded-md border border-border bg-canvas p-0.5 text-xs">
@@ -554,7 +554,7 @@ export function MediaExplorer({
         <aside className="border-t border-border bg-muted/35 p-4 xl:border-l xl:border-t-0 space-y-5">
           {selectedAsset ? (
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-highlight-700">Detail file</p>
+              <p className="text-xs font-semibold text-muted-foreground">Detail file</p>
               <div className="relative mt-3 aspect-square overflow-hidden rounded-lg bg-muted border border-border">
                 {selectedAsset.mimeType.startsWith("image/") ? (
                   <Image
@@ -648,12 +648,9 @@ export function MediaExplorer({
             </div>
           ) : currentFolder ? (
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-highlight-700">Detail folder</p>
-              <span className="mt-4 grid size-12 place-items-center rounded-md bg-highlight-50 text-highlight-700">
-                <FolderOpen size={21} />
-              </span>
-              <h3 className="mt-3 font-manrope text-lg font-semibold text-brand-900">{currentFolder.name}</h3>
-              <p className="mt-1 text-xs text-muted-foreground">{folderCount(currentFolder.id)} file di dalam struktur ini</p>
+              <p className="text-xs font-semibold text-muted-foreground">Detail folder</p>
+              <h3 className="mt-2 font-manrope text-base font-semibold text-brand-900">{currentFolder.name}</h3>
+              <p className="mt-0.5 text-xs text-muted-foreground">{folderCount(currentFolder.id)} file</p>
               {canManage ? (
                 <form action={renameMediaFolderAction} className="mt-5 space-y-2 border-t border-border pt-4">
                   <input type="hidden" name="folderId" value={currentFolder.id} />
@@ -678,13 +675,9 @@ export function MediaExplorer({
             </div>
           ) : (
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-highlight-700">Informasi</p>
-              <span className="mt-4 grid size-12 place-items-center rounded-md bg-brand-50 text-brand">
-                <FolderOpen size={21} />
-              </span>
-              <h3 className="mt-3 font-manrope text-base font-semibold text-brand-900">Pilih file atau folder</h3>
-              <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                Detail dan tindakan pengelolaan akan tersedia di panel ini.
+              <p className="text-xs font-semibold text-muted-foreground">Informasi</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Pilih file atau folder untuk melihat detail dan tindakan.
               </p>
             </div>
           )}
