@@ -1,5 +1,11 @@
 # Panduan Lengkap PAMOKA CMS
 
+Koreksi identitas 2026, 2026-10-16: favicon produksi memakai simbol atap/tiga wajah dari logo MOKA asli, bukan monogram M. Media lama tetap tersimpan dalam riwayat. Logo yang terlihat rusak di admin/login berasal dari SVG tanpa ekstensi yang masuk ke optimizer raster; perbaikan komponen tersedia di source dan memerlukan deployment terpisah. Jangan mengunggah ulang logo untuk memperbaiki masalah render tersebut.
+
+## Arsip 2025 setelah sinkronisasi
+
+Konten 2025 produksi sudah disamakan dengan CMS lokal pada 16 Oktober 2026. Edisi 2026 tetap aktif; pilih 2025 pada pemilih edisi untuk memeriksa arsip. Peserta kanonis memakai 60 identitas dan 104 entri tahap. Record lama tetap tersimpan nonaktif agar referensi voting tidak terputus. Berita contoh/tambahan menjadi draf dan sponsor di luar 68 sumber lokal dinonaktifkan. Periode pengurus 2025 dipisahkan dari periode 2026 sampai 2028; tier sponsor mengikuti data lokal dan belum menjadi klasifikasi terverifikasi. Jangan mengaktifkan ulang record arsip hanya untuk menyamakan jumlah baris mentah.
+
 ## Profil dan fase 2026
 
 Produksi memakai edisi 2026 aktif sejak 16 Oktober 2026; 2025 tersedia sebagai arsip. Profil semifinalis menampilkan motivasi dan CTA sebagai dua paragraf di Bio, lalu daftar Prestasi. Sebanyak 65 profil sudah diisi dari respons terbaru spreadsheet. Foto dan QR yang belum tersedia tidak dibuat otomatis. Rahma menunggu nomor terverifikasi; Fachri dan Yoga belum mengisi respons.
@@ -95,7 +101,7 @@ Menu **Identitas Edisi** (`/admin/content/edition-settings`) mengelola brand dan
 
 ## 5. Aset Situs Tetap
 
-Menu **Aset Situs Tetap** (`/admin/content/site-assets`) mengelola 47 slot visual per edisi, termasuk 22 slot logo, ikon dan gambar berbagi:
+Menu **Aset Situs Tetap** (`/admin/content/site-assets`) mengelola 48 slot visual per edisi, termasuk latar halaman voting dan 22 slot logo, ikon dan gambar berbagi:
 1. Buka kelompok halaman yang ingin diubah. Hanya satu kelompok ditampilkan agar halaman tetap ringkas.
 2. Setiap kartu slot menampilkan nama bagian, jenis media, rasio, status keterisian, dan pratinjau.
 3. Gunakan tombol **Pilih media** untuk memilih dari pustaka atau mengunggah file baru.
@@ -110,7 +116,7 @@ Menu **Aset Situs Tetap** (`/admin/content/site-assets`) mengelola 47 slot visua
 3. Pilih atau unggah aset melalui pustaka UploadThing. SVG hanya menerima bentuk/teks statis, tanpa skrip, CSS, gambar tertanam, atau sumber eksternal. Gambar OG harus PNG/JPEG/WebP; ikon Apple dan aplikasi harus PNG sesuai dimensi yang tertulis pada slot.
 4. Simpan tiap slot. Penggantian menyimpan binding sebelumnya pada revisi dan audit tanpa menghapus file media. Form dengan versi lama atau konteks edisi yang berubah ditolak.
 5. Pratinjau edisi dari **Kelola edisi** sebelum aktivasi. Navbar/footer, ikon, manifest aplikasi, OG dan Twitter membaca edisi aktif atau pratinjau berizin. Gambar Pasanggiri digunakan pada Voting dan daftar peserta; gambar sampul peserta/artikel yang spesifik tetap dapat mengalahkan gambar umum.
-6. Edisi arsip hanya dapat dibaca pada editor aset dan identitas. Untuk tahun baru, pilih edisi baru dan unggah media baru; jangan mengganti binding tahun sebelumnya. File serta binding 2025 tetap historis. Kit 2026 sudah diunggah ke UploadThing dan dipasang pada 22 slot di `local.db`, memakai 18 media unik dalam folder `Kit identitas 2026`. Edisi 2026 tetap draf dan 2025 tetap aktif. Mapping lokal berada di `.tmp/branding-2026/bindings.json`; laporan verifikasi di `upload-result.json` pada folder yang sama. Kit juga sudah dipasang melalui CMS pada database produksi, dengan logo edisi dan 22 slot brand terverifikasi. Hasil produksi lengkap ada di `.tmp/edition-2026/production-final-verification.json`. Deployment source tetap terpisah.
+6. Edisi arsip hanya dapat dibaca pada editor aset dan identitas. Untuk tahun baru, pilih edisi baru dan unggah media baru; jangan mengganti binding tahun sebelumnya. File serta binding 2025 tetap historis. Kit 2026 sudah diunggah ke UploadThing dan dipasang pada 22 slot di database produksi, memakai 18 media unik. Verifikasi ulang 2026-10-16 memastikan seluruh berkas kit cocok dengan sumber dan seluruh URL media terikat dapat diakses. Status terkini 2026 aktif dan 2025 arsip mengikuti aktivasi operator sebelumnya. Bukti `.tmp/branding-2026/prod-completeness-20261016.json`. Deployment source adalah langkah terpisah.
 
 Perubahan pada edisi publik aktif berlaku saat slot disimpan. Edisi draf tetap tidak terlihat oleh pengunjung biasa. Ikon yang sudah terpasang di perangkat dan gambar sosial dapat tersimpan pada cache browser/platform; gunakan file baru agar URL berbeda. Avatar, monogram, dan OG alternatif disimpan sebagai aset kampanye yang dapat digunakan ulang, tanpa dipaksakan tampil pada setiap halaman.
 

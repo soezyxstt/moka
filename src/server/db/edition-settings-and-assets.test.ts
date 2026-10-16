@@ -32,9 +32,9 @@ async function createTestDatabase() {
 }
 
 test("manifest aset situs mendefinisikan seluruh slot tetap dengan metadata lengkap", () => {
-  assert.equal(SITE_ASSET_SLOTS.length, 47);
+  assert.equal(SITE_ASSET_SLOTS.length, 48);
   assert.equal(SITE_ASSET_GROUPS.length, 5);
-  assert.equal(getSlotsByGroup("site").length, 1);
+  assert.equal(getSlotsByGroup("site").length, 2);
   assert.equal(getSlotsByGroup("brand").length, 22);
 
   const homeSlots = getSlotsByGroup("home");
@@ -62,6 +62,7 @@ test("manifest aset situs mendefinisikan seluruh slot tetap dengan metadata leng
   assert.equal(isValidSlotKey("home.hero.fg"), true);
   assert.equal(isValidSlotKey("home.programs.collage.1"), true);
   assert.equal(isValidSlotKey("about.hero.bg"), true);
+  assert.equal(isValidSlotKey("site.voting.bg"), true);
   assert.equal(isValidSlotKey("category.jd.poster"), true);
   assert.equal(isValidSlotKey("category.md.video"), true);
 

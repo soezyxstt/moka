@@ -510,6 +510,7 @@ export function MediaExplorer({
                         {asset.mimeType.startsWith("image/") ? (
                           <Image
                             src={asset.url}
+                            unoptimized={asset.mimeType === "image/svg+xml"}
                             alt={asset.alt ?? asset.filename}
                             fill
                             sizes="(max-width: 640px) 100vw, 260px"
@@ -530,7 +531,7 @@ export function MediaExplorer({
                     <>
                       <div className="relative size-11 shrink-0 overflow-hidden rounded-md bg-muted">
                         {asset.mimeType.startsWith("image/") ? (
-                          <Image src={asset.url} alt="" fill sizes="44px" className="object-cover" />
+                          <Image src={asset.url} unoptimized={asset.mimeType === "image/svg+xml"} alt="" fill sizes="44px" className="object-cover" />
                         ) : (
                           <FileImage size={17} className="absolute inset-0 m-auto text-muted-foreground" />
                         )}
@@ -558,6 +559,7 @@ export function MediaExplorer({
                 {selectedAsset.mimeType.startsWith("image/") ? (
                   <Image
                     src={selectedAsset.url}
+                    unoptimized={selectedAsset.mimeType === "image/svg+xml"}
                     alt={selectedAsset.alt ?? selectedAsset.filename}
                     fill
                     sizes="280px"

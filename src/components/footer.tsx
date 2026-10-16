@@ -10,6 +10,29 @@ export type FooterCategory = { slug: string; name: string };
 export type FooterEvent = { slug: string; label: string };
 export type FooterEdition = { year: number; logoUrl: string | null; logoAlt: string | null; slogan: string | null };
 
+const CATEGORY_LABELS: Record<string, string> = {
+  jd: 'Jajaka Dewasa',
+  md: 'Mojang Dewasa',
+  jr: 'Jajaka Remaja',
+  mr: 'Mojang Remaja',
+  jg: 'Jajaka Garut',
+  mg: 'Mojang Garut',
+  'jajaka-dewasa': 'Jajaka Dewasa',
+  'mojang-dewasa': 'Mojang Dewasa',
+  'jajaka-remaja': 'Jajaka Remaja',
+  'jajaka-rumaja': 'Jajaka Remaja',
+  'mojang-remaja': 'Mojang Remaja',
+  'mojang-rumaja': 'Mojang Remaja',
+};
+
+export function formatCategoryName(category: FooterCategory): string {
+  const byName = CATEGORY_LABELS[category.name.trim().toLowerCase()];
+  if (byName) return byName;
+  const bySlug = CATEGORY_LABELS[category.slug.trim().toLowerCase()];
+  if (bySlug) return bySlug;
+  return category.name;
+}
+
 export default function Footer({ categories, events, edition, logo, aboutDescription, resultsVisible, contacts, signature, participantKind, registrationVisible = false }: {
   participantKind: 'semifinalis' | 'finalis';
   registrationVisible?: boolean;
@@ -22,6 +45,9 @@ export default function Footer({ categories, events, edition, logo, aboutDescrip
   aboutDescription: string | null;
   resultsVisible: boolean;
 }) {
+  const instagramHref = contacts.find((contact) => contact.kind === 'instagram')?.href ?? 'https://www.instagram.com/mokagarut';
+  const otherContacts = contacts.filter((contact) => contact.kind !== 'instagram');
+
   return (
     <footer className="relative w-full overflow-hidden bg-linear-to-br from-brand-600 to-highlight-700 text-canvas">
       <div className="pointer-events-none absolute inset-0 bg-brand-900/24" />
@@ -33,8 +59,22 @@ export default function Footer({ categories, events, edition, logo, aboutDescrip
             : <p className="font-manrope text-2xl font-bold tracking-wide">MOKA Garut</p>}
           {edition.slogan ? <p className="mt-4 max-w-xs text-sm leading-6 text-canvas/82">{edition.slogan}</p> : null}
           {aboutDescription ? <p className="mt-3 max-w-md text-sm leading-6 text-canvas/85">{aboutDescription}</p> : null}
-          <div className="mt-4 flex gap-2 text-canvas">
-            {contacts.map((contact) => <SocialLink key={contact.kind} href={contact.href} label={contact.label}>{contact.kind === 'instagram' ? <Instagram className="size-4" /> : contact.kind === 'youtube' ? <Youtube className="size-4" /> : <Mail className="size-4" />}</SocialLink>)}
+          <div className="mt-5 flex flex-wrap items-center gap-2.5 text-canvas">
+            <Link
+              href={instagramHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Instagram resmi @mokagarut"
+              className="inline-flex h-10 items-center gap-2.5 rounded-md border border-canvas/20 bg-canvas/10 px-3.5 text-sm font-medium text-canvas transition-colors hover:border-highlight-300/70 hover:bg-canvas/16"
+            >
+              <Instagram className="size-4 shrink-0 text-highlight-300" aria-hidden="true" />
+              <span>@mokagarut</span>
+            </Link>
+            {otherContacts.map((contact) => (
+              <SocialLink key={contact.kind} href={contact.href} label={contact.label}>
+                {contact.kind === 'youtube' ? <Youtube className="size-4" /> : <Mail className="size-4" />}
+              </SocialLink>
+            ))}
           </div>
         </div>
 
@@ -44,6 +84,7 @@ export default function Footer({ categories, events, edition, logo, aboutDescrip
             <div className="flex flex-wrap gap-x-6 sm:block">
               <FooterLink href="/tentang">Tentang</FooterLink>
               {registrationVisible ? <FooterLink href="/pendaftaran">Pendaftaran</FooterLink> : null}
+              <FooterLink href="/voting">Voting</FooterLink>
               <FooterLink href="/galeri">Galeri</FooterLink>
             </div>
           </div>
@@ -53,10 +94,10 @@ export default function Footer({ categories, events, edition, logo, aboutDescrip
           </div> : null}
           {categories.length ? <div>
             <h2 className="mb-3 font-manrope text-sm font-semibold text-canvas">{participantKind === 'semifinalis' ? 'Profil semifinalis' : 'Profil finalis'}</h2>
-            {categories.map((category) => <FooterLink key={`participant-${category.slug}`} href={`/profil-${participantKind}/${category.slug}`}>{category.name}</FooterLink>)}
+            {categories.map((category) => <FooterLink key={`participant-${category.slug}`} href={`/profil-${participantKind}/${category.slug}`}>{formatCategoryName(category)}</FooterLink>)}
             {resultsVisible ? <>
               <h2 className="mb-3 mt-5 font-manrope text-sm font-semibold text-canvas">Hasil voting</h2>
-              {categories.map((category) => <FooterLink key={`hasil-${category.slug}`} href={`/voting/hasil/${category.slug}`}>{category.name}</FooterLink>)}
+              {categories.map((category) => <FooterLink key={`hasil-${category.slug}`} href={`/voting/hasil/${category.slug}`}>{formatCategoryName(category)}</FooterLink>)}
             </> : null}
           </div> : null}
         </nav>

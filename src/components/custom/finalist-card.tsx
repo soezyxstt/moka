@@ -13,7 +13,7 @@ type FinalistCardProps = {
 export function FinalistCard({ src, name, catt, no, href, signature }: FinalistCardProps) {
   const [firstName, ...restName] = name.split(' ');
   return (
-    <Link href={href} className="group relative aspect-square overflow-hidden rounded-md">
+    <Link href={href} data-reveal="" className="group relative aspect-square overflow-hidden rounded-md">
       <Image
         src={src}
         alt={name}

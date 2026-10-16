@@ -43,7 +43,7 @@ export function ScrollToTopButton() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 20, scale: 0.9 }}
           transition={{ duration: 0.3, ease: "easeInOut" }}
-          className="fixed bottom-8 right-8 z-50 h-auto rounded-full bg-canvas/30 p-3 text-neutral-700 shadow-lg backdrop-blur-md transition-all duration-200 hover:bg-canvas/50 hover:text-neutral-900 focus:outline-none focus:ring-2 focus:ring-highlight-500 focus:ring-offset-2 focus:ring-offset-transparent"
+          className="fixed bottom-16 right-6 z-50 h-auto rounded-full bg-highlight-400 p-3 text-neutral-950 shadow-lg transition-all duration-200 hover:bg-highlight-300 hover:text-neutral-950 focus:outline-none focus:ring-2 focus:ring-highlight-300 focus:ring-offset-2 focus:ring-offset-transparent md:bottom-12 md:right-8"
           aria-label="Kembali ke atas"
         >
           <ArrowUp className="size-6" aria-hidden="true" />

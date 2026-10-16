@@ -14,6 +14,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -44,6 +45,7 @@ export function Navbar({
   registrationVisible?: boolean;
 }) {
   const pathname = usePathname();
+  const user = authClient.useSession().data?.user;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const eventItems = events
     .map((item) => ({ href: `/rangkaian-kegiatan/${item.slug}`, label: item.label }));
@@ -115,15 +117,27 @@ export function Navbar({
               </Link>
             );
           })}
-          <Link
-            href="/admin/login"
-            className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-md border border-highlight px-3 text-sm font-semibold text-highlight transition-colors hover:bg-highlight hover:text-brand-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-highlight-200 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-900"
-            aria-label="Masuk ke ruang kerja PAMOKA"
-            title="Masuk"
-          >
-            <LogIn className="size-4" aria-hidden="true" />
-            <span className="hidden lg:inline">Masuk</span>
-          </Link>
+          {user ? (
+            <Link
+              href="/admin"
+              className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-md border border-highlight/40 py-1 pl-1 pr-3 text-sm font-semibold text-highlight transition-colors hover:border-highlight hover:bg-canvas/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-highlight-200 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-900"
+              aria-label={`Buka admin sebagai ${user.name}`}
+              title={user.name}
+            >
+              <UserAvatar name={user.name} image={user.image} />
+              <span className="hidden max-w-24 truncate lg:inline">{user.name}</span>
+            </Link>
+          ) : (
+            <Link
+              href="/admin/login"
+              className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-md border border-highlight px-3 text-sm font-semibold text-highlight transition-colors hover:bg-highlight hover:text-brand-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-highlight-200 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-900"
+              aria-label="Masuk ke ruang kerja PAMOKA"
+              title="Masuk"
+            >
+              <LogIn className="size-4" aria-hidden="true" />
+              <span className="hidden lg:inline">Masuk</span>
+            </Link>
+          )}
         </div>
       </motion.nav>
 
@@ -151,15 +165,27 @@ export function Navbar({
                 <MobileLink href="/voting" label="Voting" close={() => setIsMobileMenuOpen(false)} />
                 {participantItems.length ? <MobileMenu label={participantLabel} items={participantItems} close={() => setIsMobileMenuOpen(false)} /> : null}
                 {resultsVisible && resultItems.length ? <MobileMenu label="Hasil Voting" items={resultItems} close={() => setIsMobileMenuOpen(false)} /> : null}
-                <Link
-                  href="/admin/login"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-highlight bg-highlight px-4 py-2.5 text-sm font-semibold text-brand-900 transition-colors hover:bg-highlight-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas focus-visible:ring-offset-2 focus-visible:ring-offset-brand-900"
-                  aria-label="Masuk ke ruang kerja PAMOKA"
-                >
-                  <LogIn className="size-4" aria-hidden="true" />
-                  Masuk
-                </Link>
+                {user ? (
+                  <Link
+                    href="/admin"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="mt-4 inline-flex min-h-11 items-center gap-3 rounded-md border border-highlight/40 px-3 py-2 text-sm font-semibold text-canvas transition-colors hover:bg-canvas/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas focus-visible:ring-offset-2 focus-visible:ring-offset-brand-900"
+                    aria-label={`Buka admin sebagai ${user.name}`}
+                  >
+                    <UserAvatar name={user.name} image={user.image} />
+                    <span className="min-w-0 truncate">{user.name}</span>
+                  </Link>
+                ) : (
+                  <Link
+                    href="/admin/login"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-highlight bg-highlight px-4 py-2.5 text-sm font-semibold text-brand-900 transition-colors hover:bg-highlight-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas focus-visible:ring-offset-2 focus-visible:ring-offset-brand-900"
+                    aria-label="Masuk ke ruang kerja PAMOKA"
+                  >
+                    <LogIn className="size-4" aria-hidden="true" />
+                    Masuk
+                  </Link>
+                )}
               </div>
             </AccordionContent>
           </AccordionItem>
@@ -167,6 +193,13 @@ export function Navbar({
       </nav>
     </>
   );
+}
+
+function UserAvatar({ name, image }: { name: string; image?: string | null }) {
+  const initials = name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("");
+  return image
+    ? <Image src={image} alt="" width={32} height={32} unoptimized referrerPolicy="no-referrer" className="size-8 shrink-0 rounded-full object-cover" />
+    : <span aria-hidden="true" className="flex size-8 shrink-0 items-center justify-center rounded-full bg-highlight font-manrope text-xs font-bold text-brand-900">{initials}</span>;
 }
 
 function desktopLinkClass(active: boolean) {

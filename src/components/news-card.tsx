@@ -36,7 +36,7 @@ export const NewsCard: React.FC<NewsCardProps> = ({ news }) => {
   const { badgeText, color } = getBadgeInfo(date);
 
   return (
-    <article className="overflow-hidden flex flex-col h-full">
+    <article data-reveal="" className="overflow-hidden flex flex-col h-full">
       <div className="relative w-full aspect-[16/9] mb-4">
         <Image
           src={imageUrl}

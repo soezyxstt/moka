@@ -5,17 +5,22 @@ import { Section } from '@/components/custom/section';
 import { typography } from '@/components/custom/typography';
 import { Button } from '@/components/ui/button';
 import { VotingCategories } from './voting-categories';
-import { getPublicVotingCategories, getPublicVotingCategoryBySlug, getPublicPageIntro } from '@/server/cms/public-readers';
+import { getPublicVotingCategories, getPublicVotingCategoryBySlug, getPublicPageIntro, getPublicNavigation, getPublicSiteIdentity } from '@/server/cms/public-readers';
 
 export const metadata = { title: 'Voting' };
 
 export default async function VotingPage() {
-  const [{ editionYear, categories }, intro] = await Promise.all([getPublicVotingCategories(), getPublicPageIntro('voting')]);
+  const [{ editionYear, categories }, intro, navigation, { assets }] = await Promise.all([
+    getPublicVotingCategories(),
+    getPublicPageIntro('voting'),
+    getPublicNavigation(),
+    getPublicSiteIdentity(),
+  ]);
   const details = (await Promise.all(categories.map(({ slug }) => getPublicVotingCategoryBySlug(slug)))).filter((category) => category !== null);
-  const poster = details.find((category) => category.poster)?.poster;
+  const poster = assets['site.voting.bg'] ?? details.find((category) => category.poster)?.poster;
   return <main className="relative min-h-screen">
     <section className="relative overflow-hidden bg-brand-900 px-8 pb-12 pt-32 md:px-20 md:pb-16 md:pt-44">
-      {poster ? <Image src={poster.url} alt="" fill preload sizes="100vw" className="object-cover object-center" /> : null}
+      {poster ? <Image src={poster.url} alt={poster.alt ?? ""} fill preload sizes="100vw" className="object-cover object-center" /> : null}
       <div aria-hidden className="absolute inset-0 bg-linear-to-r from-brand-900/95 via-brand-900/80 to-brand-900/40" />
       <div className="relative mx-auto max-w-7xl">
         <h1 className="max-w-3xl font-manrope text-4xl font-semibold leading-tight text-canvas md:text-6xl">{intro?.title || 'Voting'}</h1>
@@ -29,9 +34,9 @@ export default async function VotingPage() {
           <div className="flex flex-col gap-6 border-b border-brand-200 pb-8 md:flex-row md:items-start md:justify-between">
             <div>
               <typography.h1 className="text-2xl text-brand-900 md:text-3xl">{category.campaign?.name ?? `Voting ${category.code}`}</typography.h1>
-              <typography.p className="mt-3 max-w-xl leading-7">{category.campaign ? `Pilih peserta kategori ${category.code} untuk melihat profil dan QR voting.` : `Voting edisi ${editionYear} belum dibuka. Kamu tetap dapat mengenal finalis kategori ${category.code}.`}</typography.p>
+              <typography.p className="mt-3 max-w-xl leading-7">{category.campaign ? `Pilih peserta kategori ${category.code} untuk melihat profil dan QR voting.` : `Voting edisi ${editionYear} belum dibuka. Kamu tetap dapat mengenal peserta kategori ${category.code}.`}</typography.p>
             </div>
-            <Button asChild variant="outline" className="h-11 border-brand bg-transparent text-brand hover:bg-brand hover:text-canvas"><Link href={`/profil-finalis/${category.slug}`}>Lihat finalis {category.code}<ArrowUpRight aria-hidden /></Link></Button>
+            <Button asChild variant="outline" className="h-11 border-brand bg-transparent text-brand hover:bg-brand hover:text-canvas"><Link href={`/profil-${navigation.participantKind}/${category.slug}`}>Lihat peserta {category.code}<ArrowUpRight aria-hidden /></Link></Button>
           </div>
           {category.campaign ? <>
             <dl className="my-8 grid gap-6 sm:grid-cols-2">
