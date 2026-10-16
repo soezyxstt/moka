@@ -1,4 +1,4 @@
-import { and, eq, ne } from "drizzle-orm";
+import { and, eq, inArray, ne } from "drizzle-orm";
 
 import { calculateVotesFromAmount, formatLocalDate } from "@/lib/voting";
 import { appendAuditLog } from "@/server/auth/audit";
@@ -721,3 +721,190 @@ export async function saveVotingTally(
     return { id, version: nextVersion };
   });
 }
+
+export async function saveVotingTalliesBatch(
+  db: Database,
+  editionId: string,
+  input: {
+    campaignId: string;
+    entries: Array<{
+      participantId: string;
+      votes: number;
+      mode?: "add" | "set";
+      expectedVersion?: number;
+    }>;
+    reason: string;
+  },
+  actor: AuditActor,
+  now: Date,
+) {
+  const reason = requireReason(input.reason);
+  if (!Array.isArray(input.entries) || input.entries.length === 0) {
+    throw new Error("Tidak ada data peserta yang akan diperbarui");
+  }
+
+  return db.transaction(async (tx) => {
+    const campaign = await requireCampaign(tx, editionId, input.campaignId);
+    if (campaign.status !== "active") throw new Error("Tally hanya dapat diubah saat voting aktif");
+
+    const localDate = formatLocalDate(now, campaign.timezone);
+    const firstDate = formatLocalDate(campaign.startsAt, campaign.timezone);
+    const lastDate = formatLocalDate(campaign.endsAt, campaign.timezone);
+    if (localDate < firstDate || localDate > lastDate) {
+      throw new Error("Tanggal hari ini berada di luar periode kampanye");
+    }
+
+    const validEntries = input.entries.filter((entry) => {
+      const mode = entry.mode ?? "add";
+      if (!Number.isSafeInteger(entry.votes) || entry.votes < 0) return false;
+      if (mode === "add" && entry.votes === 0) return false;
+      return true;
+    });
+
+    if (validEntries.length === 0) {
+      throw new Error("Masukkan jumlah vote untuk setidaknya satu peserta");
+    }
+
+    const participantIds = validEntries.map((e) => e.participantId);
+
+    const snapshots = await tx
+      .select({
+        participantId: votingCampaignParticipants.participantId,
+        name: participants.name,
+        qrisMediaId: participants.qrisMediaId,
+        mimeType: mediaAssets.mimeType,
+        lifecycle: mediaAssets.lifecycle,
+      })
+      .from(votingCampaignParticipants)
+      .innerJoin(participants, eq(participants.id, votingCampaignParticipants.participantId))
+      .leftJoin(mediaAssets, eq(mediaAssets.id, participants.qrisMediaId))
+      .where(
+        and(
+          eq(votingCampaignParticipants.campaignId, campaign.id),
+          inArray(votingCampaignParticipants.participantId, participantIds),
+          eq(participants.editionId, editionId),
+        ),
+      );
+
+    const snapshotMap = new Map(snapshots.map((s) => [s.participantId, s]));
+
+    const existingTallies = await tx
+      .select()
+      .from(voteDailyTallies)
+      .where(
+        and(
+          eq(voteDailyTallies.campaignId, campaign.id),
+          inArray(voteDailyTallies.participantId, participantIds),
+          eq(voteDailyTallies.localDate, localDate),
+        ),
+      );
+
+    const tallyMap = new Map(existingTallies.map((t) => [t.participantId, t]));
+    const results = [];
+
+    for (const entry of validEntries) {
+      const snapshot = snapshotMap.get(entry.participantId);
+      if (!snapshot) throw new Error("Peserta tidak ada pada snapshot kampanye");
+      if (
+        !snapshot.qrisMediaId ||
+        snapshot.lifecycle !== "ready" ||
+        !snapshot.mimeType?.startsWith("image/")
+      ) {
+        throw new Error(`Peserta ${snapshot.name} belum memiliki gambar QRIS yang siap`);
+      }
+
+      const before = tallyMap.get(entry.participantId);
+      if (
+        entry.expectedVersion !== undefined &&
+        (before?.version ?? 0) !== entry.expectedVersion
+      ) {
+        throw new Error(`Data tally untuk ${snapshot.name} telah diubah. Muat ulang halaman.`);
+      }
+
+      const mode = entry.mode ?? "add";
+      let targetAmount: number;
+      if (mode === "set") {
+        targetAmount = entry.votes * campaign.pricePerPoint;
+      } else {
+        const delta = entry.votes * campaign.pricePerPoint;
+        targetAmount = (before?.amount ?? 0) + delta;
+      }
+
+      if (!Number.isSafeInteger(targetAmount) || targetAmount < 0) {
+        throw new Error(`Jumlah vote untuk ${snapshot.name} tidak valid`);
+      }
+
+      const id = before?.id ?? crypto.randomUUID();
+      const nextVersion = (before?.version ?? 0) + 1;
+
+      if (before) {
+        const [updated] = await tx
+          .update(voteDailyTallies)
+          .set({ amount: targetAmount, version: nextVersion, updatedAt: now })
+          .where(
+            and(
+              eq(voteDailyTallies.id, before.id),
+              eq(voteDailyTallies.version, before.version),
+            ),
+          )
+          .returning({ id: voteDailyTallies.id });
+        if (!updated) {
+          throw new Error(`Data tally untuk ${snapshot.name} telah diubah. Muat ulang halaman.`);
+        }
+      } else {
+        await tx.insert(voteDailyTallies).values({
+          id,
+          campaignId: campaign.id,
+          participantId: entry.participantId,
+          localDate,
+          amount: targetAmount,
+          version: nextVersion,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+
+      const votes = calculateVotesFromAmount(targetAmount, campaign.pricePerPoint);
+      const beforeVotes = before
+        ? calculateVotesFromAmount(before.amount, campaign.pricePerPoint)
+        : null;
+
+      await appendAuditLog(tx, {
+        actorUserId: actor.userId,
+        actorLabel: actor.label,
+        action: before ? "voting.tally.correct" : "voting.tally.create",
+        resourceType: "voteDailyTally",
+        resourceId: id,
+        resourceLabel: snapshot.name,
+        before: before
+          ? {
+              campaignId: campaign.id,
+              participantId: entry.participantId,
+              localDate,
+              amount: before.amount,
+              votes: beforeVotes,
+              version: before.version,
+            }
+          : null,
+        after: {
+          campaignId: campaign.id,
+          participantId: entry.participantId,
+          localDate,
+          amount: targetAmount,
+          votes,
+          version: nextVersion,
+        },
+        changedFields: before
+          ? ["amount", "votes", "version"]
+          : ["campaignId", "participantId", "localDate", "amount", "votes", "version"],
+        source: "admin-voting",
+        reason,
+      });
+
+      results.push({ id, participantId: entry.participantId, version: nextVersion });
+    }
+
+    return { updatedCount: results.length, localDate, results };
+  });
+}
+

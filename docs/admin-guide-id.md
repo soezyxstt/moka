@@ -222,7 +222,7 @@ Menu **Voting** (`/admin/voting`) mengelola kampanye voting kameumeut dengan sik
 2. **Ubah Kampanye**: Perbarui nama kampanye, slug, harga per vote, dan rentang tanggal melalui tombol **Ubah**. Tahap sumber dapat disesuaikan selama kampanye berstatus draf sebelum snapshot dibuat. Rentang tanggal kampanye terlindungi agar tidak mengecualikan catatan tally yang sudah ada.
 3. **Mulai Manual**: Ketik nama kampanye dan alasan. Sistem membekukan daftar peserta tahap sebagai snapshot.
 4. **Siapkan QRIS**: Unggah atau pilih gambar QRIS eksternal pada profil peserta. PDF dan media yang belum siap tidak dapat menerima tally.
-5. **Catat Tally**: Pilih peserta snapshot dan tanggal, lalu masukkan akumulasi pemasukan harian dari dashboard merchant QRIS.
+5. **Catat Tally**: Masukkan perolehan suara pada input peserta (dapat mengisi beberapa peserta sekaligus dalam satu pembaruan). Tanggal pencatatan diinfer otomatis ke tanggal saat itu (WIB) tanpa pemilihan tanggal manual. Sistem mendukung mode penambahan suara maupun pengaturan total harian, serta dilengkapi bilah aksi ringkas yang responsif di perangkat bergerak.
 6. **Tampilkan Hasil**: Ubah visibilitas dengan alasan. Kampanye draf belum dapat ditampilkan. Nilai legacy yang tidak dikenal dianggap tersembunyi; gunakan **Tetapkan hasil ke tersembunyi** untuk menormalkan nilai itu melalui action audited.
 7. **Tutup Manual**: Tutup kampanye dengan nama dan alasan. Tally terkunci setelah kampanye ditutup.
 8. **Hapus Kampanye**: Hapus kampanye melalui tombol **Hapus** dengan konfirmasi pengetikan nama kampanye dan alasan tindakan. Penghapusan membersihkan seluruh data terkait seperti snapshot peserta dan rekap harian secara transaksional dengan pencatatan audit log.

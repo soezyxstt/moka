@@ -45,7 +45,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -59,7 +58,7 @@ import {
   closeCampaignAction,
   createCampaignAction,
   deleteCampaignAction,
-  saveTallyAction,
+  saveBatchTallyAction,
   setResultVisibilityAction,
   startCampaignAction,
   updateCampaignAction,
@@ -263,20 +262,12 @@ function VotingConsoleInner({
     [snapshotParticipants],
   );
 
-  const [selectedParticipantId, setSelectedParticipantId] = useState("");
-  const selectedParticipant =
-    tallyReadyParticipants.find((participant) => participant.id === selectedParticipantId) ??
-    tallyReadyParticipants[0];
-
-  const [selectedDate, setSelectedDate] = useState(
-    selectedCampaign
-      ? defaultCampaignDate(selectedCampaign.startsAt, selectedCampaign.endsAt)
-      : "",
-  );
+  const [voteInputs, setVoteInputs] = useState<Record<string, string>>({});
   const [inputMode, setInputMode] = useState<"add" | "set">("add");
-  const [voteInput, setVoteInput] = useState("1");
-  const [customAmountInput, setCustomAmountInput] = useState("");
   const [inputReason, setInputReason] = useState("");
+  const [inputCategory, setInputCategory] = useState("ALL");
+  const [inputSearchQuery, setInputSearchQuery] = useState("");
+  const [inputOnlyFilled, setInputOnlyFilled] = useState(false);
 
   const [stageId, setStageId] = useState(selectedCampaign?.eligibilityStageId ?? "");
   const [query, setQuery] = useState("");
@@ -307,9 +298,21 @@ function VotingConsoleInner({
     return totals;
   }, [campaignTallies]);
 
-  const currentTally = campaignTallies.find(
-    (tally) => tally.participantId === selectedParticipant?.id && tally.localDate === selectedDate,
-  );
+  const todayLocalDate = useMemo(() => {
+    return selectedCampaign
+      ? defaultCampaignDate(selectedCampaign.startsAt, selectedCampaign.endsAt)
+      : "";
+  }, [selectedCampaign]);
+
+  const todayTalliesMap = useMemo(() => {
+    const map = new Map<string, VotingTallySummary>();
+    for (const tally of campaignTallies) {
+      if (tally.localDate === todayLocalDate) {
+        map.set(tally.participantId, tally);
+      }
+    }
+    return map;
+  }, [campaignTallies, todayLocalDate]);
 
   const availableCategories = useMemo(() => {
     const seen = new Map<string, string>();
@@ -364,28 +367,111 @@ function VotingConsoleInner({
   );
 
   const pricePerVote = selectedCampaign?.pricePerPoint ?? 0;
-  const existingDateAmount = currentTally?.amount ?? 0;
-  const existingDateVotes =
-    pricePerVote > 0 ? calculateVotesFromAmount(existingDateAmount, pricePerVote) : 0;
-  const selectedParticipantTotalAmount = selectedParticipant
-    ? (participantTotals.get(selectedParticipant.id) ?? 0)
-    : 0;
-  const selectedParticipantTotalVotes =
-    pricePerVote > 0
-      ? calculateVotesFromAmount(selectedParticipantTotalAmount, pricePerVote)
-      : 0;
 
-  const parsedVoteInput = Number.parseInt(voteInput.trim(), 10);
-  const validVoteCount =
-    Number.isSafeInteger(parsedVoteInput) && parsedVoteInput >= 0 ? parsedVoteInput : 0;
-  const deltaOrTargetAmount =
-    customAmountInput.trim() !== ""
-      ? Math.max(0, Number.parseInt(customAmountInput.trim(), 10) || 0)
-      : validVoteCount * pricePerVote;
-  const nextDateAmount =
-    inputMode === "add" ? existingDateAmount + deltaOrTargetAmount : deltaOrTargetAmount;
-  const nextDateVotes =
-    pricePerVote > 0 ? calculateVotesFromAmount(nextDateAmount, pricePerVote) : 0;
+  const filledEntries = useMemo(() => {
+    const list: Array<{
+      participantId: string;
+      votes: number;
+      expectedVersion: number;
+      name: string;
+      code: string;
+      totalVotes: number;
+      existingTodayVotes: number;
+      projectedVotes: number;
+    }> = [];
+
+    for (const p of tallyReadyParticipants) {
+      const raw = voteInputs[p.id];
+      if (raw === undefined || raw === "") continue;
+      const votes = Number.parseInt(raw.trim(), 10);
+      if (!Number.isSafeInteger(votes) || votes < 0) continue;
+      if (inputMode === "add" && votes === 0) continue;
+
+      const code = formatParticipantCode(p.categoryCode, p.number);
+      const totalAmount = participantTotals.get(p.id) ?? 0;
+      const totalVotes = pricePerVote > 0 ? calculateVotesFromAmount(totalAmount, pricePerVote) : 0;
+      const todayTally = todayTalliesMap.get(p.id);
+      const existingTodayAmount = todayTally?.amount ?? 0;
+      const existingTodayVotes =
+        pricePerVote > 0 ? calculateVotesFromAmount(existingTodayAmount, pricePerVote) : 0;
+      const projectedVotes =
+        inputMode === "add" ? totalVotes + votes : totalVotes - existingTodayVotes + votes;
+
+      list.push({
+        participantId: p.id,
+        votes,
+        expectedVersion: todayTally?.version ?? 0,
+        name: p.name,
+        code,
+        totalVotes,
+        existingTodayVotes,
+        projectedVotes,
+      });
+    }
+
+    return list;
+  }, [
+    voteInputs,
+    inputMode,
+    tallyReadyParticipants,
+    participantTotals,
+    todayTalliesMap,
+    pricePerVote,
+  ]);
+
+  const totalDraftVotes = useMemo(
+    () => filledEntries.reduce((sum, item) => sum + item.votes, 0),
+    [filledEntries],
+  );
+  const totalDraftAmount = totalDraftVotes * pricePerVote;
+
+  const filteredInputParticipants = useMemo(() => {
+    const q = inputSearchQuery.trim().toLowerCase();
+    return tallyReadyParticipants.filter((participant) => {
+      const hasInput = Boolean(voteInputs[participant.id]);
+      if (inputOnlyFilled && !hasInput) return false;
+      if (inputCategory !== "ALL" && participant.categoryCode !== inputCategory) return false;
+      if (!q) return true;
+      const code = formatParticipantCode(participant.categoryCode, participant.number);
+      return `${participant.name} ${code} ${participant.categoryCode} ${participant.number}`
+        .toLowerCase()
+        .includes(q);
+    });
+  }, [tallyReadyParticipants, inputCategory, inputSearchQuery, inputOnlyFilled, voteInputs]);
+
+  function handleVoteInputChange(participantId: string, value: string) {
+    setVoteInputs((prev) => {
+      if (value === "" || value === "0") {
+        const next = { ...prev };
+        delete next[participantId];
+        return next;
+      }
+      const num = Number.parseInt(value, 10);
+      if (Number.isNaN(num) || num < 0) return prev;
+      return { ...prev, [participantId]: String(num) };
+    });
+  }
+
+  function handleIncrement(participantId: string, step: number) {
+    setVoteInputs((prev) => {
+      const current = Number.parseInt(prev[participantId] ?? "0", 10) || 0;
+      const nextVal = Math.max(0, current + step);
+      return { ...prev, [participantId]: String(nextVal) };
+    });
+  }
+
+  function handleClearParticipantInput(participantId: string) {
+    setVoteInputs((prev) => {
+      const next = { ...prev };
+      delete next[participantId];
+      return next;
+    });
+  }
+
+  function handleClearAllInputs() {
+    setVoteInputs({});
+    setInputReason("");
+  }
 
   function replaceCampaign(patch: Partial<VotingCampaignSummary>) {
     if (!selectedCampaign) return;
@@ -399,16 +485,20 @@ function VotingConsoleInner({
   function chooseCampaign(id: string) {
     const campaign = campaigns.find((item) => item.id === id);
     setSelectedCampaignId(id);
-    setSelectedParticipantId("");
+    setVoteInputs({});
+    setInputReason("");
     setStageId(campaign?.eligibilityStageId ?? "");
-    setSelectedDate(
-      campaign ? defaultCampaignDate(campaign.startsAt, campaign.endsAt) : "",
-    );
     setQuery("");
+    setInputSearchQuery("");
   }
 
   function jumpToParticipantInput(participantId: string) {
-    setSelectedParticipantId(participantId);
+    const p = snapshotParticipants.find((item) => item.id === participantId);
+    if (p) {
+      setInputCategory(p.categoryCode);
+      setInputSearchQuery(p.name);
+      setInputOnlyFilled(false);
+    }
     setActiveTab("input");
   }
 
@@ -583,17 +673,34 @@ function VotingConsoleInner({
     }
   }
 
-  async function saveVotingInput(formData: FormData) {
+  async function submitBatchVoting() {
+    if (!selectedCampaign) return;
+    const trimmedReason = inputReason.trim();
+    if (!trimmedReason) {
+      toast.error("Catatan audit wajib diisi");
+      return;
+    }
+    if (filledEntries.length === 0) {
+      toast.error("Masukkan jumlah vote untuk setidaknya satu peserta");
+      return;
+    }
+
     setPending(true);
-    const toastId = toast.loading("Menyimpan perolehan voting...");
+    const toastId = toast.loading(`Menyimpan voting untuk ${filledEntries.length} peserta...`);
     try {
-      await saveTallyAction(formData);
-      toast.success("Data voting disimpan dan dicatat ke audit", { id: toastId });
+      const result = await saveBatchTallyAction({
+        campaignId: selectedCampaign.id,
+        entries: filledEntries.map((e) => ({
+          participantId: e.participantId,
+          votes: e.votes,
+          mode: inputMode,
+          expectedVersion: e.expectedVersion,
+        })),
+        reason: trimmedReason,
+      });
+      toast.success(`Berhasil menyimpan voting untuk ${result.updatedCount} peserta`, { id: toastId });
+      setVoteInputs({});
       setInputReason("");
-      if (inputMode === "add") {
-        setVoteInput("1");
-        setCustomAmountInput("");
-      }
       router.refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Data voting gagal disimpan", { id: toastId });
@@ -725,246 +832,252 @@ function VotingConsoleInner({
                   title="Kampanye voting belum aktif"
                   description="Buka tab Pengaturan untuk mengaktifkan kampanye sebelum menambahkan voting peserta."
                 />
-              ) : tallyReadyParticipants.length === 0 || !selectedParticipant ? (
+              ) : tallyReadyParticipants.length === 0 ? (
                 <AdminEmptyState
                   icon="gallery"
                   title="QRIS peserta belum siap"
                   description="Pastikan peserta pada kampanye ini memiliki gambar QRIS yang siap."
                 />
               ) : (
-                <AdminCard className="space-y-4 p-4 sm:p-5">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div>
+                <div className="space-y-3">
+                  <AdminCard className="space-y-4 p-4 sm:p-5">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                       <h3 className="font-manrope text-base font-semibold text-brand-900">
-                        Input voting peserta
+                        Input voting
                       </h3>
-                      <p className="text-xs text-muted-foreground">
-                        Setiap perubahan otomatis tercatat pada log audit beserta alasan dan pelaku.
-                      </p>
-                    </div>
-                    <div className="inline-flex rounded-md border border-brand-100 bg-brand-50/50 p-0.5">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setInputMode("add");
-                          setVoteInput("1");
-                          setCustomAmountInput("");
-                        }}
-                        className={cn(
-                          "rounded px-2.5 py-1 text-xs font-semibold transition-colors",
-                          inputMode === "add"
-                            ? "bg-brand text-canvas"
-                            : "text-brand-800 hover:bg-brand-100/60",
-                        )}
-                      >
-                        Tambah vote
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setInputMode("set");
-                          setVoteInput(String(existingDateVotes));
-                          setCustomAmountInput(String(existingDateAmount));
-                        }}
-                        className={cn(
-                          "rounded px-2.5 py-1 text-xs font-semibold transition-colors",
-                          inputMode === "set"
-                            ? "bg-brand text-canvas"
-                            : "text-brand-800 hover:bg-brand-100/60",
-                        )}
-                      >
-                        Atur total tanggal
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <AdminField label="Peserta">
-                      <AdminSelect
-                        value={selectedParticipant.id}
-                        onValueChange={(nextId) => {
-                          setSelectedParticipantId(nextId);
-                          if (inputMode === "set") {
-                            const nextTally = campaignTallies.find(
-                              (t) => t.participantId === nextId && t.localDate === selectedDate,
-                            );
-                            const amt = nextTally?.amount ?? 0;
-                            setCustomAmountInput(String(amt));
-                            setVoteInput(
-                              String(
-                                pricePerVote > 0 ? calculateVotesFromAmount(amt, pricePerVote) : 0,
-                              ),
-                            );
-                          }
-                        }}
-                        options={tallyReadyParticipants.map((participant) => ({
-                          value: participant.id,
-                          label: `${formatParticipantCode(participant.categoryCode, participant.number)} · ${participant.name}`,
-                        }))}
-                      />
-                    </AdminField>
-                    <AdminField label="Tanggal pencatatan">
-                      <AdminInput
-                        type="date"
-                        min={localInputDate(selectedCampaign.startsAt)}
-                        max={localInputDate(selectedCampaign.endsAt)}
-                        value={selectedDate}
-                        onChange={(event) => {
-                          const nextDate = event.target.value;
-                          setSelectedDate(nextDate);
-                          if (inputMode === "set" && selectedParticipant) {
-                            const nextTally = campaignTallies.find(
-                              (t) =>
-                                t.participantId === selectedParticipant.id &&
-                                t.localDate === nextDate,
-                            );
-                            const amt = nextTally?.amount ?? 0;
-                            setCustomAmountInput(String(amt));
-                            setVoteInput(
-                              String(
-                                pricePerVote > 0 ? calculateVotesFromAmount(amt, pricePerVote) : 0,
-                              ),
-                            );
-                          }
-                        }}
-                      />
-                    </AdminField>
-                  </div>
-
-                  {/* Current stats strip for selected participant */}
-                  <div className="grid grid-cols-3 gap-2 rounded-lg border border-brand-100 bg-brand-50/40 p-3 text-xs">
-                    <div>
-                      <span className="text-muted-foreground">Tercatat ({selectedDate})</span>
-                      <p className="mt-0.5 font-manrope text-sm font-semibold text-brand-900">
-                        {existingDateVotes.toLocaleString("id-ID")} vote
-                      </p>
-                      <p className="text-[11px] text-muted-foreground">
-                        {currency.format(existingDateAmount)}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Setelah disimpan</span>
-                      <p className="mt-0.5 font-manrope text-sm font-semibold text-brand">
-                        {nextDateVotes.toLocaleString("id-ID")} vote
-                      </p>
-                      <p className="text-[11px] text-muted-foreground">
-                        {currency.format(nextDateAmount)}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Total akumulasi</span>
-                      <p className="mt-0.5 font-manrope text-sm font-semibold text-brand-900">
-                        {selectedParticipantTotalVotes.toLocaleString("id-ID")} vote
-                      </p>
-                      <p className="text-[11px] text-muted-foreground">
-                        {currency.format(selectedParticipantTotalAmount)}
-                      </p>
-                    </div>
-                  </div>
-
-                  <form
-                    key={`${selectedCampaign.id}:${selectedParticipant.id}:${selectedDate}:${currentTally?.version ?? 0}:${inputMode}`}
-                    action={saveVotingInput}
-                    className="space-y-3.5"
-                  >
-                    <input type="hidden" name="campaignId" value={selectedCampaign.id} />
-                    <input type="hidden" name="participantId" value={selectedParticipant.id} />
-                    <input type="hidden" name="localDate" value={selectedDate} />
-                    <input type="hidden" name="version" value={currentTally?.version ?? 0} />
-                    <input type="hidden" name="amount" value={nextDateAmount} />
-
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="space-y-2">
-                        <AdminField
-                          label={
+                      <div className="inline-flex rounded-md border border-brand-100 bg-brand-50/50 p-0.5">
+                        <button
+                          type="button"
+                          onClick={() => setInputMode("add")}
+                          className={cn(
+                            "rounded px-2.5 py-1 text-xs font-semibold transition-colors",
                             inputMode === "add"
-                              ? "Jumlah vote ditambahkan"
-                              : "Target jumlah vote tanggal ini"
-                          }
+                              ? "bg-brand text-canvas"
+                              : "text-brand-800 hover:bg-brand-100/60",
+                          )}
                         >
-                          <AdminInput
-                            type="number"
-                            min="0"
-                            step="1"
-                            value={voteInput}
-                            onChange={(event) => {
-                              const val = event.target.value;
-                              setVoteInput(val);
-                              const num = Number.parseInt(val, 10);
-                              if (Number.isSafeInteger(num) && num >= 0 && pricePerVote > 0) {
-                                setCustomAmountInput(String(num * pricePerVote));
-                              } else {
-                                setCustomAmountInput("");
-                              }
+                          Tambah vote
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setInputMode("set")}
+                          className={cn(
+                            "rounded px-2.5 py-1 text-xs font-semibold transition-colors",
+                            inputMode === "set"
+                              ? "bg-brand text-canvas"
+                              : "text-brand-800 hover:bg-brand-100/60",
+                          )}
+                        >
+                          Atur total
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Filter & Search Toolbar */}
+                    <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setInputCategory("ALL");
+                            setInputOnlyFilled(false);
+                          }}
+                          className={cn(
+                            "rounded-md px-2.5 py-1 text-xs font-semibold transition-colors",
+                            inputCategory === "ALL" && !inputOnlyFilled
+                              ? "bg-brand text-canvas"
+                              : "border border-brand-100 bg-background text-brand-800 hover:bg-brand-50",
+                          )}
+                        >
+                          Semua ({tallyReadyParticipants.length})
+                        </button>
+                        {availableCategories.map((cat) => (
+                          <button
+                            key={cat.code}
+                            type="button"
+                            onClick={() => {
+                              setInputCategory(cat.code);
+                              setInputOnlyFilled(false);
                             }}
-                          />
-                        </AdminField>
-                        <div className="flex flex-wrap gap-1.5">
-                          {[1, 5, 10, 25, 50].map((step) => (
-                            <button
-                              key={step}
-                              type="button"
-                              onClick={() => {
-                                const nextVotes = validVoteCount + step;
-                                setVoteInput(String(nextVotes));
-                                setCustomAmountInput(String(nextVotes * pricePerVote));
-                              }}
-                              className="rounded-md border border-brand-200 bg-background px-2 py-1 text-xs font-semibold text-brand-800 hover:bg-brand-50"
+                            className={cn(
+                              "rounded-md px-2.5 py-1 text-xs font-semibold transition-colors",
+                              inputCategory === cat.code && !inputOnlyFilled
+                                ? "bg-brand text-canvas"
+                                : "border border-brand-100 bg-background text-brand-800 hover:bg-brand-50",
+                            )}
+                          >
+                            {cat.code}
+                          </button>
+                        ))}
+                        {filledEntries.length > 0 ? (
+                          <button
+                            type="button"
+                            onClick={() => setInputOnlyFilled(!inputOnlyFilled)}
+                            className={cn(
+                              "rounded-md px-2.5 py-1 text-xs font-semibold transition-colors",
+                              inputOnlyFilled
+                                ? "bg-brand text-canvas"
+                                : "border border-brand-300 bg-brand-50 text-brand-900 hover:bg-brand-100",
+                            )}
+                          >
+                            Terisi ({filledEntries.length})
+                          </button>
+                        ) : null}
+                      </div>
+                      <label className="relative block w-full sm:w-64">
+                        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                        <AdminInput
+                          value={inputSearchQuery}
+                          onChange={(event) => setInputSearchQuery(event.target.value)}
+                          placeholder="Cari nama atau kode..."
+                          className="h-9 pl-9 text-xs"
+                        />
+                      </label>
+                    </div>
+
+                    {/* Participant List */}
+                    {filteredInputParticipants.length === 0 ? (
+                      <AdminEmptyState icon="users" title="Tidak ada peserta yang cocok" />
+                    ) : (
+                      <div className="space-y-2">
+                        {filteredInputParticipants.map((participant) => {
+                          const code = formatParticipantCode(participant.categoryCode, participant.number);
+                          const totalAmount = participantTotals.get(participant.id) ?? 0;
+                          const totalVotes =
+                            pricePerVote > 0 ? calculateVotesFromAmount(totalAmount, pricePerVote) : 0;
+                          const rawDraft = voteInputs[participant.id];
+                          const draftVotes = rawDraft ? Number.parseInt(rawDraft, 10) || 0 : 0;
+                          const hasInput = rawDraft !== undefined && rawDraft !== "";
+                          const todayTally = todayTalliesMap.get(participant.id);
+                          const existingTodayAmount = todayTally?.amount ?? 0;
+                          const existingTodayVotes =
+                            pricePerVote > 0 ? calculateVotesFromAmount(existingTodayAmount, pricePerVote) : 0;
+                          const projectedVotes =
+                            inputMode === "add"
+                              ? totalVotes + draftVotes
+                              : totalVotes - existingTodayVotes + draftVotes;
+
+                          return (
+                            <div
+                              key={participant.id}
+                              className={cn(
+                                "rounded-lg border p-3 transition-colors",
+                                hasInput
+                                  ? "border-brand-300 bg-brand-50/50"
+                                  : "border-border bg-card hover:bg-brand-50/20",
+                              )}
                             >
-                              +{step} vote
-                            </button>
-                          ))}
+                              <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className="shrink-0 rounded bg-brand-100 px-2 py-0.5 font-manrope text-xs font-bold text-brand-900">
+                                      {code}
+                                    </span>
+                                    <p className="truncate font-manrope text-sm font-semibold text-brand-900">
+                                      {participant.name}
+                                    </p>
+                                  </div>
+                                  <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+                                    <span>
+                                      Total: <strong className="text-brand-900">{totalVotes.toLocaleString("id-ID")}</strong> vote
+                                    </span>
+                                    {hasInput && draftVotes > 0 ? (
+                                      <span className="font-semibold text-brand">
+                                        → {projectedVotes.toLocaleString("id-ID")} vote ({inputMode === "add" ? `+${draftVotes}` : `set ${draftVotes}`} · {currency.format(draftVotes * pricePerVote)})
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                </div>
+
+                                <div className="flex flex-wrap items-center gap-1.5 sm:justify-end">
+                                  <div className="flex items-center gap-1">
+                                    <AdminInput
+                                      type="number"
+                                      min="0"
+                                      placeholder="0"
+                                      value={voteInputs[participant.id] ?? ""}
+                                      onChange={(event) =>
+                                        handleVoteInputChange(participant.id, event.target.value)
+                                      }
+                                      className="h-8 w-20 text-center font-manrope text-xs font-semibold"
+                                    />
+                                    <span className="text-xs text-muted-foreground">vote</span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    {[1, 5, 10].map((step) => (
+                                      <button
+                                        key={step}
+                                        type="button"
+                                        onClick={() => handleIncrement(participant.id, step)}
+                                        className="h-8 rounded border border-brand-200 bg-background px-2 text-xs font-semibold text-brand-800 transition-colors hover:bg-brand-50"
+                                      >
+                                        +{step}
+                                      </button>
+                                    ))}
+                                    {hasInput ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleClearParticipantInput(participant.id)}
+                                        className="h-8 rounded border border-border px-2 text-xs text-muted-foreground hover:bg-muted"
+                                        title="Hapus"
+                                      >
+                                        ×
+                                      </button>
+                                    ) : null}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </AdminCard>
+
+                  {/* Sticky / Floating Action Bar when any participant has votes entered */}
+                  {filledEntries.length > 0 ? (
+                    <div className="sticky bottom-3 z-20 rounded-xl border border-brand-200 bg-card/95 p-3.5 shadow-xl backdrop-blur sm:p-4">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <p className="font-manrope text-sm font-semibold text-brand-900">
+                            {filledEntries.length} peserta akan diperbarui · Total {inputMode === "add" ? `+${totalDraftVotes}` : `${totalDraftVotes}`} vote
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Nominal: {currency.format(totalDraftAmount)}
+                          </p>
+                        </div>
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                          <AdminInput
+                            value={inputReason}
+                            onChange={(event) => setInputReason(event.target.value)}
+                            placeholder="Catatan audit (wajib)"
+                            className="h-9 w-full text-xs sm:w-64"
+                          />
+                          <div className="flex items-center gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={handleClearAllInputs}
+                              disabled={pending}
+                              className="text-xs"
+                            >
+                              Reset
+                            </Button>
+                            <AdminButton
+                              type="button"
+                              onClick={submitBatchVoting}
+                              disabled={pending || !inputReason.trim()}
+                              className="w-full text-xs sm:w-auto"
+                            >
+                              <Check className="size-4" /> Simpan voting ({filledEntries.length})
+                            </AdminButton>
+                          </div>
                         </div>
                       </div>
-
-                      <AdminField
-                        label={
-                          inputMode === "add"
-                            ? "Nominal tambahan (Rp)"
-                            : "Nominal tanggal ini (Rp)"
-                        }
-                        hint={`Konversi otomatis: Rp ${pricePerVote.toLocaleString("id-ID")} per vote`}
-                      >
-                        <AdminInput
-                          type="number"
-                          min="0"
-                          step="1"
-                          value={
-                            customAmountInput !== ""
-                              ? customAmountInput
-                              : String(validVoteCount * pricePerVote)
-                          }
-                          onChange={(event) => {
-                            const val = event.target.value;
-                            setCustomAmountInput(val);
-                            const num = Number.parseInt(val, 10);
-                            if (Number.isSafeInteger(num) && num >= 0 && pricePerVote > 0) {
-                              setVoteInput(String(calculateVotesFromAmount(num, pricePerVote)));
-                            }
-                          }}
-                        />
-                      </AdminField>
                     </div>
-
-                    <AdminField label="Catatan audit (wajib)">
-                      <AdminInput
-                        name="reason"
-                        value={inputReason}
-                        onChange={(event) => setInputReason(event.target.value)}
-                        placeholder="Contoh: Pembayaran QRIS terverifikasi pukul 16.00 WIB"
-                        required
-                      />
-                    </AdminField>
-
-                    <AdminButton
-                      type="submit"
-                      disabled={pending || !inputReason.trim()}
-                      className="w-full sm:w-auto"
-                    >
-                      <Check className="size-4" /> Simpan voting
-                    </AdminButton>
-                  </form>
-                </AdminCard>
+                  ) : null}
+                </div>
               )}
 
               {/* Riwayat Audit Input Voting */}
@@ -973,12 +1086,9 @@ function VotingConsoleInner({
                   <div className="flex items-center gap-2">
                     <History className="size-4 text-brand" />
                     <h3 className="font-manrope text-sm font-semibold text-brand-900">
-                      Riwayat audit input voting
+                      Riwayat audit
                     </h3>
                   </div>
-                  <span className="text-xs text-muted-foreground">
-                    {campaignAuditEntries.length} catatan terakhir
-                  </span>
                 </div>
 
                 {campaignAuditEntries.length === 0 ? (
@@ -1350,16 +1460,7 @@ function VotingConsoleInner({
                     <div className="grid gap-4 lg:grid-cols-2">
                       <div className="space-y-3 rounded-lg border border-brand-100 bg-brand-50/30 p-3.5">
                         <div className="flex items-center justify-between gap-2">
-                          <div>
-                            <p className="text-xs font-semibold text-brand-900">Status voting</p>
-                            <p className="text-xs text-muted-foreground">
-                              {selectedCampaign.status === "draft"
-                                ? "Kampanye masih draf. Aktifkan untuk membuat snapshot peserta dan membuka input voting."
-                                : selectedCampaign.status === "active"
-                                  ? "Kampanye sedang aktif. Nonaktifkan jika periode voting telah selesai."
-                                  : "Kampanye telah ditutup secara permanen."}
-                            </p>
-                          </div>
+                          <p className="text-xs font-semibold text-brand-900">Status voting</p>
                           <AdminBadge value={selectedCampaign.status} />
                         </div>
 
@@ -1418,17 +1519,9 @@ function VotingConsoleInner({
 
                       <div className="space-y-3 rounded-lg border border-brand-100 bg-brand-50/30 p-3.5">
                         <div className="flex items-center justify-between gap-2">
-                          <div>
-                            <p className="text-xs font-semibold text-brand-900">
-                              Visibilitas hasil publik
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              Saat ini:{" "}
-                              <strong>
-                                {selectedResultIsVisible ? "Ditampilkan" : "Disembunyikan"}
-                              </strong>
-                            </p>
-                          </div>
+                          <p className="text-xs font-semibold text-brand-900">
+                            Visibilitas hasil publik
+                          </p>
                         </div>
                         <AdminField label="Alasan perubahan visibilitas">
                           <AdminInput
@@ -1465,9 +1558,6 @@ function VotingConsoleInner({
                       <h3 className="font-manrope text-base font-semibold text-brand-900">
                         Detail dan jadwal kampanye
                       </h3>
-                      <p className="text-xs text-muted-foreground">
-                        Ubah nama, slug, harga per vote, atau rentang tanggal buka voting (WIB).
-                      </p>
                     </div>
                     <form
                       key={`${selectedCampaign.id}:${selectedCampaign.version}`}
@@ -1558,8 +1648,7 @@ function VotingConsoleInner({
                         Hapus kampanye
                       </h3>
                       <p className="text-xs text-muted-foreground">
-                        Menghapus kampanye akan menghapus snapshot peserta dan seluruh data voting
-                        pada kampanye ini secara permanen.
+                        Hapus permanen kampanye beserta seluruh data voting terkait.
                       </p>
                     </div>
                     <AdminButton
@@ -1592,9 +1681,6 @@ function VotingConsoleInner({
             <DialogTitle className="font-manrope text-lg font-semibold text-brand-900">
               Kampanye baru
             </DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground">
-              Buat draf kampanye voting baru untuk edisi {currentEdition.year}.
-            </DialogDescription>
           </DialogHeader>
           <form action={createCampaign} className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">

@@ -9,6 +9,7 @@ import {
   createVotingCampaign,
   deleteVotingCampaign,
   saveVotingTally,
+  saveVotingTalliesBatch,
   setVotingResultVisibility,
   startVotingCampaign,
   updateVotingCampaign,
@@ -248,3 +249,29 @@ export async function saveTallyAction(formData: FormData) {
   );
   revalidatePath("/admin/voting");
 }
+
+export async function saveBatchTallyAction(input: {
+  campaignId: string;
+  entries: Array<{
+    participantId: string;
+    votes: number;
+    mode?: "add" | "set";
+    expectedVersion?: number;
+  }>;
+  reason: string;
+}) {
+  const actor = await requirePermission("voting.tally");
+  const editionId = await requireEditionId();
+  const result = await saveVotingTalliesBatch(
+    database,
+    editionId,
+    input,
+    actorFromSession(actor),
+    new Date(),
+  );
+  revalidatePath("/admin");
+  revalidatePath("/admin/voting");
+  revalidatePath("/voting");
+  return result;
+}
+
