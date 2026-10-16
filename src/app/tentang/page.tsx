@@ -16,7 +16,12 @@ export default async function AboutUs() {
   const heroImage = about.assets["about.hero.bg"];
   const introImage = about.assets["about.intro.image"] ?? heroImage;
   const visionImage = about.assets["about.vision.image"];
-  const history = about.history.filter((period) => period.members.length > 0);
+  const history = about.history
+    .map((period) => ({
+      ...period,
+      members: period.members.filter((person) => isKetuaUmum(person.position)),
+    }))
+    .filter((period) => period.members.length > 0);
   const hasHero = Boolean(hero?.title?.trim() || hero?.body?.trim() || heroImage || introImage);
   const hasVision = Boolean(visi?.title?.trim() || about.vision || visionImage);
   const hasMission = Boolean(misi?.title?.trim() || about.mission.length);
@@ -117,8 +122,9 @@ export default async function AboutUs() {
         </section>)}
       </Section> : null}
 
-      {history.length ? <Section id="riwayat" className="bg-highlight-50 py-10 md:py-12" contentClassName="mx-auto max-w-7xl">
-        <typography.h1 className="text-3xl text-brand-900 md:text-4xl">Riwayat kepengurusan</typography.h1>
+      {history.length ? <Section id="ketua-sebelumnya" className="bg-highlight-50 py-10 md:py-12" contentClassName="mx-auto max-w-7xl">
+        <span id="riwayat" className="sr-only" />
+        <typography.h1 className="text-3xl text-brand-900 md:text-4xl">Ketua-ketua Sebelumnya</typography.h1>
         <div className="mt-7 grid grid-cols-2 gap-x-6 gap-y-8 lg:grid-cols-4 lg:gap-x-8">
           {history.map((period) => <section key={period.id} className="min-w-0 border-t-2 border-highlight-300 pt-4">
             <h3 className="font-manrope text-lg font-medium tabular-nums text-brand-900 md:text-2xl">{period.label}</h3>
@@ -168,3 +174,9 @@ function AlbumPreview({ album, featured }: { album: PublicGalleryAlbum; featured
     </Link>
   );
 }
+
+function isKetuaUmum(position: string) {
+  const normalized = position.trim().toLowerCase();
+  return normalized === "ketua umum" || normalized.startsWith("ketua umum ") || normalized === "ketua";
+}
+

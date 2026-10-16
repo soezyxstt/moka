@@ -72,6 +72,7 @@ export type VotingCampaignSummary = {
   year: number;
   name: string;
   slug: string;
+  description: string | null;
   status: string;
   pricePerPoint: number;
   startsAt: string;
@@ -609,6 +610,8 @@ function VotingConsoleInner({
       const result = await updateCampaignAction(formData);
       const name = String(formData.get("name") ?? "");
       const slug = String(formData.get("slug") ?? "");
+      const rawDescription = formData.get("description");
+      const description = rawDescription !== null ? String(rawDescription).trim() || null : selectedCampaign.description;
       const rawStage = formData.get("eligibilityStageId");
       const nextStageId = rawStage ? String(rawStage) : selectedCampaign.eligibilityStageId;
       const stage = stages.find((item) => item.id === nextStageId);
@@ -620,6 +623,7 @@ function VotingConsoleInner({
         version: result.version,
         name,
         slug,
+        description,
         eligibilityStageId: nextStageId,
         stageName: stage?.name ?? selectedCampaign.stageName,
         pricePerPoint,
@@ -738,6 +742,7 @@ function VotingConsoleInner({
     const trimmedReason = inputReason.trim();
     if (!trimmedReason) {
       toast.error("Catatan audit wajib diisi");
+      document.getElementById("batch-audit-reason-input")?.focus();
       return;
     }
     if (filledEntries.length === 0) {
@@ -944,6 +949,78 @@ function VotingConsoleInner({
                         </span>
                       )}
                     </div>
+
+                    {/* Sticky / Floating Action Bar on top when any participant has votes entered */}
+                    {filledEntries.length > 0 ? (
+                      <div className="sticky top-16 sm:top-[4.25rem] z-20 rounded-xl border border-brand-200 bg-card/95 p-3.5 shadow-md backdrop-blur sm:p-4">
+                        <div className="flex flex-col gap-3">
+                          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="min-w-0">
+                              <p className="font-manrope text-sm font-semibold text-brand-900">
+                                {filledEntries.length} peserta akan diperbarui · Perubahan bersih:{" "}
+                                <span
+                                  className={
+                                    totalNetDeltaVotes >= 0 ? "text-brand-700" : "text-warning-700"
+                                  }
+                                >
+                                  {totalNetDeltaVotes >= 0
+                                    ? `+${totalNetDeltaVotes.toLocaleString("id-ID")}`
+                                    : totalNetDeltaVotes.toLocaleString("id-ID")}{" "}
+                                  vote
+                                </span>
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Nominal:{" "}
+                                {totalNetDeltaAmount >= 0
+                                  ? `+${currency.format(totalNetDeltaAmount)}`
+                                  : `-${currency.format(Math.abs(totalNetDeltaAmount))}`}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={handleClearAllInputs}
+                                disabled={pending}
+                                className="h-9 text-xs"
+                              >
+                                Reset
+                              </Button>
+                              <AdminButton
+                                type="button"
+                                onClick={submitBatchVoting}
+                                disabled={pending}
+                                className="h-9 text-xs font-semibold"
+                              >
+                                <Check className="size-4" /> Simpan voting ({filledEntries.length})
+                              </AdminButton>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+                            <AdminInput
+                              id="batch-audit-reason-input"
+                              value={inputReason}
+                              onChange={(event) => setInputReason(event.target.value)}
+                              onKeyDown={(event) => {
+                                if (event.key === "Enter" && !pending) {
+                                  event.preventDefault();
+                                  void submitBatchVoting();
+                                }
+                              }}
+                              placeholder="Catatan audit (wajib), contoh: Koreksi input / transfer"
+                              className="h-9 w-full text-xs"
+                            />
+                            {!inputReason.trim() ? (
+                              <span className="text-[11px] text-muted-foreground sm:whitespace-nowrap">
+                                Catatan audit wajib diisi untuk menyimpan
+                              </span>
+                            ) : null}
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
 
                     {/* Filter & Search Toolbar */}
                     <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
@@ -1162,63 +1239,6 @@ function VotingConsoleInner({
                       </div>
                     )}
                   </AdminCard>
-
-                  {/* Sticky / Floating Action Bar when any participant has votes entered */}
-                  {filledEntries.length > 0 ? (
-                    <div className="sticky bottom-3 z-20 rounded-xl border border-brand-200 bg-card/95 p-3.5 shadow-xl backdrop-blur sm:p-4">
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="min-w-0">
-                          <p className="font-manrope text-sm font-semibold text-brand-900">
-                            {filledEntries.length} peserta akan diperbarui · Perubahan bersih:{" "}
-                            <span
-                              className={
-                                totalNetDeltaVotes >= 0 ? "text-brand-700" : "text-warning-700"
-                              }
-                            >
-                              {totalNetDeltaVotes >= 0
-                                ? `+${totalNetDeltaVotes.toLocaleString("id-ID")}`
-                                : totalNetDeltaVotes.toLocaleString("id-ID")}{" "}
-                              vote
-                            </span>
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Nominal:{" "}
-                            {totalNetDeltaAmount >= 0
-                              ? `+${currency.format(totalNetDeltaAmount)}`
-                              : `-${currency.format(Math.abs(totalNetDeltaAmount))}`}
-                          </p>
-                        </div>
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                          <AdminInput
-                            value={inputReason}
-                            onChange={(event) => setInputReason(event.target.value)}
-                            placeholder="Catatan audit (wajib), contoh: Koreksi input / transfer"
-                            className="h-9 w-full text-xs sm:w-72"
-                          />
-                          <div className="flex items-center gap-2">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={handleClearAllInputs}
-                              disabled={pending}
-                              className="text-xs"
-                            >
-                              Reset
-                            </Button>
-                            <AdminButton
-                              type="button"
-                              onClick={submitBatchVoting}
-                              disabled={pending || !inputReason.trim()}
-                              className="w-full text-xs sm:w-auto"
-                            >
-                              <Check className="size-4" /> Simpan voting ({filledEntries.length})
-                            </AdminButton>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ) : null}
                 </div>
               )}
 
@@ -1802,6 +1822,14 @@ function VotingConsoleInner({
                             required
                           />
                         </AdminField>
+                        <AdminField label="Deskripsi" className="sm:col-span-2">
+                          <AdminTextarea
+                            name="description"
+                            defaultValue={selectedCampaign.description ?? ""}
+                            placeholder="Deskripsi kampanye yang ditampilkan pada hero halaman voting"
+                            rows={3}
+                          />
+                        </AdminField>
                       </div>
                       <AdminButton type="submit" disabled={pending}>
                         <Check className="size-4" /> Simpan perubahan
@@ -1882,6 +1910,13 @@ function VotingConsoleInner({
               </AdminField>
               <AdminField label="Selesai (WIB)">
                 <AdminInput type="datetime-local" name="endsAt" required />
+              </AdminField>
+              <AdminField label="Deskripsi" className="sm:col-span-2">
+                <AdminTextarea
+                  name="description"
+                  placeholder="Deskripsi kampanye yang ditampilkan pada hero halaman voting"
+                  rows={3}
+                />
               </AdminField>
             </div>
             <DialogFooter className="gap-2 border-t border-border pt-4 sm:flex-row sm:justify-end">

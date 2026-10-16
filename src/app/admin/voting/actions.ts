@@ -35,12 +35,14 @@ async function requireEditionId() {
 export async function createCampaignAction(formData: FormData) {
   const actor = await requirePermission("voting.manage");
   const editionId = await requireEditionId();
+  const rawDescription = formData.get("description");
   await createVotingCampaign(
     database,
     editionId,
     {
       name: String(formData.get("name") ?? ""),
       slug: String(formData.get("slug") ?? ""),
+      description: rawDescription ? String(rawDescription) : null,
       eligibilityStageId: String(formData.get("eligibilityStageId") ?? ""),
       startsAt: parseWibDateTime(formData.get("startsAt")),
       endsAt: parseWibDateTime(formData.get("endsAt")),
@@ -62,6 +64,7 @@ export async function updateCampaignAction(
         expectedVersion: number;
         name: string;
         slug: string;
+        description?: string | null;
         eligibilityStageId?: string;
         startsAt: string | Date;
         endsAt: string | Date;
@@ -75,6 +78,7 @@ export async function updateCampaignAction(
   let expectedVersion: number;
   let name: string;
   let slug: string;
+  let description: string | null | undefined;
   let eligibilityStageId: string | undefined;
   let startsAt: Date;
   let endsAt: Date;
@@ -85,6 +89,8 @@ export async function updateCampaignAction(
     expectedVersion = Number(input.get("expectedVersion"));
     name = String(input.get("name") ?? "");
     slug = String(input.get("slug") ?? "");
+    const rawDesc = input.get("description");
+    description = rawDesc !== null ? String(rawDesc) : undefined;
     const rawStage = input.get("eligibilityStageId");
     eligibilityStageId = rawStage ? String(rawStage) : undefined;
     startsAt = parseWibDateTime(input.get("startsAt"));
@@ -95,6 +101,7 @@ export async function updateCampaignAction(
     expectedVersion = input.expectedVersion;
     name = input.name;
     slug = input.slug;
+    description = input.description;
     eligibilityStageId = input.eligibilityStageId;
     startsAt =
       typeof input.startsAt === "string"
@@ -119,6 +126,7 @@ export async function updateCampaignAction(
       expectedVersion,
       name,
       slug,
+      description,
       eligibilityStageId,
       startsAt,
       endsAt,

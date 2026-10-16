@@ -388,6 +388,7 @@ test("kampanye voting mendukung pembaruan data dan audit log", async () => {
       {
         name: "Voting Favorit 2033",
         slug: "voting-favorit-2033",
+        description: "Dukung peserta favorit Anda",
         eligibilityStageId: "stage-a-early",
         startsAt: new Date("2026-09-01T00:00:00+07:00"),
         endsAt: new Date("2026-09-15T23:59:00+07:00"),
@@ -405,6 +406,7 @@ test("kampanye voting mendukung pembaruan data dan audit log", async () => {
         expectedVersion: 1,
         name: "Voting Favorit 2033 Diperbarui",
         slug: "voting-favorit-2033-baru",
+        description: "Deskripsi favorit diperbarui",
         eligibilityStageId: "stage-a-final",
         startsAt: new Date("2026-09-02T00:00:00+07:00"),
         endsAt: new Date("2026-09-20T23:59:00+07:00"),
@@ -418,6 +420,7 @@ test("kampanye voting mendukung pembaruan data dan audit log", async () => {
     const [row] = await db.select().from(votingCampaigns).where(eq(votingCampaigns.id, campaign.id));
     assert.equal(row.name, "Voting Favorit 2033 Diperbarui");
     assert.equal(row.slug, "voting-favorit-2033-baru");
+    assert.equal(row.description, "Deskripsi favorit diperbarui");
     assert.equal(row.eligibilityStageId, "stage-a-final");
     assert.equal(row.pricePerPoint, 2_500);
     assert.equal(row.version, 2);
@@ -429,7 +432,7 @@ test("kampanye voting mendukung pembaruan data dan audit log", async () => {
     assert.equal(audit.resourceId, campaign.id);
     assert.deepEqual(
       JSON.parse(audit.changedFieldsJson).sort(),
-      ["eligibilityStageId", "endsAt", "name", "pricePerPoint", "slug", "startsAt", "version"].sort(),
+      ["description", "eligibilityStageId", "endsAt", "name", "pricePerPoint", "slug", "startsAt", "version"].sort(),
     );
 
     const campaign2 = await createVotingCampaign(

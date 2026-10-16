@@ -73,6 +73,7 @@ export async function createVotingCampaign(
   input: {
     name: string;
     slug: string;
+    description?: string | null;
     eligibilityStageId: string;
     startsAt: Date;
     endsAt: Date;
@@ -83,6 +84,7 @@ export async function createVotingCampaign(
 ) {
   const name = input.name.trim();
   const slug = input.slug.trim().toLowerCase();
+  const description = input.description?.trim() || null;
   if (
     !name ||
     !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) ||
@@ -111,6 +113,7 @@ export async function createVotingCampaign(
       eligibilityStageId: stage.id,
       name,
       slug,
+      description,
       startsAt: input.startsAt,
       endsAt: input.endsAt,
       pricePerPoint: input.pricePerPoint,
@@ -132,6 +135,7 @@ export async function createVotingCampaign(
         eligibilityStageId: stage.id,
         name,
         slug,
+        description,
         startsAt: input.startsAt,
         endsAt: input.endsAt,
         pricePerPoint: input.pricePerPoint,
@@ -144,6 +148,7 @@ export async function createVotingCampaign(
         "eligibilityStageId",
         "name",
         "slug",
+        ...(description ? ["description"] : []),
         "startsAt",
         "endsAt",
         "pricePerPoint",
@@ -165,6 +170,7 @@ export async function updateVotingCampaign(
     expectedVersion: number;
     name: string;
     slug: string;
+    description?: string | null;
     eligibilityStageId?: string;
     startsAt: Date;
     endsAt: Date;
@@ -190,6 +196,7 @@ export async function updateVotingCampaign(
   return db.transaction(async (tx) => {
     const campaign = await requireCampaign(tx, editionId, input.campaignId);
     requireExpectedVersion(campaign.version, input.expectedVersion);
+    const description = input.description !== undefined ? input.description?.trim() || null : campaign.description;
 
     const [duplicate] = await tx
       .select({ id: votingCampaigns.id })
@@ -235,6 +242,7 @@ export async function updateVotingCampaign(
       .set({
         name,
         slug,
+        description,
         eligibilityStageId: targetStageId,
         startsAt: input.startsAt,
         endsAt: input.endsAt,
@@ -255,6 +263,7 @@ export async function updateVotingCampaign(
     const changedFields: string[] = [];
     if (campaign.name !== name) changedFields.push("name");
     if (campaign.slug !== slug) changedFields.push("slug");
+    if (campaign.description !== description) changedFields.push("description");
     if (campaign.eligibilityStageId !== targetStageId) changedFields.push("eligibilityStageId");
     if (campaign.startsAt.valueOf() !== input.startsAt.valueOf()) changedFields.push("startsAt");
     if (campaign.endsAt.valueOf() !== input.endsAt.valueOf()) changedFields.push("endsAt");
@@ -271,6 +280,7 @@ export async function updateVotingCampaign(
       before: {
         name: campaign.name,
         slug: campaign.slug,
+        description: campaign.description,
         eligibilityStageId: campaign.eligibilityStageId,
         startsAt: campaign.startsAt,
         endsAt: campaign.endsAt,
@@ -280,6 +290,7 @@ export async function updateVotingCampaign(
       after: {
         name,
         slug,
+        description,
         eligibilityStageId: targetStageId,
         startsAt: input.startsAt,
         endsAt: input.endsAt,

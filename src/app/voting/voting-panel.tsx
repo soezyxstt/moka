@@ -1,7 +1,7 @@
 'use client';
 import { useMemo, useState, type ReactNode } from 'react';
 import Image from 'next/image';
-import { ArrowLeft, CalendarDays, Download, Search, Vote } from 'lucide-react';
+import { ArrowLeft, Download, Search, Vote } from 'lucide-react';
 import { Bar, BarChart, LabelList, XAxis, YAxis } from 'recharts';
 import { Button } from '@/components/custom/button';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
@@ -23,16 +23,9 @@ export type VotingPanelCandidate = {
 };
 
 export type VotingPanelProps = {
-  title: string;
-  period: string | null;
-  status: string;
-  open: boolean;
-  pricePerVote: number;
   resultsVisible: boolean;
   totalVotes: number;
   results: { name: string; percentage: number }[];
-  candidates: VotingPanelCandidate[];
-  candidateNumberOffset?: number;
 };
 
 const chartConfig = { percentage: { label: 'Persentase', color: 'var(--chart-1)' } } satisfies ChartConfig;
@@ -40,52 +33,29 @@ const number = new Intl.NumberFormat('id-ID');
 const percentFormat = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 
 export function VotingPanel({
-  title,
-  period,
-  status,
-  open,
-  pricePerVote,
   resultsVisible,
   totalVotes,
   results,
-  candidates,
-  candidateNumberOffset = 0,
 }: VotingPanelProps) {
-  return <div className="mt-8">
-    <div className="flex flex-col gap-6 border-b border-brand-200 pb-8 md:flex-row md:items-end md:justify-between">
-      <div>
-        <h2 className="font-manrope text-2xl font-semibold text-brand-900 md:text-3xl">{title}</h2>
-        <p className="mt-3 flex items-center gap-2 text-left text-neutral-600"><CalendarDays className="size-4 shrink-0" aria-hidden />{period ?? 'Jadwal voting belum tersedia'}</p>
-        <p className="mt-1 text-sm text-neutral-600">{status}</p>
-      </div>
-      <VoteDialog
-        open={open}
-        pricePerVote={pricePerVote}
-        candidates={candidates}
-        resultsVisible={resultsVisible}
-        candidateNumberOffset={candidateNumberOffset}
-      />
+  return <div className="mt-6">
+    <div className="flex items-end justify-between gap-4">
+      <h2 className="font-manrope text-xl font-semibold text-brand-900">Hasil sementara</h2>
+      {resultsVisible ? <p className="text-sm text-neutral-600">{number.format(totalVotes)} vote</p> : null}
     </div>
-    <div className="mt-8">
-      <div className="flex items-end justify-between gap-4">
-        <h3 className="font-manrope text-xl font-semibold text-brand-900">Hasil sementara</h3>
-        {resultsVisible ? <p className="text-sm text-neutral-600">{number.format(totalVotes)} vote</p> : null}
-      </div>
-      {resultsVisible && totalVotes > 0 ? <ChartContainer config={chartConfig} className="mt-6 aspect-auto w-full" style={{ height: Math.max(160, results.length * 40) }}>
-        <BarChart accessibilityLayer data={results} layout="vertical" margin={{ left: 0, right: 56 }}>
-          <XAxis type="number" dataKey="percentage" hide />
-          <YAxis type="category" dataKey="name" width={150} tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value: string) => value.length > 20 ? `${value.slice(0, 19)}...` : value} />
-          <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
-          <Bar dataKey="percentage" fill="var(--color-percentage)" radius={4}>
-            <LabelList dataKey="percentage" position="right" offset={8} className="fill-foreground" fontSize={12} formatter={(value: ReactNode) => `${percentFormat.format(Number(value))}%`} />
-          </Bar>
-        </BarChart>
-      </ChartContainer> : <p className="mt-4 text-left text-neutral-600">{resultsVisible ? 'Belum ada vote tercatat untuk kategori ini.' : 'Hasil sementara belum ditampilkan panitia.'}</p>}
-    </div>
+    {resultsVisible && totalVotes > 0 ? <ChartContainer config={chartConfig} className="mt-6 aspect-auto w-full" style={{ height: Math.max(160, results.length * 40) }}>
+      <BarChart accessibilityLayer data={results} layout="vertical" margin={{ left: 0, right: 56 }}>
+        <XAxis type="number" dataKey="percentage" hide />
+        <YAxis type="category" dataKey="name" width={150} tickLine={false} axisLine={false} tickMargin={8} tickFormatter={(value: string) => value.length > 20 ? `${value.slice(0, 19)}...` : value} />
+        <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
+        <Bar dataKey="percentage" fill="var(--color-percentage)" radius={4}>
+          <LabelList dataKey="percentage" position="right" offset={8} className="fill-foreground" fontSize={12} formatter={(value: ReactNode) => `${percentFormat.format(Number(value))}%`} />
+        </Bar>
+      </BarChart>
+    </ChartContainer> : <p className="mt-4 text-left text-neutral-600">{resultsVisible ? 'Belum ada vote tercatat untuk kategori ini.' : 'Hasil sementara belum ditampilkan panitia.'}</p>}
   </div>;
 }
 
-function VoteDialog({
+export function VoteDialog({
   open,
   pricePerVote,
   candidates,

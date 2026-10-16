@@ -126,6 +126,7 @@ export type PublicVotingCampaign = {
   id: string;
   name: string;
   slug: string;
+  description: string | null;
   timezone: string;
   startsAt: Date;
   endsAt: Date;

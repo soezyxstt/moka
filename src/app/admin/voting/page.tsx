@@ -77,6 +77,7 @@ export default async function VotingAdminPage() {
         year: editions.year,
         name: votingCampaigns.name,
         slug: votingCampaigns.slug,
+        description: votingCampaigns.description,
         status: votingCampaigns.status,
         pricePerPoint: votingCampaigns.pricePerPoint,
         startsAt: votingCampaigns.startsAt,
