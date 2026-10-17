@@ -458,16 +458,17 @@ function VotingConsoleInner({
       let projectedVotes = totalVotes;
       let votesToSubmit = 0;
 
+      const inputVotes = pricePerVote > 0 ? Math.trunc((num * 1000) / pricePerVote) : 0;
       if (inputMode === "add") {
-        deltaVotes = pricePerVote > 0 ? Math.trunc((num * 1000) / pricePerVote) : 0;
+        deltaVotes = inputVotes;
         projectedVotes = totalVotes + deltaVotes;
         votesToSubmit = deltaVotes;
         if (!canManageTally && deltaVotes <= 0) continue;
         if (deltaVotes === 0 || projectedVotes < 0) continue;
       } else {
-        projectedVotes = num;
+        projectedVotes = inputVotes;
         deltaVotes = projectedVotes - totalVotes;
-        votesToSubmit = num;
+        votesToSubmit = projectedVotes;
         if (projectedVotes < 0) continue;
         if (deltaVotes === 0) continue;
       }
@@ -1238,22 +1239,24 @@ function VotingConsoleInner({
                           const draftNum = hasInput ? Number.parseInt(rawDraft, 10) : 0;
                           const isSavingThis = Boolean(savingParticipantIds[participant.id]);
 
+                          const totalThousands = Math.floor(totalAmount / 1000);
                           let projectedVotes = totalVotes;
                           let deltaVotes = 0;
                           let hasChange = false;
 
                           if (hasInput && !Number.isNaN(draftNum)) {
+                            const inputVotes =
+                              pricePerVote > 0
+                                ? Math.trunc((draftNum * 1000) / pricePerVote)
+                                : 0;
                             if (inputMode === "add") {
-                              deltaVotes =
-                                pricePerVote > 0
-                                  ? Math.trunc((draftNum * 1000) / pricePerVote)
-                                  : 0;
+                              deltaVotes = inputVotes;
                               projectedVotes = totalVotes + deltaVotes;
                               hasChange = canManageTally
                                 ? deltaVotes !== 0 && projectedVotes >= 0
                                 : deltaVotes > 0;
                             } else {
-                              projectedVotes = draftNum;
+                              projectedVotes = inputVotes;
                               deltaVotes = projectedVotes - totalVotes;
                               hasChange = projectedVotes >= 0 && deltaVotes !== 0;
                             }
@@ -1296,7 +1299,7 @@ function VotingConsoleInner({
                                       >
                                         → {projectedVotes.toLocaleString("id-ID")} vote
                                       </span>
-                                    ) : hasInput && inputMode === "set" && draftNum === totalVotes ? (
+                                    ) : hasInput && inputMode === "set" && projectedVotes === totalVotes ? (
                                       <span className="text-muted-foreground">
                                         (tetap {totalVotes.toLocaleString("id-ID")} vote)
                                       </span>
@@ -1319,61 +1322,38 @@ function VotingConsoleInner({
                                       ? hasInput && !Number.isNaN(draftNum) && draftNum !== 0
                                         ? `${deltaVotes.toLocaleString("id-ID")} vote`
                                         : "0 vote"
-                                      : hasChange
-                                        ? `${deltaVotes > 0 ? `+${deltaVotes.toLocaleString("id-ID")}` : deltaVotes.toLocaleString("id-ID")} vote`
-                                        : "0 vote"}
+                                      : hasInput && !Number.isNaN(draftNum)
+                                        ? `${projectedVotes.toLocaleString("id-ID")} vote`
+                                        : `${totalVotes.toLocaleString("id-ID")} vote`}
                                   </span>
 
                                   <div className="flex items-center gap-1.5">
-                                    {inputMode === "add" ? (
-                                      <div className="inline-flex h-8 items-center overflow-hidden rounded-md border border-input bg-background focus-within:border-brand-300 focus-within:ring-2 focus-within:ring-brand-100">
-                                        <span className="select-none pl-2.5 pr-1 font-manrope text-xs font-medium text-muted-foreground">
-                                          Rp
-                                        </span>
-                                        <AdminInput
-                                          type="text"
-                                          inputMode="numeric"
-                                          placeholder="0"
-                                          value={voteInputs[participant.id] ?? ""}
-                                          disabled={isSavingThis}
-                                          aria-label={`Nominal ribuan voting ${participant.name}`}
-                                          onChange={(event) =>
-                                            handleVoteInputChange(participant.id, event.target.value)
+                                    <div className="inline-flex h-8 items-center overflow-hidden rounded-md border border-input bg-background focus-within:border-brand-300 focus-within:ring-2 focus-within:ring-brand-100">
+                                      <span className="select-none pl-2.5 pr-1 font-manrope text-xs font-medium text-muted-foreground">
+                                        Rp
+                                      </span>
+                                      <AdminInput
+                                        type="text"
+                                        inputMode="numeric"
+                                        placeholder={inputMode === "set" ? String(totalThousands) : "0"}
+                                        value={voteInputs[participant.id] ?? ""}
+                                        disabled={isSavingThis}
+                                        aria-label={`Nominal ribuan voting ${participant.name}`}
+                                        onChange={(event) =>
+                                          handleVoteInputChange(participant.id, event.target.value)
+                                        }
+                                        onKeyDown={(event) => {
+                                          if (event.key === "Enter" && hasChange && !isSavingThis) {
+                                            event.preventDefault();
+                                            void submitSingleVoting(participant.id);
                                           }
-                                          onKeyDown={(event) => {
-                                            if (event.key === "Enter" && hasChange && !isSavingThis) {
-                                              event.preventDefault();
-                                              void submitSingleVoting(participant.id);
-                                            }
-                                          }}
-                                          className="h-full w-12 rounded-none border-0 bg-transparent px-1.5 text-right font-manrope text-xs font-semibold shadow-none focus:ring-0 focus-visible:ring-0"
-                                        />
-                                        <span className="select-none border-l border-input bg-muted/60 px-2 py-1 font-manrope text-xs font-semibold text-muted-foreground">
-                                          000
-                                        </span>
-                                      </div>
-                                    ) : (
-                                      <div className="flex items-center gap-1">
-                                        <AdminInput
-                                          type="number"
-                                          min="0"
-                                          placeholder={String(totalVotes)}
-                                          value={voteInputs[participant.id] ?? ""}
-                                          disabled={isSavingThis}
-                                          onChange={(event) =>
-                                            handleVoteInputChange(participant.id, event.target.value)
-                                          }
-                                          onKeyDown={(event) => {
-                                            if (event.key === "Enter" && hasChange && !isSavingThis) {
-                                              event.preventDefault();
-                                              void submitSingleVoting(participant.id);
-                                            }
-                                          }}
-                                          className="h-8 w-20 text-center font-manrope text-xs font-semibold"
-                                        />
-                                        <span className="text-xs text-muted-foreground">vote</span>
-                                      </div>
-                                    )}
+                                        }}
+                                        className="h-full w-12 rounded-none border-0 bg-transparent px-1.5 text-right font-manrope text-xs font-semibold shadow-none focus:ring-0 focus-visible:ring-0"
+                                      />
+                                      <span className="select-none border-l border-input bg-muted/60 px-2 py-1 font-manrope text-xs font-semibold text-muted-foreground">
+                                        000
+                                      </span>
+                                    </div>
                                     <div className="flex items-center gap-1">
                                       {canManageTally && inputMode === "set" ? (
                                         <button
