@@ -48,16 +48,13 @@ export function VotingPanel({
   updatedAt,
 }: VotingPanelProps) {
   return <div className="mt-6">
-    <div className="flex items-end justify-between gap-4">
-      <div>
-        <h2 className="font-manrope text-xl font-semibold text-brand-900">Hasil sementara</h2>
-        {resultsVisible && updatedAt ? (
-          <p className="mt-1 text-xs text-neutral-600">
-            Terakhir diperbarui: {formatUpdateTimestamp(updatedAt)}
-          </p>
-        ) : null}
-      </div>
-      {resultsVisible ? <p className="text-sm text-neutral-600">{number.format(totalVotes)} vote</p> : null}
+    <div>
+      <h2 className="font-manrope text-xl font-semibold text-brand-900">Hasil sementara</h2>
+      {resultsVisible && updatedAt ? (
+        <p className="mt-1 text-xs text-neutral-600">
+          Terakhir diperbarui: {formatUpdateTimestamp(updatedAt)}
+        </p>
+      ) : null}
     </div>
     {resultsVisible && totalVotes > 0 ? <ChartContainer config={chartConfig} className="mt-6 aspect-auto w-full" style={{ height: Math.max(160, results.length * 40) }}>
       <BarChart accessibilityLayer data={results} layout="vertical" margin={{ left: 0, right: 56 }}>

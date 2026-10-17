@@ -220,6 +220,8 @@ All uploads go through **UploadThing** only. There is no R2, S3, or local-blob w
 
 ### Verified / working
 
+- Pada 2026-10-18, teks perolehan total suara ("... vote") pada panel hasil sementara di halaman publik voting (`/voting`) dihapus agar hanya menampilkan judul hasil sementara dan waktu pembaruan terakhir.
+
 - Pada 2026-10-18, ditambahkan fitur penolakan permohonan akses (`rejectAccessRequest` / `rejectAccessRequestWithDb`) pada halaman `/admin/users` lengkap dengan dialog konfirmasi dan alasan penolakan opsional, pembaruan status `accessRequest` serta `adminProfile` menjadi `rejected`, dan pencatatan `auditLog` (`access.request.reject`) secara transaksional.
 
 - Pada 2026-10-18, menu/tab "Hasil Voting" pada navbar (desktop dan seluler), tautan hasil voting pada footer, serta rute halaman `/voting/hasil/[category]` telah dihapus karena hasil voting sementara sudah ditampilkan langsung pada halaman utama `/voting`. Akses ke `/voting/hasil` otomatis dialihkan (redirect) ke `/voting`.
