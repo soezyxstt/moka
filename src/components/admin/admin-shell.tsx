@@ -217,7 +217,7 @@ export function AdminShell({
 
   return (
     <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
-      <div className="h-screen h-dvh overflow-hidden bg-background text-foreground lg:flex" data-lenis-prevent>
+      <div className="relative h-screen h-dvh overflow-hidden bg-background text-foreground lg:flex" data-lenis-prevent>
         <aside className="relative hidden w-64 shrink-0 overflow-hidden border-r border-brand-100 bg-card lg:flex lg:h-full lg:flex-col" data-lenis-prevent>
           <div className="flex h-20 shrink-0 items-center border-b border-brand-100 px-5">
             <Link href="/admin" className="flex items-center gap-3" aria-label="Dashboard PAMOKA CMS">
@@ -255,7 +255,7 @@ export function AdminShell({
           </AdminScrollArea>
         </SheetContent>
 
-        <div className={cn("h-full min-w-0 flex-1 overflow-y-auto", adminNativeScrollbarClassName)} data-lenis-prevent>
+        <div className={cn("relative h-full min-w-0 flex-1 overflow-y-auto", adminNativeScrollbarClassName)} data-lenis-prevent>
           <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-2 border-b border-brand-100 bg-background/95 px-4 backdrop-blur-sm sm:h-16 sm:px-6 lg:px-8">
             <div className="flex shrink-0 items-center gap-2 sm:gap-3">
               <SheetTrigger asChild>

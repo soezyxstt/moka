@@ -27,7 +27,7 @@ export function AdminPage({
   children: ReactNode;
 }) {
   return (
-    <main className="min-h-[calc(100vh-4rem)] bg-brand-50/30 px-4 py-4 sm:px-6 sm:py-6 lg:px-10">
+    <main className="relative min-h-[calc(100dvh-3.5rem)] bg-brand-50/30 px-4 py-4 sm:min-h-[calc(100dvh-4rem)] sm:px-6 sm:py-6 lg:px-10">
       <div className="mx-auto w-full min-w-0 max-w-[1440px]">
         {title || description || action ? (
           <header className="mb-4 sm:mb-5">
@@ -79,7 +79,7 @@ export function AdminCardHeader({
 
 export function AdminField({ label, hint, children, className }: { label: string; hint?: string; children: ReactNode; className?: string }) {
   return (
-    <label className={cn("block space-y-2", className)}>
+    <label className={cn("relative block space-y-2", className)}>
       <span className="block text-sm font-semibold text-foreground">{label}</span>
       {children}
       {hint ? <span className="block text-xs leading-5 text-muted-foreground">{hint}</span> : null}
@@ -111,7 +111,7 @@ export function AdminButton({
       variant={variant === "danger" ? "destructive" : variant === "secondary" ? "outline" : "default"}
       disabled={disabled || loading}
       className={cn(
-        "h-10 rounded-md px-4 text-sm font-semibold shadow-none transition-colors focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50",
+        "relative h-10 rounded-md px-4 text-sm font-semibold shadow-none transition-colors focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50",
         variant === "primary" && "bg-brand text-canvas hover:bg-brand-600 focus-visible:ring-brand-100",
         variant === "secondary" && "border-brand-100 bg-canvas text-brand-700 hover:border-brand-200 hover:bg-brand-50 focus-visible:ring-brand-100",
         variant === "danger" && "bg-destructive text-canvas hover:bg-destructive/90",
@@ -131,7 +131,7 @@ export function AdminLinkButton({ href, children, variant = "primary", className
       asChild
       variant={variant === "primary" ? "default" : "outline"}
       className={cn(
-        "h-10 rounded-md px-4 text-sm font-semibold shadow-none transition-colors focus-visible:ring-2",
+        "relative h-10 rounded-md px-4 text-sm font-semibold shadow-none transition-colors focus-visible:ring-2",
         variant === "primary" && "bg-brand text-canvas hover:bg-brand-600 focus-visible:ring-brand-100",
         variant === "secondary" && "border-brand-100 bg-canvas text-brand-700 hover:border-brand-200 hover:bg-brand-50 focus-visible:ring-brand-100",
         className,
