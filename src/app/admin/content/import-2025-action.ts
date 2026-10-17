@@ -18,7 +18,7 @@ export async function import2025ContentAction() {
 
   for (const path of [
     "/", "/tentang", "/galeri", "/rangkaian-kegiatan/[event]", "/profil-finalis/[category]",
-    "/profil-semifinalis/[category]", "/voting/[category]", "/voting/hasil/[category]", "/berita/[slug]",
+    "/profil-semifinalis/[category]", "/voting/[category]", "/berita/[slug]",
     "/sitemap.xml", "/admin/content", "/admin/content/editions", "/admin/content/pages",
     "/admin/content/events", "/admin/content/galleries", "/admin/content/news", "/admin/organization",
   ]) {

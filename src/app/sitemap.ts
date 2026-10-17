@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { env } from '@/env';
-import { getPublicGalleryAlbums, getPublicNavigation, getPublicNews, getPublicVotingResults } from '@/server/cms/public-readers';
+import { getPublicGalleryAlbums, getPublicNavigation, getPublicNews } from '@/server/cms/public-readers';
 import { getPublicParticipantCategory } from '@/server/cms/public-participant-readers';
 
 export const dynamic = 'force-dynamic';
@@ -34,13 +34,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ];
   }));
 
-  const votingRoutes = await Promise.all(categories.map(async (category) => {
-    const results = await getPublicVotingResults(category.slug);
-    return results?.visible ? [
-      { url: baseUrl + '/voting/hasil/' + category.slug, changeFrequency: 'weekly' as const, priority: 0.9 },
-    ] : [];
-  }));
-
   const staticRoutes = [
     ...(navigation.registrationVisible ? [{ url: baseUrl + '/pendaftaran', changeFrequency: 'weekly' as const, priority: 0.9 }] : []),
     { url: baseUrl + '/', changeFrequency: 'monthly' as const, priority: 1.0 },
@@ -59,6 +52,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.75,
   }));
 
-  return [...staticRoutes, ...eventRoutes, ...participantRoutes.flat(), ...votingRoutes.flat(), ...newsRoutes]
+  return [...staticRoutes, ...eventRoutes, ...participantRoutes.flat(), ...newsRoutes]
     .map((entry) => ({ ...entry, lastModified: new Date() }));
 }

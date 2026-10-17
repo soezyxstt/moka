@@ -7,7 +7,7 @@ import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import test from "node:test";
-import { approveAccessRequestWithDb, updateUserRolesWithDb } from "../auth/user-roles";
+import { approveAccessRequestWithDb, rejectAccessRequestWithDb, updateUserRolesWithDb } from "../auth/user-roles";
 import { seedAuthorizationCatalog } from "../auth/seed";
 import * as schema from "./schema";
 import { accessRequests, adminProfiles, auditLogs, authUsers, roles, userRoles } from "./schema";
@@ -99,3 +99,68 @@ test("approveAccessRequestWithDb menetapkan beberapa peran sekaligus dan updateU
     client.close();
   }
 });
+
+test("rejectAccessRequestWithDb menolak permohonan akses dan memperbarui profil serta audit log", async () => {
+  const { client, db } = await createTestDatabase();
+  try {
+    const now = new Date("2026-10-18T00:00:00.000Z");
+    await db.insert(authUsers).values([
+      { id: "admin-1", name: "Admin", email: "admin@pamoka.id", emailVerified: true, createdAt: now, updatedAt: now },
+      { id: "user-2", name: "Pemohon", email: "pemohon@pamoka.id", emailVerified: true, createdAt: now, updatedAt: now },
+    ]);
+    await db.insert(adminProfiles).values({
+      userId: "user-2",
+      status: "pending",
+      createdAt: now,
+      updatedAt: now,
+    });
+    await db.insert(accessRequests).values({
+      id: "req-2",
+      userId: "user-2",
+      status: "open",
+      reason: "Permohonan akses yang tidak memenuhi syarat",
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    await rejectAccessRequestWithDb(
+      db,
+      { id: "admin-1", email: "admin@pamoka.id" },
+      "req-2",
+      "Tidak memenuhi persyaratan administrasi",
+    );
+
+    const updatedRequest = await db.query.accessRequests.findFirst({ where: eq(accessRequests.id, "req-2") });
+    assert.ok(updatedRequest);
+    assert.equal(updatedRequest.status, "rejected");
+    assert.equal(updatedRequest.reviewedByUserId, "admin-1");
+    assert.equal(updatedRequest.reviewNote, "Tidak memenuhi persyaratan administrasi");
+
+    const updatedProfile = await db.query.adminProfiles.findFirst({ where: eq(adminProfiles.userId, "user-2") });
+    assert.ok(updatedProfile);
+    assert.equal(updatedProfile.status, "rejected");
+    assert.equal(updatedProfile.statusReason, "Tidak memenuhi persyaratan administrasi");
+
+    const assignedRoles = await db
+      .select()
+      .from(userRoles)
+      .where(eq(userRoles.userId, "user-2"));
+    assert.equal(assignedRoles.length, 0);
+
+    const rejectAudit = await db.query.auditLogs.findFirst({
+      where: eq(auditLogs.action, "access.request.reject"),
+    });
+    assert.ok(rejectAudit);
+    assert.equal(rejectAudit.actorUserId, "admin-1");
+    assert.equal(rejectAudit.resourceId, "req-2");
+    assert.equal(rejectAudit.reason, "Tidak memenuhi persyaratan administrasi");
+
+    await assert.rejects(
+      () => rejectAccessRequestWithDb(db, { id: "admin-1", email: "admin@pamoka.id" }, "req-2", "Ulangi tolak"),
+      /Open access request not found/,
+    );
+  } finally {
+    client.close();
+  }
+});
+

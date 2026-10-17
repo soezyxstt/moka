@@ -52,7 +52,7 @@ Panduan operasional sistem manajemen konten (CMS) resmi **Paguyuban Mojang Jajak
 
 1. Buka `/admin/login` langsung (simpan sebagai bookmark) dan pilih **Lanjut dengan Google**. Navbar publik tidak menampilkan tombol Masuk agar pengunjung yang ingin vote tidak mengirim permintaan akses; setelah masuk, avatar Anda muncul di navbar sebagai pintasan ke `/admin`. Tombol menampilkan status menghubungkan; jika gagal, pesan muncul dan Anda dapat mencoba lagi.
 2. Pengguna baru berstatus **Menunggu**. Pada halaman **Minta akses**, jelaskan kebutuhan Anda dan pilih area yang diperlukan.
-3. Administrator dengan izin `access.approve` akan meninjau dan menyetujui permintaan dari menu **Pengguna** (`/admin/users`).
+3. Administrator dengan izin `access.approve` dapat meninjau, menyetujui, atau menolak permohonan akses dari menu **Pengguna** (`/admin/users`) disertai catatan opsional.
 4. Satu pengguna dapat memegang kombinasi peran (misalnya: *Editor Konten*, *Operator Voting*, *Auditor*) baik saat persetujuan awal maupun diperbarui kapan saja melalui bagian **Daftar pengguna** di `/admin/users`.
 5. Super admin di-bootstrap manual melalui Turso database sesuai runbook; tidak ada bootstrap otomatis.
 

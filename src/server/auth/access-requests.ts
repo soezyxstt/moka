@@ -5,9 +5,9 @@ import { database } from "@/server/db/client";
 
 import { appendAuditLog } from "./audit";
 import { requirePermission, requireRoleAdministrator, requireSession } from "./authorization";
-import { approveAccessRequestWithDb, updateUserRolesWithDb } from "./user-roles";
+import { approveAccessRequestWithDb, rejectAccessRequestWithDb, updateUserRolesWithDb } from "./user-roles";
 
-export { approveAccessRequestWithDb, updateUserRolesWithDb };
+export { approveAccessRequestWithDb, rejectAccessRequestWithDb, updateUserRolesWithDb };
 
 export async function submitAccessRequest(reason: string, requestedAreas: string[]) {
   const session = await requireSession();
@@ -55,6 +55,16 @@ export async function approveAccessRequest(requestId: string, roleInput: string 
     { id: reviewer.session.user.id, email: reviewer.session.user.email },
     requestId,
     roleInput,
+    note,
+  );
+}
+
+export async function rejectAccessRequest(requestId: string, note?: string) {
+  const reviewer = await requireRoleAdministrator();
+  await rejectAccessRequestWithDb(
+    database,
+    { id: reviewer.session.user.id, email: reviewer.session.user.email },
+    requestId,
     note,
   );
 }

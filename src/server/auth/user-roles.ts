@@ -63,6 +63,45 @@ export async function approveAccessRequestWithDb(
   });
 }
 
+export async function rejectAccessRequestWithDb(
+  db: Database,
+  actor: { id: string; email: string },
+  requestId: string,
+  note?: string,
+) {
+  await db.transaction(async (tx) => {
+    const request = await tx.query.accessRequests.findFirst({ where: eq(accessRequests.id, requestId) });
+    if (!request || request.status !== "open") throw new Error("Open access request not found");
+
+    const now = new Date();
+    await tx.update(adminProfiles)
+      .set({ status: "rejected", statusReason: note?.trim() || null, updatedAt: now })
+      .where(eq(adminProfiles.userId, request.userId));
+    await tx.update(accessRequests)
+      .set({
+        status: "rejected",
+        reviewedByUserId: actor.id,
+        reviewNote: note?.trim() || null,
+        reviewedAt: now,
+        updatedAt: now,
+      })
+      .where(eq(accessRequests.id, requestId));
+    await appendAuditLog(tx, {
+      actorUserId: actor.id,
+      actorLabel: actor.email,
+      action: "access.request.reject",
+      resourceType: "accessRequest",
+      resourceId: requestId,
+      resourceLabel: request.userId,
+      before: { status: "open" },
+      after: { status: "rejected", profileStatus: "rejected" },
+      changedFields: ["status", "profileStatus"],
+      source: "admin-users",
+      reason: note?.trim() || null,
+    });
+  });
+}
+
 export async function updateUserRolesWithDb(
   db: Database,
   actor: { id: string; email: string },

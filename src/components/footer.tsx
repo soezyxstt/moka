@@ -33,7 +33,7 @@ export function formatCategoryName(category: FooterCategory): string {
   return category.name;
 }
 
-export default function Footer({ categories, events, edition, logo, aboutDescription, resultsVisible, contacts, signature, participantKind, registrationVisible = false }: {
+export default function Footer({ categories, events, edition, logo, aboutDescription, contacts, signature, participantKind, registrationVisible = false }: {
   participantKind: 'semifinalis' | 'finalis';
   registrationVisible?: boolean;
   logo?: BrandLogo;
@@ -43,7 +43,7 @@ export default function Footer({ categories, events, edition, logo, aboutDescrip
   events: FooterEvent[];
   edition: FooterEdition;
   aboutDescription: string | null;
-  resultsVisible: boolean;
+  resultsVisible?: boolean;
 }) {
   const instagramHref = contacts.find((contact) => contact.kind === 'instagram')?.href ?? 'https://www.instagram.com/mokagarut';
   const otherContacts = contacts.filter((contact) => contact.kind !== 'instagram');
@@ -95,10 +95,6 @@ export default function Footer({ categories, events, edition, logo, aboutDescrip
           {categories.length ? <div>
             <h2 className="mb-3 font-manrope text-sm font-semibold text-canvas">{participantKind === 'semifinalis' ? 'Profil semifinalis' : 'Profil finalis'}</h2>
             {categories.map((category) => <FooterLink key={`participant-${category.slug}`} href={`/profil-${participantKind}/${category.slug}`}>{formatCategoryName(category)}</FooterLink>)}
-            {resultsVisible ? <>
-              <h2 className="mb-3 mt-5 font-manrope text-sm font-semibold text-canvas">Hasil voting</h2>
-              {categories.map((category) => <FooterLink key={`hasil-${category.slug}`} href={`/voting/hasil/${category.slug}`}>{formatCategoryName(category)}</FooterLink>)}
-            </> : null}
           </div> : null}
         </nav>
       </div>

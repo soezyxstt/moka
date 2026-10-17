@@ -28,7 +28,6 @@ type NavbarEdition = { year: number; logoUrl: string | null; logoAlt: string | n
 export function Navbar({
   categories,
   events,
-  resultsVisible,
   edition,
   desktopLogo,
   mobileLogo,
@@ -37,7 +36,7 @@ export function Navbar({
 }: {
   categories: NavbarCategory[];
   events: NavbarEvent[];
-  resultsVisible: boolean;
+  resultsVisible?: boolean;
   edition: NavbarEdition;
   desktopLogo?: BrandLogo;
   mobileLogo?: BrandLogo;
@@ -52,7 +51,6 @@ export function Navbar({
   const categoryItems = (page: string) => categories.map((category) => ({ href: `/${page}/${category.slug}`, label: category.name }));
   const participantItems = categoryItems(`profil-${participantKind}`);
   const participantLabel = participantKind === 'semifinalis' ? 'Profil Semifinalis' : 'Profil Finalis';
-  const resultItems = categoryItems("voting/hasil");
 
   const desktopLinks: Array<
     | { href: string; label: string }
@@ -64,7 +62,6 @@ export function Navbar({
     ...(eventItems.length ? [{ label: "Rangkaian Kegiatan", menu: eventItems, match: "/rangkaian-kegiatan" }] : []),
     { href: "/voting", label: "Voting" },
     ...(participantItems.length ? [{ label: participantLabel, menu: participantItems, match: `/profil-${participantKind}` }] : []),
-    ...(resultsVisible && resultItems.length ? [{ label: "Hasil Voting", menu: resultItems, match: "/voting/hasil" }] : []),
   ];
 
   const [isNavbarVisible, setIsNavbarVisible] = useState(true);
@@ -154,7 +151,6 @@ export function Navbar({
                 {eventItems.length ? <MobileMenu label="Rangkaian Kegiatan" items={eventItems} close={() => setIsMobileMenuOpen(false)} /> : null}
                 <MobileLink href="/voting" label="Voting" close={() => setIsMobileMenuOpen(false)} />
                 {participantItems.length ? <MobileMenu label={participantLabel} items={participantItems} close={() => setIsMobileMenuOpen(false)} /> : null}
-                {resultsVisible && resultItems.length ? <MobileMenu label="Hasil Voting" items={resultItems} close={() => setIsMobileMenuOpen(false)} /> : null}
                 {user ? (
                   <Link
                     href="/admin"

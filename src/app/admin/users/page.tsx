@@ -56,6 +56,9 @@ export default async function UsersPage() {
                   action={<AdminBadge value={request.status} />}
                 >
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{request.reason}</p>
+                  {request.reviewNote ? (
+                    <p className="mt-1 text-xs text-muted-foreground">Catatan: {request.reviewNote}</p>
+                  ) : null}
                   {request.status === "open" ? (
                     <AccessRequestForm requestId={request.id} assignableRoles={assignableRoles} />
                   ) : null}

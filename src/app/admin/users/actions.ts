@@ -1,11 +1,16 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { approveAccessRequest, updateUserRoles } from "@/server/auth/access-requests";
+import { approveAccessRequest, rejectAccessRequest, updateUserRoles } from "@/server/auth/access-requests";
 
 export async function approveAction(formData: FormData) {
   const multi = formData.getAll("roleSlugs").map(String).filter(Boolean);
   const roles = multi.length > 0 ? multi : [String(formData.get("roleSlug") ?? "")].filter(Boolean);
   await approveAccessRequest(String(formData.get("requestId")), roles, String(formData.get("note") ?? ""));
+  revalidatePath("/admin/users");
+}
+
+export async function rejectAction(formData: FormData) {
+  await rejectAccessRequest(String(formData.get("requestId")), String(formData.get("reason") ?? formData.get("note") ?? ""));
   revalidatePath("/admin/users");
 }
 
