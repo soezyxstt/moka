@@ -1327,6 +1327,9 @@ function VotingConsoleInner({
                                   <div className="flex items-center gap-1.5">
                                     {inputMode === "add" ? (
                                       <div className="inline-flex h-8 items-center overflow-hidden rounded-md border border-input bg-background focus-within:border-brand-300 focus-within:ring-2 focus-within:ring-brand-100">
+                                        <span className="select-none pl-2.5 pr-1 font-manrope text-xs font-medium text-muted-foreground">
+                                          Rp
+                                        </span>
                                         <AdminInput
                                           type="text"
                                           inputMode="numeric"
@@ -1343,10 +1346,10 @@ function VotingConsoleInner({
                                               void submitSingleVoting(participant.id);
                                             }
                                           }}
-                                          className="h-full w-14 rounded-none border-0 bg-transparent px-2 text-right font-manrope text-xs font-semibold focus:ring-0 focus-visible:ring-0"
+                                          className="h-full w-12 rounded-none border-0 bg-transparent px-1.5 text-right font-manrope text-xs font-semibold shadow-none focus:ring-0 focus-visible:ring-0"
                                         />
                                         <span className="select-none border-l border-input bg-muted/60 px-2 py-1 font-manrope text-xs font-semibold text-muted-foreground">
-                                          000
+                                          .000
                                         </span>
                                       </div>
                                     ) : (
