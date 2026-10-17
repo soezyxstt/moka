@@ -1,6 +1,6 @@
 import { eq, and, inArray } from "drizzle-orm";
 
-import { AdminBadge, AdminCard, AdminPage } from "@/components/admin/primitives";
+import { AdminCard, AdminPage } from "@/components/admin/primitives";
 import { requirePermission } from "@/server/auth/authorization";
 import { getAdminEditionContext } from "@/server/cms/context";
 import { PAGE_SECTION_SLOTS } from "@/server/cms/page-sections";
@@ -103,11 +103,7 @@ export default async function PagesPage() {
   const documents = documentIds.length ? await database.select().from(mediaAssets).where(inArray(mediaAssets.id, documentIds)) : [];
 
   return (
-    <AdminPage
-      title="Teks halaman"
-
-      action={<AdminBadge value={edition.lifecycle} />}
-    >
+    <AdminPage title="Teks halaman">
       <PageSectionsEditor
         editionId={edition.id}
         editionYear={edition.year}

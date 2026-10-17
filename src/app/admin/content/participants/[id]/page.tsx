@@ -1,7 +1,7 @@
 import { and, asc, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 
-import { AdminBadge, AdminPage } from "@/components/admin/primitives";
+import { AdminPage } from "@/components/admin/primitives";
 import { requirePermission } from "@/server/auth/authorization";
 import { getAdminEditionContext } from "@/server/cms/context";
 import { database } from "@/server/db/client";
@@ -243,7 +243,7 @@ export default async function ParticipantDetailPage(props: Props) {
   return (
     <AdminPage
       title={`Profil peserta #${String(participantDetail.number).padStart(2, "0")}`}
-      action={<AdminBadge value={editionRow.lifecycle} />}
+
     >
       <ParticipantDetailWorkspace
         signature={identity?.signature ?? null}

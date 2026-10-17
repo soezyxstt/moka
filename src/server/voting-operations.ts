@@ -744,16 +744,19 @@ export async function saveVotingTalliesBatch(
       mode?: "add" | "set";
       expectedVersion?: number;
     }>;
-    reason: string;
+    reason?: string;
     canManageTally?: boolean;
   },
   actor: AuditActor,
   now: Date,
 ) {
-  const reason = requireReason(input.reason);
   if (!Array.isArray(input.entries) || input.entries.length === 0) {
     throw new Error("Tidak ada data peserta yang akan diperbarui");
   }
+  const hasSetMode = input.entries.some((entry) => entry.mode === "set");
+  const reason = hasSetMode
+    ? requireReason(input.reason ?? "")
+    : input.reason?.trim() || "Tambah vote";
 
   return db.transaction(async (tx) => {
     const campaign = await requireCampaign(tx, editionId, input.campaignId);

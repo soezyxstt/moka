@@ -67,28 +67,21 @@ export function AdminEditionSelector({
       <SelectTrigger
         aria-label="Pilih edisi admin"
         className={cn(
-          "group flex h-10 min-w-0 max-w-[calc(100vw-7rem)] items-center gap-2 rounded-md border border-brand-100 bg-canvas/80 px-2.5 py-1.5 text-left text-xs shadow-none transition-colors hover:border-brand-200 hover:bg-canvas focus-visible:border-brand-300 focus-visible:ring-brand-100 sm:max-w-none sm:px-3 sm:py-2",
+          "group flex h-9 min-w-0 max-w-full items-center gap-2 overflow-hidden rounded-md border border-brand-100 bg-canvas/80 px-2.5 py-1.5 text-left text-xs shadow-none transition-colors hover:border-brand-200 hover:bg-canvas focus-visible:border-brand-300 focus-visible:ring-brand-100 sm:h-10 sm:px-3",
+          "[&_[data-slot=select-value]]:min-w-0 [&_[data-slot=select-value]]:flex-1",
           isPending && "cursor-wait opacity-60",
           className,
         )}
       >
         <SelectValue placeholder="Pilih edisi">
-          <span className="flex min-w-0 items-center gap-2">
-            <span className="grid size-6 shrink-0 place-items-center rounded bg-brand-50 text-brand">
-              {isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Calendar className="size-3.5" />}
-            </span>
-            <span className="min-w-0 flex-1 text-left">
-              <span className="flex items-center gap-1.5">
-                <span className="min-w-0 truncate font-inter text-xs font-semibold text-brand-900">
-                  {currentEdition ? currentEdition.name : "Pilih edisi"}
-                </span>
-                {currentEdition ? <AdminBadge value={currentEdition.lifecycle} className="hidden py-0 text-xs sm:inline-flex" /> : null}
-              </span>
-              {currentEdition ? (
-                <span className="block text-xs text-muted-foreground sm:hidden">
-                  {currentEdition.year} · {currentEdition.lifecycle === "active" ? "Aktif" : currentEdition.lifecycle === "draft" ? "Draf" : "Arsip"}
-                </span>
-              ) : null}
+          <span className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+            {isPending ? (
+              <Loader2 className="size-3.5 shrink-0 animate-spin text-brand" />
+            ) : (
+              <Calendar className="size-3.5 shrink-0 text-brand" />
+            )}
+            <span className="block min-w-0 flex-1 truncate font-inter text-xs font-semibold text-brand-900">
+              {currentEdition ? currentEdition.name : "Pilih edisi"}
             </span>
           </span>
         </SelectValue>

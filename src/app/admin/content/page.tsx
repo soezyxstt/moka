@@ -2,8 +2,7 @@ import { eq } from "drizzle-orm";
 
 import { requirePermission } from "@/server/auth/authorization";
 import type { AdminIconName } from "@/components/admin/icons";
-import { AdminBadge, AdminCard, AdminCardHeader, AdminLinkButton, AdminListRow, AdminPage } from "@/components/admin/primitives";
-import { getAdminEditionContext } from "@/server/cms/context";
+import { AdminCard, AdminCardHeader, AdminLinkButton, AdminListRow, AdminPage } from "@/components/admin/primitives";
 import { database } from "@/server/db/client";
 import { editions } from "@/server/db/schema";
 import { Import2025Button } from "./import-2025-button";
@@ -25,17 +24,13 @@ const modules: { slug: string; label: string; description: string; icon: AdminIc
 
 export default async function ContentPage() {
   const actor = await requirePermission("content.view");
-  const currentEdition = await getAdminEditionContext();
   const canImport2025 = actor.effectivePermissions.has("settings.manage") && process.env.NODE_ENV !== "production" && process.env.TURSO_DATABASE_URL === "file:local.db";
   const existing2025 = canImport2025
     ? await database.select({ id: editions.id }).from(editions).where(eq(editions.year, 2025)).limit(1)
     : [];
 
   return (
-    <AdminPage
-      title="Kelola konten"
-      action={currentEdition ? <AdminBadge value={currentEdition.lifecycle} /> : null}
-    >
+    <AdminPage title="Kelola konten">
       <div className="divide-y divide-brand-100 border-y border-brand-100">
         {modules.map((module) => (
           <AdminListRow

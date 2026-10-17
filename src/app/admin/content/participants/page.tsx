@@ -1,6 +1,6 @@
 import { and, asc, eq, inArray } from "drizzle-orm";
 
-import { AdminBadge, AdminButton, AdminCard, AdminEmptyState, AdminPage } from "@/components/admin/primitives";
+import { AdminButton, AdminCard, AdminEmptyState, AdminPage } from "@/components/admin/primitives";
 import { requirePermission } from "@/server/auth/authorization";
 import { getAdminEditionContext } from "@/server/cms/context";
 import {
@@ -216,10 +216,7 @@ export default async function ParticipantsPage() {
   });
 
   return (
-    <AdminPage
-      title="Mojang Jajaka"
-      action={<AdminBadge value={currentEdition.lifecycle} />}
-    >
+    <AdminPage title="Mojang Jajaka">
       {hasIncompleteStageNumbers ? (
         <AdminCard className="flex flex-wrap items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">Nomor dan urutan peserta di tahap semifinalis atau finalis belum lengkap.</p>

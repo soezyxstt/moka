@@ -113,9 +113,9 @@ export function AdminSelect({
           aria-invalid={ariaInvalid ?? requiredErrorVisible}
           aria-required={required || undefined}
           className={cn(
-            "h-10 w-full min-w-0 rounded-md border-input bg-background text-sm text-foreground shadow-none focus-visible:border-brand-300 focus-visible:ring-brand-100",
+            "h-10 w-full min-w-0 overflow-hidden rounded-md border-input bg-background text-sm text-foreground shadow-none focus-visible:border-brand-300 focus-visible:ring-brand-100",
             "data-[size=default]:h-10",
-            "[&>span]:min-w-0 [&>span]:truncate",
+            "[&_[data-slot=select-value]]:block [&_[data-slot=select-value]]:min-w-0 [&_[data-slot=select-value]]:flex-1 [&_[data-slot=select-value]]:truncate [&_[data-slot=select-value]]:text-left",
             className,
           )}
         >

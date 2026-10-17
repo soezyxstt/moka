@@ -1,7 +1,7 @@
 import { desc, eq } from "drizzle-orm";
 import { Plus } from "lucide-react";
 
-import { AdminBadge, AdminLinkButton, AdminPage } from "@/components/admin/primitives";
+import { AdminLinkButton, AdminPage } from "@/components/admin/primitives";
 import { requirePermission } from "@/server/auth/authorization";
 import { getAdminEditionContext } from "@/server/cms/context";
 import { database } from "@/server/db/client";
@@ -53,7 +53,7 @@ export default async function NewsPage() {
       action={
         currentEdition ? (
           <div className="flex items-center gap-2">
-            <AdminBadge value={currentEdition.lifecycle} />
+
             {canEdit && (
               <AdminLinkButton href="/admin/content/news/new" className="h-9 px-3 text-xs">
                 <Plus size={14} /> Tulis berita

@@ -21,23 +21,31 @@ export function AdminPage({
   action,
   children,
 }: {
-  title: string;
+  title?: string;
   description?: string;
   action?: ReactNode;
   children: ReactNode;
 }) {
   return (
-    <main className="min-h-[calc(100vh-4rem)] bg-brand-50/30 px-4 py-6 sm:px-6 sm:py-8 lg:px-10">
+    <main className="min-h-[calc(100vh-4rem)] bg-brand-50/30 px-4 py-4 sm:px-6 sm:py-6 lg:px-10">
       <div className="mx-auto w-full min-w-0 max-w-[1440px]">
-        <header className="mb-6 pb-2 sm:mb-8 sm:pb-3">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div className="min-w-0 max-w-3xl">
-              <h1 className="break-words font-manrope !text-2xl font-semibold leading-tight tracking-[-0.03em] text-brand-900 sm:!text-3xl">{title}</h1>
-              {description ? <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{description}</p> : null}
+        {title || description || action ? (
+          <header className="mb-4 sm:mb-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0 max-w-3xl">
+                {title ? (
+                  <h1 className="break-words font-manrope !text-2xl font-semibold leading-tight tracking-[-0.03em] text-brand-900 sm:!text-3xl">
+                    {title}
+                  </h1>
+                ) : null}
+                {description ? (
+                  <p className="mt-1.5 max-w-2xl text-sm leading-6 text-muted-foreground">{description}</p>
+                ) : null}
+              </div>
+              {action ? <div className="shrink-0">{action}</div> : null}
             </div>
-            {action ? <div className="shrink-0">{action}</div> : null}
-          </div>
-        </header>
+          </header>
+        ) : null}
         {children}
       </div>
     </main>

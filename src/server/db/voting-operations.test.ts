@@ -12,6 +12,7 @@ import {
   closeVotingCampaign,
   createVotingCampaign,
   deleteVotingCampaign,
+  saveVotingTalliesBatch,
   saveVotingTally,
   setVotingResultVisibility,
   startVotingCampaign,
@@ -769,6 +770,34 @@ test("setiap proses pencatatan voting direkam pada audit log beserta jumlah vote
       votes: 7,
       version: 2,
     });
+
+    const addedWithoutReason = await saveVotingTalliesBatch(
+      db,
+      "edition-a",
+      {
+        campaignId: campaign.id,
+        entries: [{ participantId: "participant-a", votes: 2, mode: "add" }],
+        canManageTally: true,
+      },
+      actor,
+      now,
+    );
+    assert.equal(addedWithoutReason.updatedCount, 1);
+
+    await assert.rejects(
+      saveVotingTalliesBatch(
+        db,
+        "edition-a",
+        {
+          campaignId: campaign.id,
+          entries: [{ participantId: "participant-a", votes: 5, mode: "set" }],
+          canManageTally: true,
+        },
+        actor,
+        now,
+      ),
+      /Alasan tindakan wajib diisi/,
+    );
   } finally {
     client.close();
   }

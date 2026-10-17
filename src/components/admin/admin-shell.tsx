@@ -256,18 +256,18 @@ export function AdminShell({
         </SheetContent>
 
         <div className={cn("h-full min-w-0 flex-1 overflow-y-auto", adminNativeScrollbarClassName)} data-lenis-prevent>
-          <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-brand-100 bg-background/95 px-3 backdrop-blur-sm sm:px-6 lg:px-8">
-            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-2 border-b border-brand-100 bg-background/95 px-4 backdrop-blur-sm sm:h-16 sm:px-6 lg:px-8">
+            <div className="flex shrink-0 items-center gap-2 sm:gap-3">
               <SheetTrigger asChild>
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="size-10 shrink-0 border border-brand-100 bg-brand-50 text-brand shadow-none hover:bg-brand-100 hover:text-brand lg:hidden"
+                  className="-ml-1.5 size-9 shrink-0 text-brand-900 shadow-none hover:bg-brand-50 hover:text-brand lg:hidden"
                   aria-label="Buka navigasi"
                   aria-expanded={isMobileOpen}
                 >
-                  <Menu size={18} />
+                  <Menu className="size-5" />
                 </Button>
               </SheetTrigger>
               <div className="hidden items-center gap-2 text-xs text-muted-foreground md:flex">
@@ -275,7 +275,7 @@ export function AdminShell({
               </div>
             </div>
 
-            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-3">
               <AdminEditionSelector
                 currentEdition={currentEdition}
                 editions={allEditions}
@@ -283,14 +283,14 @@ export function AdminShell({
 
               <Link
                 href="/admin/profile"
-                className="flex items-center gap-2.5 rounded-md p-1 transition-colors hover:bg-brand-100/50"
+                className="flex shrink-0 items-center gap-2.5 rounded-md p-0.5 transition-colors hover:bg-brand-100/50 sm:p-1"
                 aria-label={`Profil ${user.name}`}
               >
                 <div className="hidden text-right lg:block">
                   <p className="text-xs font-semibold leading-tight text-brand-900">{user.name}</p>
                   <p className="max-w-[160px] truncate text-xs text-muted-foreground">{user.email}</p>
                 </div>
-                <div className="grid size-9 place-items-center rounded-md bg-brand text-xs font-semibold text-canvas">
+                <div className="grid size-8 place-items-center rounded-md bg-brand text-xs font-semibold text-canvas sm:size-9">
                   {initials || "A"}
                 </div>
               </Link>

@@ -702,31 +702,28 @@ export function CommitteeWorkspaceClient({
           title="Struktur dan anggota"
 
           action={
-            <div className="flex flex-wrap items-center gap-2">
-              <AdminBadge value={edition.lifecycle} />
-              {canEdit && (
-                <>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-8 border-brand-200 text-xs font-semibold text-brand hover:bg-brand-50"
-                    onClick={() => openCreateUnitDialog(null)}
-                  >
-                    <Plus size={13} className="mr-1.5" /> Tambah unit utama
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    className="h-8 bg-brand text-xs font-semibold text-canvas hover:bg-brand/90"
-                    onClick={() => openAssignMemberDialog(null)}
-                    disabled={initialUnits.length === 0}
-                  >
-                    <UserPlus size={13} className="mr-1.5" /> Tambah penugasan
-                  </Button>
-                </>
-              )}
-            </div>
+            canEdit ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 border-brand-200 text-xs font-semibold text-brand hover:bg-brand-50"
+                  onClick={() => openCreateUnitDialog(null)}
+                >
+                  <Plus size={13} className="mr-1.5" /> Tambah unit utama
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-8 bg-brand text-xs font-semibold text-canvas hover:bg-brand/90"
+                  onClick={() => openAssignMemberDialog(null)}
+                  disabled={initialUnits.length === 0}
+                >
+                  <UserPlus size={13} className="mr-1.5" /> Tambah penugasan
+                </Button>
+              </div>
+            ) : null
           }
         />
 

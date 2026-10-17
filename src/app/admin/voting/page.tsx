@@ -2,7 +2,7 @@ import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { AdminBadge, AdminEmptyState, AdminPage } from "@/components/admin/primitives";
+import { AdminEmptyState, AdminPage } from "@/components/admin/primitives";
 import { getEffectivePermissions } from "@/server/auth/authorization";
 import { auth } from "@/server/auth/config";
 import { database } from "@/server/db/client";
@@ -201,12 +201,9 @@ export default async function VotingAdminPage() {
   }
 
   return (
-    <AdminPage
-      title="Voting"
-      action={<AdminBadge value={currentEdition.lifecycle} />}
-    >
+    <AdminPage>
       <VotingConsole
-        key={`${currentEdition.id}:${campaignRows.map((campaign) => `${campaign.id}:${campaign.version}`).join(",")}:${tallyRows.map((tally) => `${tally.id}:${tally.version}`).join(",")}`}
+        key={`${currentEdition.id}:${campaignRows.map((campaign) => `${campaign.id}:${campaign.version}`).join(",")}`}
         currentEdition={currentEdition}
         campaigns={campaignRows.map((campaign) => ({
           ...campaign,

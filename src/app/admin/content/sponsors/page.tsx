@@ -1,6 +1,6 @@
 import { asc, eq } from "drizzle-orm";
 
-import { AdminBadge, AdminEmptyState, AdminPage } from "@/components/admin/primitives";
+import { AdminEmptyState, AdminPage } from "@/components/admin/primitives";
 import { requirePermission } from "@/server/auth/authorization";
 import { getAdminEditionContext } from "@/server/cms/context";
 import { database } from "@/server/db/client";
@@ -84,10 +84,7 @@ export default async function SponsorsPage() {
   }));
 
   return (
-    <AdminPage
-      title="Sponsor"
-      action={<AdminBadge value={currentEdition.lifecycle} />}
-    >
+    <AdminPage title="Sponsor">
       <SponsorsClient
         edition={{
           id: currentEdition.id,

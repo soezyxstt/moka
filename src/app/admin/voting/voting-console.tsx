@@ -7,6 +7,7 @@ import {
   EyeOff,
   Flag,
   History,
+  Loader2,
   LockKeyhole,
   Plus,
   QrCode,
@@ -49,6 +50,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useTabUrl } from "@/hooks/use-tab-url";
 import { cn } from "@/lib/utils";
 import { calculateVotesFromAmount } from "@/lib/voting";
@@ -268,16 +275,31 @@ function VotingConsoleInner({
     selectedCampaign.resultVisibility !== "hidden" &&
     !selectedResultIsVisible;
 
-  const snapshotParticipants = useMemo(
+  const rawSnapshotParticipants = useMemo(
     () => participants.filter((participant) => participant.campaignId === selectedCampaign?.id),
     [participants, selectedCampaign?.id],
   );
   const rumajaCount = useMemo(
     () =>
-      snapshotParticipants.filter(
+      rawSnapshotParticipants.filter(
         (participant) => participant.categoryCode === "JR" || participant.categoryCode === "MR",
       ).length,
-    [snapshotParticipants],
+    [rawSnapshotParticipants],
+  );
+  const snapshotParticipants = useMemo(
+    () =>
+      [...rawSnapshotParticipants].sort((a, b) => {
+        const codeA = Number.parseInt(
+          formatParticipantCode(a.categoryCode, a.number, rumajaCount),
+          10,
+        );
+        const codeB = Number.parseInt(
+          formatParticipantCode(b.categoryCode, b.number, rumajaCount),
+          10,
+        );
+        return codeA - codeB || a.name.localeCompare(b.name, "id");
+      }),
+    [rawSnapshotParticipants, rumajaCount],
   );
   const tallyReadyParticipants = useMemo(
     () => snapshotParticipants.filter((participant) => participant.qrisReady),
@@ -285,6 +307,7 @@ function VotingConsoleInner({
   );
 
   const [voteInputs, setVoteInputs] = useState<Record<string, string>>({});
+  const [savingParticipantIds, setSavingParticipantIds] = useState<Record<string, boolean>>({});
   const [inputMode, setInputMode] = useState<"add" | "set">("add");
   const [inputReason, setInputReason] = useState("");
   const [inputCategory, setInputCategory] = useState("ALL");
@@ -359,7 +382,12 @@ function VotingConsoleInner({
             : 0,
         };
       })
-      .sort((a, b) => b.votes - a.votes || a.number - b.number || a.name.localeCompare(b.name, "id"));
+      .sort(
+        (a, b) =>
+          b.votes - a.votes ||
+          Number.parseInt(a.code, 10) - Number.parseInt(b.code, 10) ||
+          a.name.localeCompare(b.name, "id"),
+      );
   }, [snapshotParticipants, participantTotals, selectedCampaign, rumajaCount]);
 
   const filteredRekap = useMemo(() => {
@@ -502,29 +530,6 @@ function VotingConsoleInner({
     });
   }
 
-  function handleIncrement(participantId: string, step: number, currentTotal: number) {
-    setVoteInputs((prev) => {
-      if (inputMode === "set") {
-        const current =
-          prev[participantId] !== undefined
-            ? Number.parseInt(prev[participantId]!, 10) || 0
-            : currentTotal;
-        const nextVal = Math.max(0, current + step);
-        return { ...prev, [participantId]: String(nextVal) };
-      } else {
-        const current = Number.parseInt(prev[participantId] ?? "0", 10) || 0;
-        const nextVal = canManageTally
-          ? Math.max(-currentTotal, current + step)
-          : Math.max(0, current + step);
-        if (nextVal === 0) {
-          const next = { ...prev };
-          delete next[participantId];
-          return next;
-        }
-        return { ...prev, [participantId]: String(nextVal) };
-      }
-    });
-  }
 
   function handleSetZero(participantId: string) {
     setVoteInputs((prev) => ({ ...prev, [participantId]: "0" }));
@@ -746,78 +751,237 @@ function VotingConsoleInner({
     }
   }
 
-  async function submitBatchVoting() {
+  async function submitSingleVoting(participantId: string) {
     if (!selectedCampaign) return;
+    if (savingParticipantIds[participantId]) return;
+    const entry = filledEntries.find((item) => item.participantId === participantId);
+    if (!entry) return;
+
     const trimmedReason = inputReason.trim();
-    if (!trimmedReason) {
-      toast.error("Catatan audit wajib diisi");
+    if (inputMode === "set" && !trimmedReason) {
+      toast.error("Catatan konfirmasi wajib diisi saat mengubah total");
       document.getElementById("batch-audit-reason-input")?.focus();
       return;
     }
-    if (filledEntries.length === 0) {
-      toast.error("Masukkan jumlah vote untuk setidaknya satu peserta");
-      return;
-    }
 
-    setPending(true);
-    const toastId = toast.loading(`Menyimpan voting untuk ${filledEntries.length} peserta...`);
+    setSavingParticipantIds((prev) => ({ ...prev, [participantId]: true }));
+    const toastId = toast.loading(`Menyimpan vote ${entry.code} (${entry.name})...`);
     try {
-      const result = await saveBatchTallyAction({
+      await saveBatchTallyAction({
         campaignId: selectedCampaign.id,
-        entries: filledEntries.map((e) => ({
-          participantId: e.participantId,
-          votes: e.votes,
-          mode: inputMode,
-          expectedVersion: e.expectedVersion,
-        })),
-        reason: trimmedReason,
+        entries: [
+          {
+            participantId: entry.participantId,
+            votes: entry.votes,
+            mode: inputMode,
+            expectedVersion: inputMode === "set" ? entry.expectedVersion : undefined,
+          },
+        ],
+        reason: inputMode === "set" ? trimmedReason : undefined,
       });
-      toast.success(`Berhasil menyimpan voting untuk ${result.updatedCount} peserta`, { id: toastId });
-      setVoteInputs({});
-      setInputReason("");
+      toast.success(`Vote ${entry.code} (${entry.name}) disimpan`, { id: toastId });
+      setVoteInputs((prev) => {
+        const next = { ...prev };
+        delete next[participantId];
+        return next;
+      });
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Data voting gagal disimpan", { id: toastId });
+      toast.error(error instanceof Error ? error.message : "Data voting gagal disimpan", {
+        id: toastId,
+      });
     } finally {
-      setPending(false);
+      setSavingParticipantIds((prev) => {
+        const next = { ...prev };
+        delete next[participantId];
+        return next;
+      });
     }
   }
 
+  async function submitBatchVoting() {
+    if (!selectedCampaign) return;
+    const entriesToSave = filledEntries.filter((e) => !savingParticipantIds[e.participantId]);
+    if (entriesToSave.length === 0) {
+      toast.error("Masukkan jumlah vote untuk setidaknya satu peserta");
+      return;
+    }
+    const trimmedReason = inputReason.trim();
+    if (inputMode === "set" && !trimmedReason) {
+      toast.error("Catatan konfirmasi wajib diisi saat mengubah total");
+      document.getElementById("batch-audit-reason-input")?.focus();
+      return;
+    }
+
+    const idsToSave = entriesToSave.map((e) => e.participantId);
+    setSavingParticipantIds((prev) => {
+      const next = { ...prev };
+      for (const id of idsToSave) next[id] = true;
+      return next;
+    });
+    const toastId = toast.loading(`Menyimpan voting untuk ${entriesToSave.length} peserta...`);
+    try {
+      const result = await saveBatchTallyAction({
+        campaignId: selectedCampaign.id,
+        entries: entriesToSave.map((e) => ({
+          participantId: e.participantId,
+          votes: e.votes,
+          mode: inputMode,
+          expectedVersion: inputMode === "set" ? e.expectedVersion : undefined,
+        })),
+        reason: inputMode === "set" ? trimmedReason : undefined,
+      });
+      toast.success(`Berhasil menyimpan voting untuk ${result.updatedCount} peserta`, {
+        id: toastId,
+      });
+      setVoteInputs((prev) => {
+        const next = { ...prev };
+        for (const id of idsToSave) delete next[id];
+        return next;
+      });
+      if (inputMode === "set") {
+        setInputReason("");
+      }
+      router.refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Data voting gagal disimpan", {
+        id: toastId,
+      });
+    } finally {
+      setSavingParticipantIds((prev) => {
+        const next = { ...prev };
+        for (const id of idsToSave) delete next[id];
+        return next;
+      });
+    }
+  }
+
+  const isBatchSaving = filledEntries.some((e) => savingParticipantIds[e.participantId]);
   const defaultStageId = stages.find((stage) => stage.finalStage)?.id ?? stages[0]?.id ?? "";
 
   return (
-    <div className="space-y-5">
-      {/* Top Bar: Campaign Selector + Kampanye Baru Button */}
-      <div className="flex flex-col gap-3 rounded-xl border border-brand-100 bg-card p-3.5 sm:flex-row sm:items-end sm:justify-between sm:p-4">
-        <div className="min-w-0 flex-1">
+    <div className="space-y-4">
+      {/* Floating Sticky Action Card at the very top of the page (outside Input Voting card) */}
+      {activeTab === "input" &&
+      canTally &&
+      selectedCampaign?.status === "active" &&
+      filledEntries.length > 0 ? (
+        <div className="pointer-events-none fixed inset-x-0 top-3 z-50 px-4 sm:px-6 lg:left-64 lg:px-10">
+          <div className="pointer-events-auto mx-auto max-w-[1440px] rounded-xl border border-brand-200 bg-card/95 p-3.5 shadow-lg backdrop-blur sm:p-4">
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="font-manrope text-sm font-semibold text-brand-900">
+                    {filledEntries.length} peserta akan diperbarui · Perubahan bersih:{" "}
+                    <span
+                      className={
+                        totalNetDeltaVotes >= 0 ? "text-brand-700" : "text-warning-700"
+                      }
+                    >
+                      {totalNetDeltaVotes >= 0
+                        ? `+${totalNetDeltaVotes.toLocaleString("id-ID")}`
+                        : totalNetDeltaVotes.toLocaleString("id-ID")}{" "}
+                      vote
+                    </span>
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Nominal:{" "}
+                    {totalNetDeltaAmount >= 0
+                      ? `+${currency.format(totalNetDeltaAmount)}`
+                      : `-${currency.format(Math.abs(totalNetDeltaAmount))}`}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleClearAllInputs}
+                    disabled={isBatchSaving}
+                    className="h-9 text-xs"
+                  >
+                    Reset
+                  </Button>
+                  <AdminButton
+                    type="button"
+                    onClick={() => void submitBatchVoting()}
+                    loading={isBatchSaving}
+                    disabled={isBatchSaving}
+                    className="h-9 text-xs font-semibold"
+                  >
+                    {!isBatchSaving ? <Check className="size-4" /> : null} Simpan voting (
+                    {filledEntries.length})
+                  </AdminButton>
+                </div>
+              </div>
+
+              {inputMode === "set" ? (
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+                  <AdminInput
+                    id="batch-audit-reason-input"
+                    value={inputReason}
+                    onChange={(event) => setInputReason(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" && !isBatchSaving) {
+                        event.preventDefault();
+                        void submitBatchVoting();
+                      }
+                    }}
+                    placeholder="Catatan konfirmasi perubahan total (wajib), contoh: Koreksi rekap mutasi"
+                    className="h-9 w-full text-xs"
+                  />
+                  {!inputReason.trim() ? (
+                    <span className="text-[11px] text-muted-foreground sm:whitespace-nowrap">
+                      Wajib diisi saat mengubah total
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Inline Header: Title + Single-line Campaign Select + Icon-only Kampanye Baru Button */}
+      <header className="flex items-center justify-between gap-3">
+        <h1 className="shrink-0 font-manrope !text-2xl font-semibold leading-tight tracking-[-0.03em] text-brand-900 sm:!text-3xl">
+          Voting
+        </h1>
+        <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:max-w-md">
           {campaigns.length > 0 && selectedCampaign ? (
-            <AdminField label="Pilih kampanye">
+            <div className="min-w-0 flex-1">
               <AdminSelect
+                aria-label="Pilih kampanye"
                 value={selectedCampaign.id}
                 onValueChange={chooseCampaign}
+                className="w-full min-w-0"
                 options={campaigns.map((campaign) => ({
                   value: campaign.id,
                   label: `${campaign.name} (${statusLabel(campaign.status)})`,
                 }))}
               />
-            </AdminField>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Belum ada kampanye voting pada edisi {currentEdition.year}.
-            </p>
-          )}
+            </div>
+          ) : null}
+          {canManage ? (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <AdminButton
+                    type="button"
+                    onClick={() => setIsCreateOpen(true)}
+                    disabled={pending || stages.length === 0}
+                    aria-label="Kampanye baru"
+                    className="size-10 shrink-0 px-0"
+                  >
+                    <CalendarPlus className="size-4" />
+                  </AdminButton>
+                </TooltipTrigger>
+                <TooltipContent>Kampanye baru</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : null}
         </div>
-        {canManage ? (
-          <AdminButton
-            type="button"
-            onClick={() => setIsCreateOpen(true)}
-            disabled={pending || stages.length === 0}
-            className="w-full shrink-0 sm:w-auto"
-          >
-            <CalendarPlus className="size-4" /> Kampanye baru
-          </AdminButton>
-        ) : null}
-      </div>
+      </header>
 
       {selectedCampaign ? (
         <div className="space-y-4">
@@ -959,78 +1123,6 @@ function VotingConsoleInner({
                       )}
                     </div>
 
-                    {/* Sticky / Floating Action Bar on top when any participant has votes entered */}
-                    {filledEntries.length > 0 ? (
-                      <div className="sticky top-16 sm:top-[4.25rem] z-20 rounded-xl border border-brand-200 bg-card/95 p-3.5 shadow-md backdrop-blur sm:p-4">
-                        <div className="flex flex-col gap-3">
-                          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
-                            <div className="min-w-0">
-                              <p className="font-manrope text-sm font-semibold text-brand-900">
-                                {filledEntries.length} peserta akan diperbarui · Perubahan bersih:{" "}
-                                <span
-                                  className={
-                                    totalNetDeltaVotes >= 0 ? "text-brand-700" : "text-warning-700"
-                                  }
-                                >
-                                  {totalNetDeltaVotes >= 0
-                                    ? `+${totalNetDeltaVotes.toLocaleString("id-ID")}`
-                                    : totalNetDeltaVotes.toLocaleString("id-ID")}{" "}
-                                  vote
-                                </span>
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                Nominal:{" "}
-                                {totalNetDeltaAmount >= 0
-                                  ? `+${currency.format(totalNetDeltaAmount)}`
-                                  : `-${currency.format(Math.abs(totalNetDeltaAmount))}`}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={handleClearAllInputs}
-                                disabled={pending}
-                                className="h-9 text-xs"
-                              >
-                                Reset
-                              </Button>
-                              <AdminButton
-                                type="button"
-                                onClick={submitBatchVoting}
-                                disabled={pending}
-                                className="h-9 text-xs font-semibold"
-                              >
-                                <Check className="size-4" /> Simpan voting ({filledEntries.length})
-                              </AdminButton>
-                            </div>
-                          </div>
-
-                          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-                            <AdminInput
-                              id="batch-audit-reason-input"
-                              value={inputReason}
-                              onChange={(event) => setInputReason(event.target.value)}
-                              onKeyDown={(event) => {
-                                if (event.key === "Enter" && !pending) {
-                                  event.preventDefault();
-                                  void submitBatchVoting();
-                                }
-                              }}
-                              placeholder="Catatan audit (wajib), contoh: Koreksi input / transfer"
-                              className="h-9 w-full text-xs"
-                            />
-                            {!inputReason.trim() ? (
-                              <span className="text-[11px] text-muted-foreground sm:whitespace-nowrap">
-                                Catatan audit wajib diisi untuk menyimpan
-                              </span>
-                            ) : null}
-                          </div>
-                        </div>
-                      </div>
-                    ) : null}
-
                     {/* Filter & Search Toolbar */}
                     <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex flex-wrap items-center gap-1.5">
@@ -1110,6 +1202,7 @@ function VotingConsoleInner({
                           const rawDraft = voteInputs[participant.id];
                           const hasInput = rawDraft !== undefined && rawDraft !== "" && rawDraft !== "-";
                           const draftNum = hasInput ? Number.parseInt(rawDraft, 10) : 0;
+                          const isSavingThis = Boolean(savingParticipantIds[participant.id]);
 
                           let projectedVotes = totalVotes;
                           let deltaVotes = 0;
@@ -1189,39 +1282,27 @@ function VotingConsoleInner({
                                       min={inputMode === "set" ? "0" : undefined}
                                       placeholder={inputMode === "set" ? String(totalVotes) : "0"}
                                       value={voteInputs[participant.id] ?? ""}
+                                      disabled={isSavingThis}
                                       onChange={(event) =>
                                         handleVoteInputChange(participant.id, event.target.value)
                                       }
+                                      onKeyDown={(event) => {
+                                        if (event.key === "Enter" && hasChange && !isSavingThis) {
+                                          event.preventDefault();
+                                          void submitSingleVoting(participant.id);
+                                        }
+                                      }}
                                       className="h-8 w-20 text-center font-manrope text-xs font-semibold"
                                     />
                                     <span className="text-xs text-muted-foreground">vote</span>
                                   </div>
                                   <div className="flex flex-wrap items-center gap-1">
-                                    {canManageTally ? (
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          handleIncrement(participant.id, -5, totalVotes)
-                                        }
-                                        className="h-8 rounded border border-border bg-background px-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                                      >
-                                        -5
-                                      </button>
-                                    ) : null}
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        handleIncrement(participant.id, 5, totalVotes)
-                                      }
-                                      className="h-8 rounded border border-brand-200 bg-background px-2 text-xs font-semibold text-brand-800 transition-colors hover:bg-brand-50"
-                                    >
-                                      +5
-                                    </button>
                                     {canManageTally && inputMode === "set" ? (
                                       <button
                                         type="button"
+                                        disabled={isSavingThis}
                                         onClick={() => handleSetZero(participant.id)}
-                                        className="h-8 rounded border border-border bg-background px-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-destructive sm:px-2"
+                                        className="h-8 rounded border border-border bg-background px-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-destructive disabled:opacity-50 sm:px-2"
                                         title="Atur jadi 0"
                                       >
                                         0
@@ -1230,13 +1311,33 @@ function VotingConsoleInner({
                                     {hasInput ? (
                                       <button
                                         type="button"
+                                        disabled={isSavingThis}
                                         onClick={() => handleClearParticipantInput(participant.id)}
-                                        className="h-8 rounded border border-border px-2 text-xs text-muted-foreground hover:bg-muted"
+                                        className="h-8 rounded border border-border px-2 text-xs text-muted-foreground hover:bg-muted disabled:opacity-50"
                                         title="Batal"
                                       >
                                         ×
                                       </button>
                                     ) : null}
+                                    <button
+                                      type="button"
+                                      disabled={!hasChange || isSavingThis}
+                                      onClick={() => void submitSingleVoting(participant.id)}
+                                      title="Simpan vote peserta ini"
+                                      aria-label={`Simpan vote ${participant.name}`}
+                                      className={cn(
+                                        "inline-flex size-8 items-center justify-center rounded-md border transition-colors",
+                                        hasChange
+                                          ? "border-brand bg-brand text-canvas hover:bg-brand-600"
+                                          : "cursor-not-allowed border-border bg-muted/40 text-muted-foreground opacity-50",
+                                      )}
+                                    >
+                                      {isSavingThis ? (
+                                        <Loader2 className="size-3.5 animate-spin" />
+                                      ) : (
+                                        <Check className="size-3.5" />
+                                      )}
+                                    </button>
                                   </div>
                                 </div>
                               </div>

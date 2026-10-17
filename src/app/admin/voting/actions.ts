@@ -266,7 +266,7 @@ export async function saveBatchTallyAction(input: {
     mode?: "add" | "set";
     expectedVersion?: number;
   }>;
-  reason: string;
+  reason?: string;
 }) {
   const actor = await requirePermission("voting.tally");
   const effectivePermissions = await getEffectivePermissions(actor.session.user.id);
