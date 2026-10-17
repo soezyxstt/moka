@@ -3,6 +3,7 @@
 import {
   CalendarPlus,
   Check,
+  Clock,
   Eye,
   EyeOff,
   Flag,
@@ -67,6 +68,7 @@ import {
   deleteCampaignAction,
   saveBatchTallyAction,
   setResultVisibilityAction,
+  setShowResultUpdatedAtAction,
   startCampaignAction,
   updateCampaignAction,
   updateCampaignStageAction,
@@ -87,6 +89,7 @@ export type VotingCampaignSummary = {
   eligibilityStageId: string | null;
   stageName: string | null;
   resultVisibility: string;
+  showResultUpdatedAt: boolean;
   startedAt: string | null;
   closedAt: string | null;
   version: number;
@@ -325,6 +328,7 @@ function VotingConsoleInner({
   const [confirmation, setConfirmation] = useState("");
   const [reason, setReason] = useState("");
   const [visibilityReason, setVisibilityReason] = useState("");
+  const [showResultUpdatedAtReason, setShowResultUpdatedAtReason] = useState("");
 
   const campaignTallies = useMemo(
     () => tallies.filter((tally) => tally.campaignId === selectedCampaign?.id),
@@ -455,9 +459,9 @@ function VotingConsoleInner({
       let votesToSubmit = 0;
 
       if (inputMode === "add") {
-        deltaVotes = num;
+        deltaVotes = pricePerVote > 0 ? Math.trunc((num * 1000) / pricePerVote) : 0;
         projectedVotes = totalVotes + deltaVotes;
-        votesToSubmit = num;
+        votesToSubmit = deltaVotes;
         if (!canManageTally && deltaVotes <= 0) continue;
         if (deltaVotes === 0 || projectedVotes < 0) continue;
       } else {
@@ -746,6 +750,36 @@ function VotingConsoleInner({
       );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Visibilitas hasil gagal diubah", { id: toastId });
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function toggleShowResultUpdatedAt() {
+    if (!selectedCampaign) return;
+    const nextShow = !selectedCampaign.showResultUpdatedAt;
+    setPending(true);
+    const toastId = toast.loading("Mengubah tampilan waktu pembaruan...");
+    try {
+      const result = await setShowResultUpdatedAtAction({
+        campaignId: selectedCampaign.id,
+        expectedVersion: selectedCampaign.version,
+        showResultUpdatedAt: nextShow,
+        reason: showResultUpdatedAtReason,
+      });
+      replaceCampaign({ version: result.version, showResultUpdatedAt: nextShow });
+      setShowResultUpdatedAtReason("");
+      toast.success(
+        nextShow
+          ? "Waktu pembaruan terakhir ditampilkan ke publik"
+          : "Waktu pembaruan terakhir disembunyikan dari publik",
+        { id: toastId },
+      );
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Tampilan waktu pembaruan gagal diubah",
+        { id: toastId },
+      );
     } finally {
       setPending(false);
     }
@@ -1210,7 +1244,10 @@ function VotingConsoleInner({
 
                           if (hasInput && !Number.isNaN(draftNum)) {
                             if (inputMode === "add") {
-                              deltaVotes = draftNum;
+                              deltaVotes =
+                                pricePerVote > 0
+                                  ? Math.trunc((draftNum * 1000) / pricePerVote)
+                                  : 0;
                               projectedVotes = totalVotes + deltaVotes;
                               hasChange = canManageTally
                                 ? deltaVotes !== 0 && projectedVotes >= 0
@@ -1236,7 +1273,7 @@ function VotingConsoleInner({
                                     : "border-border bg-card hover:bg-brand-50/20",
                               )}
                             >
-                              <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+                              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-center gap-2">
                                     <span className="shrink-0 rounded bg-brand-100 px-2 py-0.5 font-manrope text-xs font-bold text-brand-900">
@@ -1257,15 +1294,7 @@ function VotingConsoleInner({
                                           deltaVotes >= 0 ? "text-brand-700" : "text-warning-700",
                                         )}
                                       >
-                                        → {projectedVotes.toLocaleString("id-ID")} vote (
-                                        {deltaVotes >= 0
-                                          ? `+${deltaVotes.toLocaleString("id-ID")}`
-                                          : deltaVotes.toLocaleString("id-ID")}{" "}
-                                        ·{" "}
-                                        {deltaVotes >= 0
-                                          ? currency.format(deltaVotes * pricePerVote)
-                                          : `-${currency.format(Math.abs(deltaVotes * pricePerVote))}`}
-                                        )
+                                        → {projectedVotes.toLocaleString("id-ID")} vote
                                       </span>
                                     ) : hasInput && inputMode === "set" && draftNum === totalVotes ? (
                                       <span className="text-muted-foreground">
@@ -1275,69 +1304,116 @@ function VotingConsoleInner({
                                   </div>
                                 </div>
 
-                                <div className="flex flex-wrap items-center gap-1.5 sm:justify-end">
-                                  <div className="flex items-center gap-1">
-                                    <AdminInput
-                                      type={inputMode === "add" && canManageTally ? "text" : "number"}
-                                      min={inputMode === "set" ? "0" : undefined}
-                                      placeholder={inputMode === "set" ? String(totalVotes) : "0"}
-                                      value={voteInputs[participant.id] ?? ""}
-                                      disabled={isSavingThis}
-                                      onChange={(event) =>
-                                        handleVoteInputChange(participant.id, event.target.value)
-                                      }
-                                      onKeyDown={(event) => {
-                                        if (event.key === "Enter" && hasChange && !isSavingThis) {
-                                          event.preventDefault();
-                                          void submitSingleVoting(participant.id);
-                                        }
-                                      }}
-                                      className="h-8 w-20 text-center font-manrope text-xs font-semibold"
-                                    />
-                                    <span className="text-xs text-muted-foreground">vote</span>
-                                  </div>
-                                  <div className="flex flex-wrap items-center gap-1">
-                                    {canManageTally && inputMode === "set" ? (
+                                <div className="flex items-center justify-between gap-2 border-t border-border/60 pt-2 sm:border-t-0 sm:pt-0 sm:justify-end">
+                                  <span
+                                    className={cn(
+                                      "text-xs",
+                                      hasChange
+                                        ? deltaVotes >= 0
+                                          ? "font-semibold text-brand-700"
+                                          : "font-semibold text-warning-700"
+                                        : "text-muted-foreground",
+                                    )}
+                                  >
+                                    {inputMode === "add"
+                                      ? hasInput && !Number.isNaN(draftNum) && draftNum !== 0
+                                        ? `${deltaVotes.toLocaleString("id-ID")} vote`
+                                        : "0 vote"
+                                      : hasChange
+                                        ? `${deltaVotes > 0 ? `+${deltaVotes.toLocaleString("id-ID")}` : deltaVotes.toLocaleString("id-ID")} vote`
+                                        : "0 vote"}
+                                  </span>
+
+                                  <div className="flex items-center gap-1.5">
+                                    {inputMode === "add" ? (
+                                      <div className="inline-flex h-8 items-center overflow-hidden rounded-md border border-input bg-background focus-within:border-brand-300 focus-within:ring-2 focus-within:ring-brand-100">
+                                        <AdminInput
+                                          type="text"
+                                          inputMode="numeric"
+                                          placeholder="0"
+                                          value={voteInputs[participant.id] ?? ""}
+                                          disabled={isSavingThis}
+                                          aria-label={`Nominal ribuan voting ${participant.name}`}
+                                          onChange={(event) =>
+                                            handleVoteInputChange(participant.id, event.target.value)
+                                          }
+                                          onKeyDown={(event) => {
+                                            if (event.key === "Enter" && hasChange && !isSavingThis) {
+                                              event.preventDefault();
+                                              void submitSingleVoting(participant.id);
+                                            }
+                                          }}
+                                          className="h-full w-14 rounded-none border-0 bg-transparent px-2 text-right font-manrope text-xs font-semibold focus:ring-0 focus-visible:ring-0"
+                                        />
+                                        <span className="select-none border-l border-input bg-muted/60 px-2 py-1 font-manrope text-xs font-semibold text-muted-foreground">
+                                          000
+                                        </span>
+                                      </div>
+                                    ) : (
+                                      <div className="flex items-center gap-1">
+                                        <AdminInput
+                                          type="number"
+                                          min="0"
+                                          placeholder={String(totalVotes)}
+                                          value={voteInputs[participant.id] ?? ""}
+                                          disabled={isSavingThis}
+                                          onChange={(event) =>
+                                            handleVoteInputChange(participant.id, event.target.value)
+                                          }
+                                          onKeyDown={(event) => {
+                                            if (event.key === "Enter" && hasChange && !isSavingThis) {
+                                              event.preventDefault();
+                                              void submitSingleVoting(participant.id);
+                                            }
+                                          }}
+                                          className="h-8 w-20 text-center font-manrope text-xs font-semibold"
+                                        />
+                                        <span className="text-xs text-muted-foreground">vote</span>
+                                      </div>
+                                    )}
+                                    <div className="flex items-center gap-1">
+                                      {canManageTally && inputMode === "set" ? (
+                                        <button
+                                          type="button"
+                                          disabled={isSavingThis}
+                                          onClick={() => handleSetZero(participant.id)}
+                                          className="h-8 rounded border border-border bg-background px-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-destructive disabled:opacity-50 sm:px-2"
+                                          title="Atur jadi 0"
+                                        >
+                                          0
+                                        </button>
+                                      ) : null}
+                                      {hasInput ? (
+                                        <button
+                                          type="button"
+                                          disabled={isSavingThis}
+                                          onClick={() => handleClearParticipantInput(participant.id)}
+                                          className="inline-flex size-8 shrink-0 items-center justify-center rounded-md border border-border text-xs text-muted-foreground hover:bg-muted disabled:opacity-50"
+                                          title="Batal"
+                                        >
+                                          ×
+                                        </button>
+                                      ) : null}
                                       <button
                                         type="button"
-                                        disabled={isSavingThis}
-                                        onClick={() => handleSetZero(participant.id)}
-                                        className="h-8 rounded border border-border bg-background px-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-destructive disabled:opacity-50 sm:px-2"
-                                        title="Atur jadi 0"
+                                        disabled={!hasChange || isSavingThis}
+                                        onClick={() => void submitSingleVoting(participant.id)}
+                                        title="Simpan vote peserta ini"
+                                        aria-label={`Simpan vote ${participant.name}`}
+                                        className={cn(
+                                          "inline-flex size-8 shrink-0 items-center justify-center rounded-md border transition-colors",
+                                          hasChange
+                                            ? "border-brand bg-brand text-canvas hover:bg-brand-600"
+                                            : "cursor-not-allowed border-border bg-muted/40 text-muted-foreground opacity-50",
+                                        )}
                                       >
-                                        0
+                                        {isSavingThis ? (
+                                          <Loader2 className="size-3.5 animate-spin" />
+                                        ) : (
+                                          <Check className="size-3.5" />
+                                        )}
                                       </button>
-                                    ) : null}
-                                    {hasInput ? (
-                                      <button
-                                        type="button"
-                                        disabled={isSavingThis}
-                                        onClick={() => handleClearParticipantInput(participant.id)}
-                                        className="h-8 rounded border border-border px-2 text-xs text-muted-foreground hover:bg-muted disabled:opacity-50"
-                                        title="Batal"
-                                      >
-                                        ×
-                                      </button>
-                                    ) : null}
-                                    <button
-                                      type="button"
-                                      disabled={!hasChange || isSavingThis}
-                                      onClick={() => void submitSingleVoting(participant.id)}
-                                      title="Simpan vote peserta ini"
-                                      aria-label={`Simpan vote ${participant.name}`}
-                                      className={cn(
-                                        "inline-flex size-8 items-center justify-center rounded-md border transition-colors",
-                                        hasChange
-                                          ? "border-brand bg-brand text-canvas hover:bg-brand-600"
-                                          : "cursor-not-allowed border-border bg-muted/40 text-muted-foreground opacity-50",
-                                      )}
-                                    >
-                                      {isSavingThis ? (
-                                        <Loader2 className="size-3.5 animate-spin" />
-                                      ) : (
-                                        <Check className="size-3.5" />
-                                      )}
-                                    </button>
+                                    </div>
                                   </div>
                                 </div>
                               </div>
@@ -1843,6 +1919,40 @@ function VotingConsoleInner({
                             : selectedCampaign.resultVisibility === "hidden"
                               ? "Tampilkan hasil"
                               : "Tetapkan hasil ke tersembunyi"}
+                        </AdminButton>
+                      </div>
+
+                      <div className="space-y-3 rounded-lg border border-brand-100 bg-brand-50/30 p-3.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-xs font-semibold text-brand-900">
+                            Waktu pembaruan terakhir
+                          </p>
+                          <span className="text-[11px] text-neutral-500">
+                            {selectedCampaign.showResultUpdatedAt ? "Aktif" : "Nonaktif"}
+                          </span>
+                        </div>
+                        <AdminField label="Alasan perubahan tampilan waktu">
+                          <AdminInput
+                            value={showResultUpdatedAtReason}
+                            onChange={(event) => setShowResultUpdatedAtReason(event.target.value)}
+                            placeholder="Contoh: Sembunyikan jam rekap"
+                            disabled={pending}
+                          />
+                        </AdminField>
+                        <AdminButton
+                          type="button"
+                          variant="secondary"
+                          onClick={toggleShowResultUpdatedAt}
+                          disabled={pending || !showResultUpdatedAtReason.trim()}
+                        >
+                          {selectedCampaign.showResultUpdatedAt ? (
+                            <EyeOff className="size-4" />
+                          ) : (
+                            <Clock className="size-4" />
+                          )}
+                          {selectedCampaign.showResultUpdatedAt
+                            ? "Sembunyikan waktu pembaruan"
+                            : "Tampilkan waktu pembaruan"}
                         </AdminButton>
                       </div>
                     </div>

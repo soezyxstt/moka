@@ -1,0 +1,1 @@
+ALTER TABLE `votingCampaign` ADD `showResultUpdatedAt` integer DEFAULT true NOT NULL;

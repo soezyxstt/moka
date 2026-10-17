@@ -93,6 +93,7 @@ export default async function VotingPage() {
           resultsVisible={results.visible}
           totalVotes={totalVotes}
           results={ranked.map(({ name, percentage }) => ({ name, percentage }))}
+          updatedAt={results.resultUpdatedAt}
         />
       ),
     };

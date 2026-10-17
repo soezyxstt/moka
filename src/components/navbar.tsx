@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, LogIn, MoveUpRight } from "lucide-react";
+import { ChevronDown, MoveUpRight } from "lucide-react";
 import { motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -127,17 +127,7 @@ export function Navbar({
               <UserAvatar name={user.name} image={user.image} />
               <span className="hidden max-w-24 truncate lg:inline">{user.name}</span>
             </Link>
-          ) : (
-            <Link
-              href="/admin/login"
-              className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-md border border-highlight px-3 text-sm font-semibold text-highlight transition-colors hover:bg-highlight hover:text-brand-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-highlight-200 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-900"
-              aria-label="Masuk ke ruang kerja PAMOKA"
-              title="Masuk"
-            >
-              <LogIn className="size-4" aria-hidden="true" />
-              <span className="hidden lg:inline">Masuk</span>
-            </Link>
-          )}
+          ) : null}
         </div>
       </motion.nav>
 
@@ -175,17 +165,7 @@ export function Navbar({
                     <UserAvatar name={user.name} image={user.image} />
                     <span className="min-w-0 truncate">{user.name}</span>
                   </Link>
-                ) : (
-                  <Link
-                    href="/admin/login"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-highlight bg-highlight px-4 py-2.5 text-sm font-semibold text-brand-900 transition-colors hover:bg-highlight-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-canvas focus-visible:ring-offset-2 focus-visible:ring-offset-brand-900"
-                    aria-label="Masuk ke ruang kerja PAMOKA"
-                  >
-                    <LogIn className="size-4" aria-hidden="true" />
-                    Masuk
-                  </Link>
-                )}
+                ) : null}
               </div>
             </AccordionContent>
           </AccordionItem>

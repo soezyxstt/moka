@@ -85,6 +85,7 @@ export default async function VotingAdminPage() {
         eligibilityStageId: votingCampaigns.eligibilityStageId,
         stageName: selectionStages.name,
         resultVisibility: votingCampaigns.resultVisibility,
+        showResultUpdatedAt: votingCampaigns.showResultUpdatedAt,
         startedAt: votingCampaigns.startedAt,
         closedAt: votingCampaigns.closedAt,
         version: votingCampaigns.version,

@@ -26,6 +26,11 @@ export default async function HasilPage({ params }: Readonly<{ params: Promise<{
           <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-canvas/80 md:text-base">
             {results.campaign?.name ?? "Kampanye voting belum tersedia"} · {results.categoryName}
           </p>
+          {results.resultUpdatedAt ? (
+            <p className="mx-auto mt-1 text-xs text-canvas/70">
+              Terakhir diperbarui: {formatUpdateTimestamp(results.resultUpdatedAt)}
+            </p>
+          ) : null}
         </header>
 
         <nav className="mx-auto mt-7 grid grid-cols-2 gap-2 rounded-xl bg-canvas/20 p-2 backdrop-blur-sm sm:flex sm:w-fit" aria-label="Kategori hasil voting">
@@ -94,6 +99,14 @@ export default async function HasilPage({ params }: Readonly<{ params: Promise<{
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(amount);
+}
+
+function formatUpdateTimestamp(date: Date) {
+  const day = new Intl.DateTimeFormat("id-ID", { day: "numeric", timeZone: "Asia/Jakarta" }).format(date);
+  const month = new Intl.DateTimeFormat("id-ID", { month: "short", timeZone: "Asia/Jakarta" }).format(date);
+  const year = new Intl.DateTimeFormat("id-ID", { year: "numeric", timeZone: "Asia/Jakarta" }).format(date);
+  const time = new Intl.DateTimeFormat("id-ID", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Jakarta" }).format(date).replace(".", ":");
+  return `${day} ${month} ${year}, ${time} WIB`;
 }
 
 function ResultSummary({ icon, label, value, className }: { icon: ReactNode; label: string; value: string; className?: string }) {

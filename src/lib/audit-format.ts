@@ -97,6 +97,7 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   "voting.campaign.close": "Tutup kampanye voting",
   "voting.campaign.delete": "Hapus kampanye voting",
   "voting.campaign.visibility.update": "Ubah visibilitas voting",
+  "voting.campaign.resultUpdatedAt.update": "Ubah visibilitas waktu pembaruan voting",
   "voting.tally.create": "Catat suara voting",
   "voting.tally.correct": "Koreksi suara voting",
 

@@ -119,6 +119,7 @@ export async function createVotingCampaign(
       pricePerPoint: input.pricePerPoint,
       status: "draft",
       resultVisibility: "hidden",
+      showResultUpdatedAt: true,
       version: 1,
       createdAt: now,
       updatedAt: now,
@@ -141,6 +142,7 @@ export async function createVotingCampaign(
         pricePerPoint: input.pricePerPoint,
         status: "draft",
         resultVisibility: "hidden",
+        showResultUpdatedAt: true,
         version: 1,
       },
       changedFields: [
@@ -584,6 +586,58 @@ export async function setVotingResultVisibility(
       before: { resultVisibility: campaign.resultVisibility, version: campaign.version },
       after: { resultVisibility: input.visibility, version: campaign.version + 1 },
       changedFields: ["resultVisibility", "version"],
+      source: "admin-voting",
+      reason,
+    });
+    return { version: campaign.version + 1 };
+  });
+}
+
+export async function setVotingShowResultUpdatedAt(
+  db: Database,
+  editionId: string,
+  input: {
+    campaignId: string;
+    expectedVersion: number;
+    showResultUpdatedAt: boolean;
+    reason: string;
+  },
+  actor: AuditActor,
+  now: Date,
+) {
+  const reason = requireReason(input.reason);
+  if (typeof input.showResultUpdatedAt !== "boolean") {
+    throw new Error("Pilihan tampilan waktu pembaruan tidak valid");
+  }
+  return db.transaction(async (tx) => {
+    const campaign = await requireCampaign(tx, editionId, input.campaignId);
+    requireExpectedVersion(campaign.version, input.expectedVersion);
+    const [updated] = await tx
+      .update(votingCampaigns)
+      .set({
+        showResultUpdatedAt: input.showResultUpdatedAt,
+        version: campaign.version + 1,
+        updatedAt: now,
+      })
+      .where(
+        and(
+          eq(votingCampaigns.id, campaign.id),
+          eq(votingCampaigns.editionId, editionId),
+          eq(votingCampaigns.version, input.expectedVersion),
+        ),
+      )
+      .returning({ id: votingCampaigns.id });
+    if (!updated) throw new Error(staleCampaignMessage);
+    await appendAuditLog(tx, {
+      actorUserId: actor.userId,
+      actorLabel: actor.label,
+      action: "voting.campaign.resultUpdatedAt.update",
+      resourceType: "votingCampaign",
+      resourceId: campaign.id,
+      resourceLabel: campaign.name,
+      before: { showResultUpdatedAt: campaign.showResultUpdatedAt, version: campaign.version },
+      after: { showResultUpdatedAt: input.showResultUpdatedAt, version: campaign.version + 1 },
+      changedFields: ["showResultUpdatedAt", "version"],
       source: "admin-voting",
       reason,
     });

@@ -127,6 +127,13 @@
       "when": 1792166057456,
       "tag": "0017_lonely_warbound",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1792259840883,
+      "tag": "0018_damp_masque",
+      "breakpoints": true
     }
   ]
 }

@@ -133,6 +133,7 @@ export type PublicVotingCampaign = {
   status: string;
   pricePerPoint: number;
   resultVisibility: string;
+  showResultUpdatedAt: boolean;
 };
 
 export type PublicVotingCandidate = {
@@ -167,6 +168,7 @@ export type PublicVotingResults = {
   visible: boolean;
   totalAmount: number;
   candidates: { id: string; name: string; amount: number; percentage: number }[];
+  resultUpdatedAt: Date | null;
 };
 
 export type PublicEdition = {
@@ -551,7 +553,7 @@ export async function getPublicVotingResults(categorySlug: string): Promise<Publ
     .limit(1);
   const visible = campaign?.resultVisibility === 'visible';
   if (!campaign || !visible) {
-    return { categoryName: category.label, categorySlug: category.slug, editionYear: edition.year, campaign: campaign ?? null, visible: false, totalAmount: 0, candidates: [] };
+    return { categoryName: category.label, categorySlug: category.slug, editionYear: edition.year, campaign: campaign ?? null, visible: false, totalAmount: 0, candidates: [], resultUpdatedAt: null };
   }
 
   const candidates = await database
@@ -566,13 +568,23 @@ export async function getPublicVotingResults(categorySlug: string): Promise<Publ
     .orderBy(asc(participants.displayOrder), asc(participants.number), asc(participants.name));
   const tallies = candidates.length
     ? await database
-      .select({ participantId: voteDailyTallies.participantId, amount: voteDailyTallies.amount })
+      .select({ participantId: voteDailyTallies.participantId, amount: voteDailyTallies.amount, updatedAt: voteDailyTallies.updatedAt })
       .from(voteDailyTallies)
       .where(and(eq(voteDailyTallies.campaignId, campaign.id), inArray(voteDailyTallies.participantId, candidates.map((row) => row.id))))
     : [];
   const amountByParticipant = new Map<string, number>();
-  for (const tally of tallies) amountByParticipant.set(tally.participantId, (amountByParticipant.get(tally.participantId) ?? 0) + tally.amount);
+  let latestTallyTime = 0;
+  for (const tally of tallies) {
+    amountByParticipant.set(tally.participantId, (amountByParticipant.get(tally.participantId) ?? 0) + tally.amount);
+    if (tally.updatedAt) {
+      const tallyTime = tally.updatedAt.getTime();
+      if (tallyTime > latestTallyTime) latestTallyTime = tallyTime;
+    }
+  }
   const totalAmount = candidates.reduce((total, candidate) => total + (amountByParticipant.get(candidate.id) ?? 0), 0);
+  const resultUpdatedAt = campaign.showResultUpdatedAt
+    ? (latestTallyTime > 0 ? new Date(latestTallyTime) : (campaign.startedAt ?? campaign.updatedAt ?? null))
+    : null;
 
   return {
     categoryName: category.label,
@@ -585,6 +597,7 @@ export async function getPublicVotingResults(categorySlug: string): Promise<Publ
       const amount = amountByParticipant.get(candidate.id) ?? 0;
       return { ...candidate, amount, percentage: totalAmount > 0 ? Math.round((amount / totalAmount) * 10000) / 100 : 0 };
     }),
+    resultUpdatedAt,
   };
 }
 

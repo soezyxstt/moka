@@ -26,20 +26,37 @@ export type VotingPanelProps = {
   resultsVisible: boolean;
   totalVotes: number;
   results: { name: string; percentage: number }[];
+  updatedAt?: Date | null;
 };
 
 const chartConfig = { percentage: { label: 'Persentase', color: 'var(--chart-1)' } } satisfies ChartConfig;
 const number = new Intl.NumberFormat('id-ID');
 const percentFormat = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 
+function formatUpdateTimestamp(date: Date) {
+  const day = new Intl.DateTimeFormat('id-ID', { day: 'numeric', timeZone: 'Asia/Jakarta' }).format(date);
+  const month = new Intl.DateTimeFormat('id-ID', { month: 'short', timeZone: 'Asia/Jakarta' }).format(date);
+  const year = new Intl.DateTimeFormat('id-ID', { year: 'numeric', timeZone: 'Asia/Jakarta' }).format(date);
+  const time = new Intl.DateTimeFormat('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Jakarta' }).format(date).replace('.', ':');
+  return `${day} ${month} ${year}, ${time} WIB`;
+}
+
 export function VotingPanel({
   resultsVisible,
   totalVotes,
   results,
+  updatedAt,
 }: VotingPanelProps) {
   return <div className="mt-6">
     <div className="flex items-end justify-between gap-4">
-      <h2 className="font-manrope text-xl font-semibold text-brand-900">Hasil sementara</h2>
+      <div>
+        <h2 className="font-manrope text-xl font-semibold text-brand-900">Hasil sementara</h2>
+        {resultsVisible && updatedAt ? (
+          <p className="mt-1 text-xs text-neutral-600">
+            Terakhir diperbarui: {formatUpdateTimestamp(updatedAt)}
+          </p>
+        ) : null}
+      </div>
       {resultsVisible ? <p className="text-sm text-neutral-600">{number.format(totalVotes)} vote</p> : null}
     </div>
     {resultsVisible && totalVotes > 0 ? <ChartContainer config={chartConfig} className="mt-6 aspect-auto w-full" style={{ height: Math.max(160, results.length * 40) }}>

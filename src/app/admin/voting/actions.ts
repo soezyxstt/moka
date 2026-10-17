@@ -11,6 +11,7 @@ import {
   saveVotingTally,
   saveVotingTalliesBatch,
   setVotingResultVisibility,
+  setVotingShowResultUpdatedAt,
   startVotingCampaign,
   updateVotingCampaign,
   updateVotingCampaignStage,
@@ -235,6 +236,27 @@ export async function setResultVisibilityAction(input: {
     new Date(),
   );
   revalidatePath("/admin/voting");
+  revalidatePath("/voting");
+  return result;
+}
+
+export async function setShowResultUpdatedAtAction(input: {
+  campaignId: string;
+  expectedVersion: number;
+  showResultUpdatedAt: boolean;
+  reason: string;
+}) {
+  const actor = await requirePermission("voting.manage");
+  const editionId = await requireEditionId();
+  const result = await setVotingShowResultUpdatedAt(
+    database,
+    editionId,
+    input,
+    actorFromSession(actor),
+    new Date(),
+  );
+  revalidatePath("/admin/voting");
+  revalidatePath("/voting");
   return result;
 }
 
