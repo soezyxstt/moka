@@ -219,8 +219,9 @@ function statusLabel(value: string) {
   return "Draf";
 }
 
-function formatParticipantCode(categoryCode: string, number: number) {
-  return `${categoryCode}-${String(number).padStart(2, "0")}`;
+function formatParticipantCode(categoryCode: string, number: number, rumajaCount: number) {
+  const offset = categoryCode === "JD" || categoryCode === "MD" ? rumajaCount : 0;
+  return String(number + offset).padStart(2, "0");
 }
 
 type VotingConsoleProps = {
@@ -270,6 +271,13 @@ function VotingConsoleInner({
   const snapshotParticipants = useMemo(
     () => participants.filter((participant) => participant.campaignId === selectedCampaign?.id),
     [participants, selectedCampaign?.id],
+  );
+  const rumajaCount = useMemo(
+    () =>
+      snapshotParticipants.filter(
+        (participant) => participant.categoryCode === "JR" || participant.categoryCode === "MR",
+      ).length,
+    [snapshotParticipants],
   );
   const tallyReadyParticipants = useMemo(
     () => snapshotParticipants.filter((participant) => participant.qrisReady),
@@ -344,7 +352,7 @@ function VotingConsoleInner({
         const amount = participantTotals.get(participant.id) ?? 0;
         return {
           ...participant,
-          code: formatParticipantCode(participant.categoryCode, participant.number),
+          code: formatParticipantCode(participant.categoryCode, participant.number, rumajaCount),
           amount,
           votes: selectedCampaign
             ? calculateVotesFromAmount(amount, selectedCampaign.pricePerPoint)
@@ -352,14 +360,14 @@ function VotingConsoleInner({
         };
       })
       .sort((a, b) => b.votes - a.votes || a.number - b.number || a.name.localeCompare(b.name, "id"));
-  }, [snapshotParticipants, participantTotals, selectedCampaign]);
+  }, [snapshotParticipants, participantTotals, selectedCampaign, rumajaCount]);
 
   const filteredRekap = useMemo(() => {
     const q = query.trim().toLowerCase();
     return allStandings.filter((participant) => {
       if (rekapCategory !== "ALL" && participant.categoryCode !== rekapCategory) return false;
       if (!q) return true;
-      return `${participant.name} ${participant.code} ${participant.categoryCode} ${participant.number}`
+      return `${participant.name} ${participant.code} ${participant.categoryCode}`
         .toLowerCase()
         .includes(q);
     });
@@ -409,7 +417,7 @@ function VotingConsoleInner({
       const num = Number.parseInt(raw.trim(), 10);
       if (Number.isNaN(num)) continue;
 
-      const code = formatParticipantCode(p.categoryCode, p.number);
+      const code = formatParticipantCode(p.categoryCode, p.number, rumajaCount);
       const totalAmount = participantTotals.get(p.id) ?? 0;
       const totalVotes = pricePerVote > 0 ? calculateVotesFromAmount(totalAmount, pricePerVote) : 0;
       const todayTally = todayTalliesMap.get(p.id);
@@ -453,6 +461,7 @@ function VotingConsoleInner({
     todayTalliesMap,
     pricePerVote,
     canManageTally,
+    rumajaCount,
   ]);
 
   const totalNetDeltaVotes = useMemo(
@@ -468,12 +477,12 @@ function VotingConsoleInner({
       if (inputOnlyFilled && !hasInput) return false;
       if (inputCategory !== "ALL" && participant.categoryCode !== inputCategory) return false;
       if (!q) return true;
-      const code = formatParticipantCode(participant.categoryCode, participant.number);
-      return `${participant.name} ${code} ${participant.categoryCode} ${participant.number}`
+      const code = formatParticipantCode(participant.categoryCode, participant.number, rumajaCount);
+      return `${participant.name} ${code} ${participant.categoryCode}`
         .toLowerCase()
         .includes(q);
     });
-  }, [tallyReadyParticipants, inputCategory, inputSearchQuery, inputOnlyFilled, voteInputs]);
+  }, [tallyReadyParticipants, inputCategory, inputSearchQuery, inputOnlyFilled, voteInputs, rumajaCount]);
 
   function handleVoteInputChange(participantId: string, value: string) {
     setVoteInputs((prev) => {
@@ -1090,7 +1099,11 @@ function VotingConsoleInner({
                     ) : (
                       <div className="space-y-2">
                         {filteredInputParticipants.map((participant) => {
-                          const code = formatParticipantCode(participant.categoryCode, participant.number);
+                          const code = formatParticipantCode(
+                            participant.categoryCode,
+                            participant.number,
+                            rumajaCount,
+                          );
                           const totalAmount = participantTotals.get(participant.id) ?? 0;
                           const totalVotes =
                             pricePerVote > 0 ? calculateVotesFromAmount(totalAmount, pricePerVote) : 0;
@@ -1184,32 +1197,26 @@ function VotingConsoleInner({
                                     <span className="text-xs text-muted-foreground">vote</span>
                                   </div>
                                   <div className="flex flex-wrap items-center gap-1">
-                                    {canManageTally
-                                      ? [-10, -5, -1].map((step) => (
-                                          <button
-                                            key={step}
-                                            type="button"
-                                            onClick={() =>
-                                              handleIncrement(participant.id, step, totalVotes)
-                                            }
-                                            className="h-8 rounded border border-border bg-background px-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:px-2"
-                                          >
-                                            {step}
-                                          </button>
-                                        ))
-                                      : null}
-                                    {[1, 5, 10].map((step) => (
+                                    {canManageTally ? (
                                       <button
-                                        key={step}
                                         type="button"
                                         onClick={() =>
-                                          handleIncrement(participant.id, step, totalVotes)
+                                          handleIncrement(participant.id, -5, totalVotes)
                                         }
-                                        className="h-8 rounded border border-brand-200 bg-background px-1.5 text-xs font-semibold text-brand-800 transition-colors hover:bg-brand-50 sm:px-2"
+                                        className="h-8 rounded border border-border bg-background px-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                                       >
-                                        +{step}
+                                        -5
                                       </button>
-                                    ))}
+                                    ) : null}
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        handleIncrement(participant.id, 5, totalVotes)
+                                      }
+                                      className="h-8 rounded border border-brand-200 bg-background px-2 text-xs font-semibold text-brand-800 transition-colors hover:bg-brand-50"
+                                    >
+                                      +5
+                                    </button>
                                     {canManageTally && inputMode === "set" ? (
                                       <button
                                         type="button"
