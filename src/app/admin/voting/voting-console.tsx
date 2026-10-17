@@ -1349,7 +1349,7 @@ function VotingConsoleInner({
                                           className="h-full w-12 rounded-none border-0 bg-transparent px-1.5 text-right font-manrope text-xs font-semibold shadow-none focus:ring-0 focus-visible:ring-0"
                                         />
                                         <span className="select-none border-l border-input bg-muted/60 px-2 py-1 font-manrope text-xs font-semibold text-muted-foreground">
-                                          .000
+                                          000
                                         </span>
                                       </div>
                                     ) : (
