@@ -199,7 +199,7 @@ export const SITE_ASSET_SLOTS: readonly SiteAssetSlotDefinition[] = [
     label: "Foto profil peserta",
     description: "Foto pendukung bagian Kenali semifinalis atau finalis di Beranda.",
     acceptType: "image",
-    aspectRatio: "4:3",
+    aspectRatio: "1:1",
     required: false,
   },
 

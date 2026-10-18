@@ -232,3 +232,5 @@ Hasil penyeimbangan 2026-10-18: DONE untuk revisi source lokal. Program PAMOKA d
 Rilis konten 2026-10-18: revisi tiga halaman dan slot CMS sudah di origin/main (`603d359`), dengan 5 entry baru dan 5 pembaruan riil edisi 2026 terbit di produksi. Hero dipertahankan; schema tetap. Verifikasi, backup dan readback tercatat di Plan 013 serta `.tmp/content-release-20261018/production-verification.json`.
 
 Revisi tampilan 2026-10-18: filosofi tema dipindah dari Beranda dan digabung dengan lima nilai di Tentang. Foto peserta Beranda menggunakan home.cta.image existing; agenda hanya tanggal/nama. Cakupan Plan 013, tanpa migrasi, upload atau write database.
+
+Foto peserta Beranda 2026 memakai DSC09868.JPG asli yang dicrop/resize ke WebP 1400 px dan didaftarkan melalui UploadThing/CMS produksi, tanpa schema baru. Timeline Pendaftaran tidak lagi menampilkan label moda pelaksanaan. Backup, pelestarian dan readback terverifikasi di Plan 013 dan `.tmp/participant-photo-20261018/production-verification.json`.

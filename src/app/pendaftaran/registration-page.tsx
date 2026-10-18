@@ -98,7 +98,7 @@ export function RegistrationPage({ sections, contact }: { sections: Record<strin
               <span aria-hidden="true" className="absolute -left-9 top-1.5 size-[15px] rounded-full border-[3px] border-highlight-50 bg-brand-600 ring-1 ring-brand-300 md:left-0" />
               <motion.div whileHover={reduced ? undefined : { x: 4 }} className="pb-4">
                 <h3 className="font-manrope text-xl font-semibold text-brand-900 md:text-2xl">{item.title}</h3>
-                {item.detail ? <typography.p className="mt-3 max-w-xl text-sm leading-7">{item.detail}</typography.p> : null}
+                {item.detail && !/^(?:online|offline|daring|luring)[.!]?$/i.test(item.detail.trim()) ? <typography.p className="mt-3 max-w-xl text-sm leading-7">{item.detail}</typography.p> : null}
               </motion.div>
               {index < agenda.length - 1 ? <Separator className="mt-3 bg-brand-200/70" /> : null}
             </div>

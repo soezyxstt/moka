@@ -130,8 +130,8 @@ export default async function Home() {
         className="relative border-b border-neutral-200/70 bg-background px-8 py-12 md:px-20 md:py-16"
       >
         <div className={`mx-auto grid w-full max-w-7xl items-center gap-8 lg:gap-16 ${participantImage ? "lg:grid-cols-[0.85fr_1.15fr]" : "lg:grid-cols-2"}`}>
-          {participantImage ? <div className="relative order-2 aspect-square overflow-hidden rounded-2xl bg-linear-to-b from-brand-50 to-brand-100 lg:order-none">
-            <Image src={participantImage.url} alt={participantImage.alt ?? "Pinilih Mojang Jajaka Garut"} fill className="object-contain object-bottom px-5 pt-6" sizes="(max-width: 1023px) 85vw, 40vw" />
+          {participantImage ? <div className="relative order-2 aspect-square overflow-hidden rounded-2xl bg-brand-50 lg:order-none">
+            <Image src={participantImage.url} alt={participantImage.alt ?? "Mojang Jajaka Garut"} fill className="object-cover" sizes="(max-width: 1023px) 85vw, 40vw" />
           </div> : null}
           <div>
           <div>
