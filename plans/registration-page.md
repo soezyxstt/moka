@@ -42,3 +42,11 @@ Bukti privat di `.tmp/registration-prod-before-20261015.aesgcm`, `.key.dpapi`, `
 - Motion menghormati reduced motion melalui hook dan media query scoped. Mode OS reduced motion dan perangkat fisik belum diuji.
 - URL formulir, nominal pembayaran dan detail raksukan tidak diisi karena belum diberikan. Perbedaan sumber Instagram tentang sertifikat opsional dan registrasi tambahan 9 Oktober dicatat untuk tinjauan; template mengikuti naskah operator.
 - Tidak ada perubahan skema, migrasi, upload, write remote, aktivasi atau deployment. Publikasi serta kesiapan seluruh edisi tetap terpisah dari penerimaan source halaman ini.
+
+
+## Draf tiga halaman, 2026-10-18
+
+Status: IN PROGRESS. Permintaan operator menerapkan draf Beranda, Tentang dan Pendaftaran dengan gaya existing dan foto CMS reusable. Dependensi: Plan 004/007/014/017/018. Drift terhadap baseline `3874ede` ditinjau; working tree bersih sebelum pekerjaan. Cakupan: ketiga route, komponen pendaftaran, registry teks CMS, reader, preset draf editor, tes dan panduan admin. STOP: fakta/status/biaya/tautan yang belum dipastikan, target remote, migrasi, upload dan deployment. Tidak ada aset baru atau perubahan token global.
+
+
+Hasil 2026-10-18: source revisi selesai, sebelas draf perubahan tersimpan melalui CMS lokal (enam Beranda, tiga Tentang, satu FAQ dan satu Instagram), tanpa penerbitan atau aktivasi. QA pratinjau desktop dan 380 px mencakup tiga halaman, FAQ, kontak dan roster lengkap; tidak ada overflow horizontal. Lima tes CMS pendaftaran/editorial lulus. Typegen, TypeScript dan lint lulus dengan warning TanStack existing. Bukti visual di `.tmp/content-draft-20261018/`. Data/aset lokal tidak sama dengan produksi; pratinjau memakai fallback foto existing dan tidak menjadi bukti roster produksi. Status/jalur/langkah, biaya dan ketentuan berkas yang belum pasti tetap menunggu panitia. Tidak ada build produksi, upload, migrasi, write remote atau deployment. Status plan induk tetap IN PROGRESS; Plan 018 revisi source diterima, publikasi baru terpisah.

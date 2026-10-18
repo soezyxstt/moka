@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getPublicRegistration } from "@/server/cms/public-readers";
+import { getPublicRegistration, getPublicSiteIdentity } from "@/server/cms/public-readers";
 import { RegistrationPage } from "./registration-page";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -11,5 +11,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function Page() {
   const content = await getPublicRegistration();
   if (!content) notFound();
-  return <RegistrationPage year={content.edition.year} sections={content.sections} />;
+  const identity = await getPublicSiteIdentity();
+  const contact = identity.contacts.find((item) => item.kind === "instagram");
+  return <RegistrationPage sections={content.sections} contact={contact} />;
 }

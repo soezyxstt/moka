@@ -220,6 +220,10 @@ All uploads go through **UploadThing** only. There is no R2, S3, or local-blob w
 
 ### Verified / working
 
+- Penyeimbangan revisi 2026-10-18: Program PAMOKA dan preview Kegiatan kami dipindah dari Tentang ke Beranda memakai foto/data CMS existing. Seluruh pengurus Tentang tampil langsung tanpa accordion dan tanpa ringkasan nama berulang. Enam program, tiga album serta 16 pengurus dataset lokal 2025 diverifikasi; desktop/380 px tanpa overflow. Pratinjau 2026 lokal belum memiliki periode pengurus. Tidak ada perubahan data, upload, migrasi, build produksi atau deployment untuk revisi ini.
+
+- Pada 2026-10-18, draf Beranda, Tentang dan Pendaftaran diterapkan pada source dengan gaya publik dan foto CMS existing. Program dipindah ke Tentang, peran/nilai memakai slot CMS, roster lengkap tetap pada accordion, pendaftaran menyediakan status/jalur/langkah/FAQ opsional tanpa menebak ketentuan. Sebelas draf tersimpan melalui CMS lokal; 2025 tetap aktif, 2026 draf. QA desktop/380 px, lima tes CMS, typegen/TypeScript dan lint lulus (warning TanStack existing). Aset/data lokal berbeda dari produksi. Tidak ada build produksi, upload, migrasi, write remote, publikasi atau deployment. Bukti `.tmp/content-draft-20261018/`.
+
 - Pada 2026-10-18, teks perolehan total suara ("... vote") pada panel hasil sementara di halaman publik voting (`/voting`) dihapus agar hanya menampilkan judul hasil sementara dan waktu pembaruan terakhir.
 
 - Pada 2026-10-18, ditambahkan fitur penolakan permohonan akses (`rejectAccessRequest` / `rejectAccessRequestWithDb`) pada halaman `/admin/users` lengkap dengan dialog konfirmasi dan alasan penolakan opsional, pembaruan status `accessRequest` serta `adminProfile` menjadi `rejected`, dan pencatatan `auditLog` (`access.request.reject`) secara transaksional.

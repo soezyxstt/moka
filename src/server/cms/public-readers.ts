@@ -273,7 +273,7 @@ async function getPublishedSiteAssets(editionId: string, group: SiteAssetGroup) 
 export async function getPublicHomeContent(): Promise<PublicHomeContent> {
   const editionId = await getCurrentEditionId();
   const [sections, assets, programs] = await Promise.all([
-    getPublishedPageSections(editionId, 'home', ['hero', 'program', 'berita', 'ajakan']),
+    getPublishedPageSections(editionId, 'home', ['hero', 'program', 'berita', 'ajakan', 'pengantar', 'agenda']),
     getPublishedSiteAssets(editionId, 'home'),
     firstAvailableList(await getContentEditionIds(editionId), (id) => database
       .select({ title: editionPrograms.title, description: editionPrograms.description })
@@ -767,7 +767,7 @@ function parsePresentationItems(value: string | null | undefined) {
 export async function getPublicAboutContent(): Promise<PublicAboutContent> {
   const edition = await getCurrentEdition();
   const [sections, assets, periodRows, galleries] = await Promise.all([
-    getPublishedPageSections(edition.id, 'tentang', ['hero', 'visi', 'misi', 'legalitas', 'organisasi']),
+    getPublishedPageSections(edition.id, 'tentang', ['hero', 'visi', 'misi', 'legalitas', 'organisasi', 'peran', 'nilai']),
     getPublishedSiteAssets(edition.id, 'about'),
     database
       .select({

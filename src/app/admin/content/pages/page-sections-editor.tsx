@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { AdminBadge, AdminButton, AdminCard, AdminCardHeader, AdminField, AdminInput, AdminTextarea } from "@/components/admin/primitives";
 import { publishPageSectionAction, savePageSectionDraftAction } from "./actions";
+import { CONTENT_DRAFT_2026 } from "./content-draft-2026";
 import { REGISTRATION_2026 } from "./registration-2026";
 
 export type PageSectionCopy = {
@@ -122,6 +123,10 @@ export function PageSectionsEditor({
             <h2 id={`${pageKey}-sections-title`} className="font-manrope text-lg font-semibold text-brand-900">
               {{ site: "Identitas dan kontak", home: "Beranda", tentang: "Tentang", galeri: "Galeri", voting: "Voting", pendaftaran: "Pendaftaran" }[pageKey]}
             </h2>
+            {["home", "tentang", "pendaftaran"].includes(pageKey) && editionYear === 2026 && canEdit ? <AdminButton type="button" variant="secondary" disabled={Boolean(pending)} onClick={() => setSections((current) => current.map((section) => {
+              const preset = section.pageKey === pageKey ? CONTENT_DRAFT_2026[section.slotKey] : undefined;
+              return preset ? { ...section, value: { ...section.value, ...preset } } : section;
+            }))}>Isi draf perubahan</AdminButton> : null}
             {pageKey === "pendaftaran" && editionYear === 2026 && canEdit ? <AdminButton type="button" variant="secondary" disabled={Boolean(pending) || !sections.some((section) => section.pageKey === "pendaftaran" && !section.value.title && !section.value.body)} onClick={() => setSections((current) => current.map((section) => {
               const preset = section.pageKey === "pendaftaran" && !section.value.title && !section.value.body ? REGISTRATION_2026[section.sectionKey] : null;
               return preset ? { ...section, value: { ...section.value, ...preset } } : section;
@@ -130,7 +135,8 @@ export function PageSectionsEditor({
           <div className="grid gap-4 xl:grid-cols-2">
             {sections.filter((section) => section.pageKey === pageKey).map((section) => {
               const hasUnpublishedChanges = section.draft !== null && !sameCopy(section.value, section.draft);
-              const missionHint = section.pageKey === "pendaftaran" ? section.sectionKey === "timeline" ? "Satu agenda per baris: tanggal | agenda | keterangan opsional. Urutan baris mengikuti tampilan publik." : section.sectionKey === "usia" ? "Satu kategori per baris: kategori | rentang usia | keterangan opsional." : "Satu poin per baris. Simpan draf, lalu tinjau melalui pratinjau edisi." : section.slotKey === "tentang/misi" ? "Tulis satu misi per baris." : undefined;
+              const rowSection = ["home/agenda", "tentang/peran", "tentang/nilai", "pendaftaran/jalur", "pendaftaran/langkah", "pendaftaran/faq"].includes(section.slotKey);
+              const missionHint = rowSection ? "Satu baris: judul | penjelasan | keterangan opsional. Agenda beranda diperbarui manual oleh panitia." : section.pageKey === "pendaftaran" ? section.sectionKey === "timeline" ? "Satu agenda per baris: tanggal | agenda | keterangan opsional. Urutan baris mengikuti tampilan publik." : section.sectionKey === "usia" ? "Satu kategori per baris: kategori | rentang usia | keterangan opsional." : "Satu poin per baris. Simpan draf, lalu tinjau melalui pratinjau edisi." : section.slotKey === "tentang/misi" ? "Tulis satu misi per baris." : undefined;
               const fromPeriod = Boolean(organizationPeriod && ["tentang/visi", "tentang/misi"].includes(section.slotKey));
               const isContact = section.pageKey === "site" && section.sectionKey !== "identity";
               return (

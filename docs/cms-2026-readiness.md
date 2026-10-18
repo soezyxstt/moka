@@ -41,7 +41,7 @@ Plan 016 DONE untuk source, persiapan aset produksi dan QA; Plan 014 tetap IN PR
 | Unsur | Pengelolaan |
 | --- | --- |
 | Nama, tahun, slogan, logo, periode | Identitas edisi |
-| Teks, metadata, tagar, kontak, PDF legalitas | Teks halaman, 15 slot umum dengan draf dan publikasi |
+| Teks, metadata, tagar, kontak, PDF legalitas | Teks halaman, slot teks umum dan pendaftaran dengan draf dan publikasi |
 | Informasi pendaftaran mulai 2026 | Tujuh slot tambahan: pengantar, usia, syarat, kriteria, OTS, berkas dan timeline |
 | Hero, video, poster, latar, logo, ikon, gambar sosial | Aset situs, 47 slot dan pustaka media |
 | Program, berita, sponsor | Modul masing-masing, terikat edisi |
@@ -68,3 +68,6 @@ Pada pemeriksaan awal, 2025 aktif dan 2026 draf. Edisi lokal 2026 memiliki dua k
 Lengkapi empat kategori, logo/slogan, periode sesuai tahun, teks inti terbit, dan hero wajib sebelum aktivasi. Lengkapi modul lain sesuai jadwal. Pembukaan voting memerlukan kampanye serta kandidat yang benar; aktivasi situs tidak otomatis membuka voting.
 
 Upload nyata dan penerapan data produksi telah diverifikasi pada hasil terbaru di atas. QA browser gabungan dengan salinan data publik produksi telah lulus. Pemeriksaan environment deployment dan rilis source terbaru masih terpisah. Ikuti `docs/runbooks/cms-cutover.md`.
+
+
+Draf tiga halaman 2026-10-18: source dan sebelas draf perubahan tersimpan lokal melalui CMS. Edisi lokal 2026 belum lengkap dan tetap draf, 2025 tetap aktif. Pratinjau memakai foto serta data CMS lokal, sehingga roster/kategori/foto tidak merepresentasikan produksi terbaru. Bagian status/jalur/langkah pendaftaran belum diisi karena belum ada keputusan resmi; FAQ hanya memakai jawaban domisili yang terverifikasi dalam materi. Tidak ada operasi remote, upload, migrasi atau deployment.

@@ -122,3 +122,22 @@ test("tautan dan baris terstruktur divalidasi saat simpan dan terbit", async () 
     assert.equal((await db.select().from(schema.contentRevisions)).length, 0);
   } finally { client.close(); }
 });
+
+test("new editorial sections keep drafts separate and validate row content before saving", async () => {
+  const { db, client, actor } = await fixture();
+  try {
+    for (const slotKey of ["home/agenda", "tentang/peran", "tentang/nilai", "pendaftaran/jalur", "pendaftaran/langkah", "pendaftaran/faq"]) {
+      await assert.rejects(savePageSectionDraft({ ...actor, slotKey, baseVersion: null, patch: { title: "Judul", eyebrow: null, body: "Baris tanpa pemisah" } }, db), /format/);
+      const saved = await savePageSectionDraft({ ...actor, slotKey, baseVersion: null, patch: { title: "Judul", eyebrow: null, body: "Nama | Penjelasan" } }, db);
+      const row = (await db.select().from(schema.pageSections).where(eq(schema.pageSections.id, saved.sectionId)))[0];
+      assert.equal(row.status, "draft");
+      assert.equal(row.body, null);
+      await publishPageSection({ ...actor, slotKey }, db);
+      const published = (await db.select().from(schema.pageSections).where(eq(schema.pageSections.id, saved.sectionId)))[0];
+      assert.equal(published.body, "Nama | Penjelasan");
+      assert.equal(published.version, 2);
+    }
+    assert.equal((await db.select().from(schema.auditLogs)).length, 12);
+    assert.equal((await db.select().from(schema.contentRevisions)).length, 6);
+  } finally { client.close(); }
+});

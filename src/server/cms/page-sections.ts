@@ -10,6 +10,14 @@ import { registrationEditionEligible, registrationLines, registrationRows } from
 export class PageSectionValidationError extends Error {}
 
 export const PAGE_SECTION_SLOTS = [
+  { key: "home/pengantar", pageKey: "home", sectionKey: "pengantar", label: "Deskripsi ajang" },
+  { key: "home/agenda", pageKey: "home", sectionKey: "agenda", label: "Agenda terdekat" },
+  { key: "tentang/peran", pageKey: "tentang", sectionKey: "peran", label: "Peran untuk Garut" },
+  { key: "tentang/nilai", pageKey: "tentang", sectionKey: "nilai", label: "Nilai pembinaan" },
+  { key: "pendaftaran/status", pageKey: "pendaftaran", sectionKey: "status", label: "Status pendaftaran" },
+  { key: "pendaftaran/jalur", pageKey: "pendaftaran", sectionKey: "jalur", label: "Jalur pendaftaran" },
+  { key: "pendaftaran/langkah", pageKey: "pendaftaran", sectionKey: "langkah", label: "Cara mendaftar" },
+  { key: "pendaftaran/faq", pageKey: "pendaftaran", sectionKey: "faq", label: "Pertanyaan umum" },
   { key: "pendaftaran/hero", pageKey: "pendaftaran", sectionKey: "hero", label: "Pengantar pendaftaran" },
   { key: "pendaftaran/usia", pageKey: "pendaftaran", sectionKey: "usia", label: "Kategori usia" },
   { key: "pendaftaran/syarat", pageKey: "pendaftaran", sectionKey: "syarat", label: "Syarat pendaftaran" },
@@ -24,9 +32,9 @@ export const PAGE_SECTION_SLOTS = [
   { key: "galeri/hero", pageKey: "galeri", sectionKey: "hero", label: "Pengantar galeri" },
   { key: "voting/hero", pageKey: "voting", sectionKey: "hero", label: "Pengantar voting" },
   { key: "home/hero", pageKey: "home", sectionKey: "hero", label: "Hero beranda" },
-  { key: "home/program", pageKey: "home", sectionKey: "program", label: "Program unggulan" },
+  { key: "home/program", pageKey: "home", sectionKey: "program", label: "Program PAMOKA di Beranda" },
   { key: "home/berita", pageKey: "home", sectionKey: "berita", label: "Berita dan update" },
-  { key: "home/ajakan", pageKey: "home", sectionKey: "ajakan", label: "Ajakan bergabung" },
+  { key: "home/ajakan", pageKey: "home", sectionKey: "ajakan", label: "Filosofi tema" },
   { key: "tentang/hero", pageKey: "tentang", sectionKey: "hero", label: "Hero tentang" },
   { key: "tentang/visi", pageKey: "tentang", sectionKey: "visi", label: "Visi" },
   { key: "tentang/misi", pageKey: "tentang", sectionKey: "misi", label: "Misi" },
@@ -103,7 +111,7 @@ async function validateRegistrationEdition(tx: Parameters<Parameters<Database["t
 }
 
 function validateRegistrationBody(pageKey: string, sectionKey: string, body: string | null) {
-  if (pageKey !== "pendaftaran" || !["usia", "timeline"].includes(sectionKey)) return;
+  if (!["home/agenda", "tentang/peran", "tentang/nilai", "pendaftaran/usia", "pendaftaran/timeline", "pendaftaran/jalur", "pendaftaran/langkah", "pendaftaran/faq"].includes(pageKey + "/" + sectionKey)) return;
   const lines = registrationLines(body);
   if (lines.length > 50 || registrationRows(body).length !== lines.length) {
     throw new PageSectionValidationError("Gunakan format: tanggal atau kategori | judul | keterangan opsional. Maksimal 50 baris.");

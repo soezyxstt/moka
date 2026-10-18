@@ -1,4 +1,4 @@
-export const REGISTRATION_SECTIONS = ["hero", "usia", "syarat", "kriteria", "ots", "berkas", "timeline"] as const;
+export const REGISTRATION_SECTIONS = ["hero", "status", "usia", "syarat", "kriteria", "jalur", "ots", "berkas", "langkah", "timeline", "faq"] as const;
 
 export function registrationEditionEligible(year: number) {
   return Number.isInteger(year) && year >= 2026;

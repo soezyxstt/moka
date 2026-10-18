@@ -126,7 +126,7 @@ Perubahan pada edisi publik aktif berlaku saat slot disimpan. Edisi draf tetap t
 
 ---
 
-Editor **Teks halaman** (`/admin/content/pages`) menyediakan 15 slot untuk identitas/kontak, Beranda, Tentang, pengantar Galeri, dan pengantar Voting. Simpan draf, lalu terbitkan dengan izin penerbitan. Revisi dan audit dicatat per edisi. Bila periode kepengurusan ditautkan, isi visi/misi dikelola melalui Kepengurusan; editor halaman tetap mengatur judul bagiannya. Pada Ajakan bergabung, label tombol dan tautan bersifat opsional; tautan memakai path situs atau URL http(s) lengkap dan memerlukan label. Pratinjau dari Kelola edisi menampilkan draf teks tanpa mengganti edisi aktif. Production tetap mengikuti rekonsiliasi dan runbook cutover.
+Editor **Teks halaman** (`/admin/content/pages`) menyediakan slot untuk identitas/kontak, Beranda, Tentang, Galeri, Voting dan Pendaftaran. Simpan draf, lalu terbitkan dengan izin penerbitan. Revisi dan audit dicatat per edisi. Bila periode kepengurusan ditautkan, isi visi/misi dikelola melalui Kepengurusan; editor halaman tetap mengatur judul bagiannya. Pada Filosofi tema, label tombol dan tautan bersifat opsional; tautan memakai path situs atau URL http(s) lengkap dan memerlukan label. Pratinjau dari Kelola edisi menampilkan draf teks tanpa mengganti edisi aktif. Production tetap mengikuti rekonsiliasi dan runbook cutover.
 
 ## 6. Sponsor & Mitra
 
@@ -209,7 +209,7 @@ Di dalam album, admin dapat memilih beberapa foto dari Pustaka Media, menambahka
 
 Halaman publik Galeri memakai dinding foto tanpa kartu, judul foto, atau keterangan terlihat. Keterangan tetap tersimpan dan dipakai sebagai deskripsi aksesibel bila alt belum tersedia. Foto dapat diperbesar dan dinavigasi dengan tombol atau panah keyboard; video tersedia setelah foto.
 
-Album terbit ditampilkan pada `/galeri`. Bagian Kegiatan kami di `/tentang` berada setelah pengantar dan menampilkan maksimal tiga preview foto tanpa wadah kartu, deskripsi album bila tersedia, dan tautan ke album terkait. Kontak di akhir halaman mengikuti email atau Instagram pada Teks halaman dengan prioritas tahun yang dijelaskan di atas. Judul legacy Kenali Kami Lebih Dekat ditampilkan sebagai PAMOKA Garut dengan pengantar ringkas berdasarkan misi; judul khusus dan isi hero yang diterbitkan tetap dipakai. Item album acara menjadi carousel pada detail kegiatan. Public site membaca CMS terbit dengan pewarisan sesuai jenis konten, tanpa tahun fallback yang tertanam. Perilaku source terbaru belum menjadi bukti perilaku deployment pada `www.pamokagarut.com`. Lihat `docs/runbooks/cms-cutover.md` untuk persiapan produksi dan batas rilis.
+Album terbit ditampilkan pada `/galeri`. Bagian Kegiatan kami di Beranda berada setelah bagian tema dan menampilkan maksimal tiga preview foto tanpa wadah kartu, deskripsi album bila tersedia, dan tautan ke album terkait. Kontak di akhir halaman mengikuti email atau Instagram pada Teks halaman dengan prioritas tahun yang dijelaskan di atas. Judul legacy Kenali Kami Lebih Dekat ditampilkan sebagai PAMOKA Garut dengan pengantar ringkas berdasarkan misi; judul khusus dan isi hero yang diterbitkan tetap dipakai. Item album acara menjadi carousel pada detail kegiatan. Public site membaca CMS terbit dengan pewarisan sesuai jenis konten, tanpa tahun fallback yang tertanam. Perilaku source terbaru belum menjadi bukti perilaku deployment pada `www.pamokagarut.com`. Lihat `docs/runbooks/cms-cutover.md` untuk persiapan produksi dan batas rilis.
 
 Lampiran legalitas dipilih melalui **Teks halaman > Legalitas organisasi > Dokumen legalitas**. Pilih PDF dari pustaka media, isi nama dokumen, simpan draf, lalu terbitkan. Untuk melepas lampiran, hapus pilihan media lalu simpan dan terbitkan. Sistem memeriksa kembali status siap, tipe PDF, dan URL HTTPS saat publikasi. Riwayat menampilkan anggota periode arsip dengan identitas historis yang dipertahankan.
 
@@ -283,3 +283,19 @@ Materi awal 2026 mengikuti naskah operator. Cocokkan perubahan jadwal, status se
 
 ### QRIS bersama 2026
 JD dan MD memakai qris-dewasa-2026.png; JR dan MR memakai qris-rumaja-2026.png. Dua aset tersedia di folder Edisi 2026. Pada Mojang Jajaka, buka peserta, tab QRIS, pilih aset sesuai kelompok dan simpan dengan alasan. Penetapan ini tersimpan per peserta; peserta baru harus dipasangkan melalui formulir yang sama. Aset lama tidak dihapus.
+
+
+### Draf Beranda, Tentang dan Pendaftaran, 18 Oktober 2026
+
+Di Teks halaman edisi 2026, tombol **Isi draf perubahan** mengisi formulir halaman yang dipilih untuk ditinjau. Tombol ini mengganti isian formulir sesuai preset, tetapi tidak menyimpan atau menerbitkan otomatis. Simpan tiap bagian melalui **Simpan draf**; buka pratinjau dari Kelola edisi untuk memeriksa hasil. Sebelas bagian draf baru/perubahan tersimpan di database lokal pada sesi ini, termasuk kontak Instagram. Data produksi belum diubah.
+
+- Beranda: deskripsi ajang, profil peserta, agenda terdekat, tema, berita dan pengenalan organisasi. Label profil mengikuti tahap yang tersedia. Halaman pendaftaran tersedia tidak berarti pendaftaran sedang dibuka.
+- Agenda terdekat memakai baris `tanggal | kegiatan | keterangan opsional`. Daftar dikurasi manual; hapus agenda yang sudah berlalu dan ambil tanggal dari jadwal panitia. Preset adalah snapshot 18 Oktober 2026. Tautan seluruh rangkaian membuka timeline yang tersedia.
+- Program tetap dikelola di Identitas edisi dan rinciannya tampil di Beranda. Foto program memakai binding kolase Beranda yang sama, tanpa unggah ulang. Foto visi dipakai pada pengantar Tentang; data foto tetap di Aset situs.
+- Peran dan nilai memakai `nama | penjelasan`. Visi/misi formal, seluruh pengurus, riwayat ketua dan PDF existing dipertahankan. Susunan lengkap tampil langsung di Tentang tanpa accordion.
+- Pendaftaran menyediakan slot status, jalur, cara mendaftar dan FAQ. Jalur/langkah/FAQ memakai `judul | penjelasan`. Biarkan bagian kosong sampai informasi resmi tersedia. Status, formulir, biaya dan syarat baru tidak diisi otomatis. Kontak bantuan mengikuti Instagram edisi.
+
+Materi dengan placeholder dan perbedaan aturan usia/berkas memerlukan keputusan panitia sebelum diterbitkan. Tidak ada aset baru, migrasi atau deployment untuk revisi source ini.
+
+
+Penyeimbangan halaman 2026-10-18: Beranda memuat Program PAMOKA dengan tiga foto kolase existing serta preview Kegiatan kami dari album CMS. Keduanya dipindah dari Tentang. Tentang menampilkan semua pengurus langsung, dikelompokkan menurut jabatan; ringkasan nama yang berulang dihapus. Label judul program pada Teks halaman diselaraskan ke Beranda; daftar program dan album tetap dikelola pada menu existing. Tidak ada perubahan data atau unggah baru.
