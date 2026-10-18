@@ -6,12 +6,16 @@ import { registrationRows } from "@/server/cms/registration";
 import { Section } from "@/components/custom/section";
 import { Button } from "@/components/custom/button";
 import { typography } from "@/components/custom/typography";
-import { getPublicAboutContent, getPublicSiteIdentity } from "@/server/cms/public-readers";
+import { getPublicAboutContent, getPublicHomeContent, getPublicSiteIdentity } from "@/server/cms/public-readers";
 
 export const metadata = { title: "Tentang Kami" };
 
 export default async function AboutUs() {
-  const [about, site] = await Promise.all([getPublicAboutContent(), getPublicSiteIdentity()]);
+  const [about, site, home] = await Promise.all([getPublicAboutContent(), getPublicSiteIdentity(), getPublicHomeContent()]);
+  const theme = home.sections.ajakan;
+  const themeTitle = theme?.title?.trim();
+  const themeCards = themeTitle ? resolvePhilosophyCards(themeTitle, theme.body) : [];
+  const themeAction = theme?.actionLabel && theme.actionHref ? { label: theme.actionLabel, href: theme.actionHref } : null;
   const roles = registrationRows(about.sections.peran?.body);
   const values = registrationRows(about.sections.nilai?.body);
   const contact = site.contacts.find((item) => item.kind === "email") ?? site.contacts.find((item) => item.kind === "instagram");
@@ -76,7 +80,23 @@ export default async function AboutUs() {
         </div> : null}
       </Section> : null}
 
-      {values.length ? <Section className="bg-background" contentClassName="mx-auto max-w-7xl"><typography.h1 className="text-brand-900">{about.sections.nilai.title}</typography.h1><div className="mt-8 divide-y divide-neutral-200 border-y border-neutral-200">{values.map((item) => <div key={item.label} className="grid gap-2 py-5 md:grid-cols-[14rem_1fr]"><h3 className="font-manrope text-lg font-semibold text-brand-900">{item.label}</h3><typography.p>{item.title}</typography.p></div>)}</div></Section> : null}
+      {values.length || themeTitle ? <Section id="filosofi-tema" className="border-b border-neutral-200/70 bg-background" contentClassName="mx-auto max-w-7xl">
+        <typography.h1 className="text-brand-900">{about.sections.nilai?.title || "Nu Nyunda Tur Nyakola"}</typography.h1>
+        <div className={`mt-8 grid gap-10 lg:gap-16 ${themeTitle && values.length ? "lg:grid-cols-[0.9fr_1.1fr]" : ""}`}>
+          {themeTitle ? <div>
+            <h3 className="font-manrope text-2xl font-semibold text-brand-900 md:text-3xl">{themeTitle}</h3>
+            {theme.body?.trim() ? <typography.p className="mt-4 max-w-prose">{theme.body.trim()}</typography.p> : null}
+            <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-1">
+              {themeCards.map((card) => <div key={card.title} className="border-t border-neutral-200 pt-4">
+                <h4 className="font-manrope text-lg font-semibold text-brand-900">{card.title}</h4>
+                <typography.p className="mt-2 text-sm">{card.description}</typography.p>
+              </div>)}
+            </div>
+            {themeAction ? <Button asChild className="mt-6"><Link href={themeAction.href} target={/^https?:\/\//i.test(themeAction.href) ? "_blank" : undefined} rel={/^https?:\/\//i.test(themeAction.href) ? "noopener noreferrer" : undefined}>{themeAction.label}<ArrowRight className="ml-2 size-4" aria-hidden /></Link></Button> : null}
+          </div> : null}
+          {values.length ? <div className="divide-y divide-neutral-200 border-y border-neutral-200">{values.map((item) => <div key={item.label} className="grid gap-2 py-5 sm:grid-cols-[8rem_1fr]"><h3 className="font-manrope text-lg font-semibold text-brand-900">{item.label}</h3><typography.p>{item.title}</typography.p></div>)}</div> : null}
+        </div>
+      </Section> : null}
       {hasLegalitas ? <Section id="legalitas" className="bg-highlight-50 py-8 md:py-10" contentClassName="mx-auto grid max-w-7xl gap-5 lg:grid-cols-[1fr_2fr] lg:gap-12">
         <div>
           {legalitas?.title?.trim() ? <typography.h1 className="text-3xl text-brand-900 md:text-4xl">{legalitas.title.trim()}</typography.h1> : null}
@@ -149,5 +169,51 @@ export default async function AboutUs() {
 function isKetuaUmum(position: string) {
   const normalized = position.trim().toLowerCase();
   return normalized === "ketua umum" || normalized.startsWith("ketua umum ") || normalized === "ketua";
+}
+
+
+function resolvePhilosophyCards(title: string | null | undefined, body: string | null | undefined) {
+  const parts = (title ?? '')
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const firstTitle = parts[0] || 'Niti Harti';
+  const secondTitle = parts[1] || 'Nanjeur Bukti';
+  const isNitiHarti = /niti\s+harti|nanjeur\s+bukti/i.test(title ?? "");
+
+  if (isNitiHarti) {
+    return [
+      {
+        title: firstTitle,
+        description:
+          'Mengenal nilai budaya dan memperdalam pengetahuan sebagai dasar bersikap.',
+      },
+      {
+        title: secondTitle,
+        description:
+          'Menunjukkan sikap, karya, dan kontribusi yang berguna bagi Garut.',
+      },
+    ];
+  }
+
+  const sentences = (body ?? '')
+    .split(/(?<=[.!?])\s+/)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+
+  return [
+    {
+      title: firstTitle,
+      description:
+        sentences[0] ||
+        'Menjaga jati diri generasi muda Kabupaten Garut yang berwawasan luas, berbudaya, dan berdaya saing.',
+    },
+    {
+      title: secondTitle,
+      description:
+        sentences.slice(1).join(' ') ||
+        'Mewujudkan gagasan menjadi aksi kolaboratif yang memberi manfaat nyata bagi pariwisata, budaya, dan masyarakat.',
+    },
+  ];
 }
 

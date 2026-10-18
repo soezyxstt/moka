@@ -34,7 +34,7 @@ export const PAGE_SECTION_SLOTS = [
   { key: "home/hero", pageKey: "home", sectionKey: "hero", label: "Hero beranda" },
   { key: "home/program", pageKey: "home", sectionKey: "program", label: "Program PAMOKA di Beranda" },
   { key: "home/berita", pageKey: "home", sectionKey: "berita", label: "Berita dan update" },
-  { key: "home/ajakan", pageKey: "home", sectionKey: "ajakan", label: "Filosofi tema" },
+  { key: "home/ajakan", pageKey: "home", sectionKey: "ajakan", label: "Filosofi tema (Tentang)" },
   { key: "tentang/hero", pageKey: "tentang", sectionKey: "hero", label: "Hero tentang" },
   { key: "tentang/visi", pageKey: "tentang", sectionKey: "visi", label: "Visi" },
   { key: "tentang/misi", pageKey: "tentang", sectionKey: "misi", label: "Misi" },

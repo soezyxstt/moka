@@ -289,8 +289,8 @@ JD dan MD memakai qris-dewasa-2026.png; JR dan MR memakai qris-rumaja-2026.png. 
 
 Di Teks halaman edisi 2026, tombol **Isi draf perubahan** mengisi formulir halaman yang dipilih untuk ditinjau. Tombol ini mengganti isian formulir sesuai preset, tetapi tidak menyimpan atau menerbitkan otomatis. Simpan tiap bagian melalui **Simpan draf**; buka pratinjau dari Kelola edisi untuk memeriksa hasil. Sebelas bagian draf baru/perubahan tersimpan di database lokal pada sesi ini, termasuk kontak Instagram. Data produksi belum diubah.
 
-- Beranda: deskripsi ajang, profil peserta, agenda terdekat, tema, berita dan pengenalan organisasi. Label profil mengikuti tahap yang tersedia. Halaman pendaftaran tersedia tidak berarti pendaftaran sedang dibuka.
-- Agenda terdekat memakai baris `tanggal | kegiatan | keterangan opsional`. Daftar dikurasi manual; hapus agenda yang sudah berlalu dan ambil tanggal dari jadwal panitia. Preset adalah snapshot 18 Oktober 2026. Tautan seluruh rangkaian membuka timeline yang tersedia.
+- Beranda: deskripsi ajang, profil peserta, agenda terdekat, berita dan pengenalan organisasi. Label profil mengikuti tahap yang tersedia. Halaman pendaftaran tersedia tidak berarti pendaftaran sedang dibuka.
+- Agenda terdekat memakai baris `tanggal | kegiatan`. Beranda hanya menampilkan tanggal dan nama agenda, tanpa keterangan daring/luring. Daftar dikurasi manual; hapus agenda yang sudah berlalu dan ambil tanggal dari jadwal panitia. Preset adalah snapshot 18 Oktober 2026. Tautan seluruh rangkaian membuka timeline yang tersedia.
 - Program tetap dikelola di Identitas edisi dan rinciannya tampil di Beranda. Foto program memakai binding kolase Beranda yang sama, tanpa unggah ulang. Foto visi dipakai pada pengantar Tentang; data foto tetap di Aset situs.
 - Peran dan nilai memakai `nama | penjelasan`. Visi/misi formal, seluruh pengurus, riwayat ketua dan PDF existing dipertahankan. Susunan lengkap tampil langsung di Tentang tanpa accordion.
 - Pendaftaran menyediakan slot status, jalur, cara mendaftar dan FAQ. Jalur/langkah/FAQ memakai `judul | penjelasan`. Biarkan bagian kosong sampai informasi resmi tersedia. Status, formulir, biaya dan syarat baru tidak diisi otomatis. Kontak bantuan mengikuti Instagram edisi.
@@ -299,3 +299,5 @@ Materi dengan placeholder dan perbedaan aturan usia/berkas memerlukan keputusan 
 
 
 Penyeimbangan halaman 2026-10-18: Beranda memuat Program PAMOKA dengan tiga foto kolase existing serta preview Kegiatan kami dari album CMS. Keduanya dipindah dari Tentang. Tentang menampilkan semua pengurus langsung, dikelompokkan menurut jabatan; ringkasan nama yang berulang dihapus. Label judul program pada Teks halaman diselaraskan ke Beranda; daftar program dan album tetap dikelola pada menu existing. Tidak ada perubahan data atau unggah baru.
+
+Filosofi tema (`home/ajakan`, label Filosofi tema (Tentang) di Teks halaman) ditampilkan bersama lima nilai Nu Nyunda Tur Nyakola di Tentang. Slot existing tetap digunakan. Foto pendukung bagian Kenali semifinalis/finalis memakai Aset situs > Beranda > Foto profil peserta (`home.cta.image`), tanpa unggah ulang atau perubahan schema.

@@ -13,51 +13,6 @@ function cssBackground(url?: string) {
   return url ? `url(${JSON.stringify(url)})` : undefined;
 }
 
-function resolvePhilosophyCards(title: string | null | undefined, body: string | null | undefined) {
-  const parts = (title ?? '')
-    .split(',')
-    .map((part) => part.trim())
-    .filter(Boolean);
-  const firstTitle = parts[0] || 'Niti Harti';
-  const secondTitle = parts[1] || 'Nanjeur Bukti';
-  const isNitiHarti = /niti\s+harti|nanjeur\s+bukti/i.test(title ?? "");
-
-  if (isNitiHarti) {
-    return [
-      {
-        title: firstTitle,
-        description:
-          'Mengenal nilai budaya dan memperdalam pengetahuan sebagai dasar bersikap.',
-      },
-      {
-        title: secondTitle,
-        description:
-          'Menunjukkan sikap, karya, dan kontribusi yang berguna bagi Garut.',
-      },
-    ];
-  }
-
-  const sentences = (body ?? '')
-    .split(/(?<=[.!?])\s+/)
-    .map((sentence) => sentence.trim())
-    .filter(Boolean);
-
-  return [
-    {
-      title: firstTitle,
-      description:
-        sentences[0] ||
-        'Menjaga jati diri generasi muda Kabupaten Garut yang berwawasan luas, berbudaya, dan berdaya saing.',
-    },
-    {
-      title: secondTitle,
-      description:
-        sentences.slice(1).join(' ') ||
-        'Mewujudkan gagasan menjadi aksi kolaboratif yang memberi manfaat nyata bagi pariwisata, budaya, dan masyarakat.',
-    },
-  ];
-}
-
 function formatNewsDate(date: Date) {
   if (!date || !(date instanceof Date) || Number.isNaN(date.getTime())) return '';
   return date.toLocaleDateString('id-ID', {
@@ -66,38 +21,6 @@ function formatNewsDate(date: Date) {
     year: 'numeric',
     timeZone: 'Asia/Jakarta',
   });
-}
-
-function GununganOrnament({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 120 180"
-      fill="none"
-      aria-hidden="true"
-      className={className}
-    >
-      <path
-        d="M60 8L108 116C113 128 104 142 91 142H29C16 142 7 128 12 116L60 8Z"
-        stroke="currentColor"
-        strokeWidth="2"
-      />
-      <path
-        d="M60 28L94 108C98 117 91 128 81 128H39C29 128 22 117 26 108L60 28Z"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeDasharray="4 4"
-      />
-      <path
-        d="M60 48L78 96H42L60 48Z"
-        fill="currentColor"
-        fillOpacity="0.12"
-        stroke="currentColor"
-        strokeWidth="1.5"
-      />
-      <circle cx="60" cy="112" r="6" fill="currentColor" fillOpacity="0.25" />
-      <path d="M24 156H96M36 168H84" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
 }
 
 export default async function Home() {
@@ -123,8 +46,7 @@ export default async function Home() {
   const agenda = registrationRows(home.sections.agenda?.body);
   const program = home.sections.program;
   const news = home.sections.berita;
-  const cta = home.sections.ajakan;
-  const ctaAction = cta?.actionLabel && cta.actionHref ? { label: cta.actionLabel, href: cta.actionHref } : null;
+  const participantImage = home.assets["home.cta.image"];
   const heroImage = home.assets['home.hero.fg'] ?? home.assets['home.hero.placeholder'];
   const collage = [
     'home.programs.collage.1',
@@ -139,10 +61,9 @@ export default async function Home() {
   const hasHero = Boolean(hero?.title?.trim() || hero?.body?.trim() || home.assets['home.hero.bg'] || heroImage);
   const hasProgram = Boolean(program?.title?.trim() || home.programs.length || home.assets['home.programs.bg'] || collage.length);
   const hasNews = Boolean(news?.title?.trim() || news?.body?.trim() || newsItems.length || home.assets['home.news.bg']);
-  const hasCta = Boolean(cta?.title?.trim() || cta?.body?.trim() || ctaAction || home.assets['home.cta.bg'] || home.assets['home.cta.image']);
   const hasEvents = navigation.events.length > 0;
 
-  if (!hasHero && !hasProgram && !hasNews && !hasCta) {
+  if (!hasHero && !hasProgram && !hasNews) {
     return (
       <main className="grid min-h-screen place-items-center px-8">
         <p className="font-inter text-sm text-muted-foreground">Konten beranda belum diterbitkan untuk edisi ini.</p>
@@ -155,9 +76,6 @@ export default async function Home() {
   const participantProfileHref = primaryCategory
     ? `/profil-${navigation.participantKind}/${primaryCategory.slug}`
     : '/voting';
-  const philosophyHeading = cta?.title?.trim() || navigation.edition.slogan || 'Niti Harti, Nanjeur Bukti';
-  const philosophyCards = resolvePhilosophyCards(philosophyHeading, cta?.body);
-
   return (
     <main className="min-h-screen bg-background text-foreground">
       {/* 1. HERO SECTION */}
@@ -211,8 +129,12 @@ export default async function Home() {
         id="partisipasi"
         className="relative border-b border-neutral-200/70 bg-background px-8 py-12 md:px-20 md:py-16"
       >
-        <div className="mx-auto grid w-full max-w-7xl items-start gap-10 lg:grid-cols-12 lg:gap-16">
-          <div className="lg:col-span-6">
+        <div className={`mx-auto grid w-full max-w-7xl items-center gap-8 lg:gap-16 ${participantImage ? "lg:grid-cols-[0.85fr_1.15fr]" : "lg:grid-cols-2"}`}>
+          {participantImage ? <div className="relative order-2 aspect-square overflow-hidden rounded-2xl bg-linear-to-b from-brand-50 to-brand-100 lg:order-none">
+            <Image src={participantImage.url} alt={participantImage.alt ?? "Pinilih Mojang Jajaka Garut"} fill className="object-contain object-bottom px-5 pt-6" sizes="(max-width: 1023px) 85vw, 40vw" />
+          </div> : null}
+          <div>
+          <div>
             <typography.h1 className="text-brand-900">
               Kenali {participantRoleLabel.toLowerCase()}
             </typography.h1>
@@ -236,7 +158,7 @@ export default async function Home() {
           </div>
 
           {navigation.categories.length ? (
-            <div className="divide-y divide-neutral-200 border-y border-neutral-200 lg:col-span-6">
+            <div className="mt-8 divide-y divide-neutral-200 border-y border-neutral-200">
               {navigation.categories.map((category) => (
                 <Link
                   key={category.slug}
@@ -251,6 +173,7 @@ export default async function Home() {
               ))}
             </div>
           ) : null}
+          </div>
         </div>
       </section>
 
@@ -267,7 +190,7 @@ export default async function Home() {
 
       {agenda.length ? <section id="rangkaian-kegiatan" className="border-b border-neutral-200/70 bg-background px-8 py-16 md:px-20 md:py-24"><div className="mx-auto max-w-7xl">
         <typography.h1 className="text-brand-900">{home.sections.agenda.title || 'Agenda terdekat'}</typography.h1>
-        <div className="mt-8 divide-y divide-neutral-200 border-y border-neutral-200">{agenda.map((item) => <div key={item.label + item.title} className="grid gap-2 py-5 md:grid-cols-[14rem_1fr]"><p className="font-medium text-brand">{item.label}</p><div><h3 className="font-manrope text-lg font-semibold text-brand-900">{item.title}</h3>{item.detail ? <typography.p className="mt-1">{item.detail}</typography.p> : null}</div></div>)}</div>
+        <div className="mt-8 divide-y divide-neutral-200 border-y border-neutral-200">{agenda.map((item) => <div key={item.label + item.title} className="grid gap-2 py-5 md:grid-cols-[14rem_1fr]"><p className="font-medium text-brand">{item.label}</p><h3 className="font-manrope text-lg font-semibold text-brand-900">{item.title}</h3></div>)}</div>
         {hasEvents ? <Link href={navigation.registrationVisible ? "/pendaftaran#timeline" : `/rangkaian-kegiatan/${navigation.events[0].slug}`} className="mt-5 inline-flex min-h-11 items-center gap-2 font-semibold text-brand">Lihat seluruh rangkaian<ArrowRight className="size-4" aria-hidden /></Link> : null}
       </div></section> : null}
       {/* 3. RANGKAIAN KEGIATAN / TIMELINE */}
@@ -312,66 +235,6 @@ export default async function Home() {
                   </div>
                 </Link>
               ))}
-            </div>
-          </div>
-        </section>
-      ) : null}
-
-      {/* 2. THEME PHILOSOPHY ("Niti Harti, Nanjeur Bukti") */}
-      {hasCta ? (
-        <section
-          id="filosofi-tema"
-          className="relative isolate overflow-hidden border-b border-neutral-200/70 bg-neutral-50 px-8 py-16 md:px-20 md:py-24"
-        >
-          <div className="mx-auto max-w-5xl">
-            <div className="relative flex flex-col items-center">
-              <GununganOrnament className="pointer-events-none absolute -left-8 top-0 hidden h-40 w-24 text-brand-700/12 lg:block" />
-              <GununganOrnament className="pointer-events-none absolute -right-8 top-0 hidden h-40 w-24 text-brand-700/12 lg:block" />
-
-              <div className="max-w-3xl text-center">
-                <typography.h1 className="text-3xl text-brand-900 md:text-5xl">
-                  {philosophyHeading}
-                </typography.h1>
-              </div>
-
-              {cta?.body?.trim() ? (
-                <div className="mt-6 w-full max-w-prose">
-                  <typography.p className="text-left leading-relaxed text-body">
-                    {cta.body.trim()}
-                  </typography.p>
-                </div>
-              ) : null}
-
-              <div className="mt-12 grid w-full grid-cols-1 divide-y divide-neutral-200 border-y border-neutral-200 md:grid-cols-2 md:divide-x md:divide-y-0">
-                {philosophyCards.map((card, index) => (
-                  <div
-                    key={card.title}
-                    data-reveal=""
-                    className={`py-6 md:py-8 ${index === 0 ? 'md:pr-10' : 'md:pl-10'}`}
-                  >
-                    <h3 className="font-manrope text-xl font-semibold text-brand-900 md:text-2xl">
-                      {card.title}
-                    </h3>
-                    <p className="mt-2.5 text-left font-inter text-sm leading-relaxed text-neutral-600 md:text-base">
-                      {card.description}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              {ctaAction ? (
-                <div className="mt-8 flex justify-center">
-                  <Button data-reveal="" asChild size="lg">
-                    <Link
-                      href={ctaAction.href}
-                      target={/^https?:\/\//i.test(ctaAction.href) ? "_blank" : undefined}
-                      rel={/^https?:\/\//i.test(ctaAction.href) ? "noopener noreferrer" : undefined}
-                    >
-                      {ctaAction.label} <ArrowRight className="ml-2 size-4" aria-hidden="true" />
-                    </Link>
-                  </Button>
-                </div>
-              ) : null}
             </div>
           </div>
         </section>

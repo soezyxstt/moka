@@ -23,7 +23,7 @@ export const CONTENT_DRAFT_2026: Record<string, { title?: string; body?: string 
   },
   "home/agenda": {
     "title": "Agenda terdekat",
-    "body": "18 Oktober 2026 | Pertemuan mingguan semifinalis | Daring\n25 Oktober 2026 | Penjurian dan pengumuman finalis\n1, 8, 15 November 2026 | Pembekalan finalis"
+    "body": "18 Oktober 2026 | Pertemuan mingguan semifinalis\n25 Oktober 2026 | Penjurian dan pengumuman finalis\n1, 8, 15 November 2026 | Pembekalan finalis"
   },
   "tentang/hero": {
     "title": "PAMOKA Garut",
