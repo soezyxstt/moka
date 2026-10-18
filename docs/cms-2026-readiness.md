@@ -71,3 +71,5 @@ Upload nyata dan penerapan data produksi telah diverifikasi pada hasil terbaru d
 
 
 Draf tiga halaman 2026-10-18: source dan sebelas draf perubahan tersimpan lokal melalui CMS. Edisi lokal 2026 belum lengkap dan tetap draf, 2025 tetap aktif. Pratinjau memakai foto serta data CMS lokal, sehingga roster/kategori/foto tidak merepresentasikan produksi terbaru. Bagian status/jalur/langkah pendaftaran belum diisi karena belum ada keputusan resmi; FAQ hanya memakai jawaban domisili yang terverifikasi dalam materi. Tidak ada operasi remote, upload, migrasi atau deployment.
+
+Pembaruan 2026-10-18: konten editorial riil untuk Beranda, Tentang dan FAQ Pendaftaran sudah diterbitkan di produksi 2026. Lima entry baru dan lima pembaruan memakai tabel CMS existing; hero dipertahankan. Tetap dapat diubah melalui Teks halaman. Source `603d359` tersedia di origin/main; bukti readback `.tmp/content-release-20261018/production-verification.json`. Ini tidak menetapkan syarat/jalur/langkah atau keputusan panitia yang belum tersedia.
