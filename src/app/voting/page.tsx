@@ -46,6 +46,7 @@ export default async function VotingPage() {
   const periodText = campaign
     ? formatCampaignPeriod(campaign.startsAt, campaign.endsAt, campaign.timezone)
     : null;
+  const campaignEnded = details.some(({ results }) => results.ended);
 
   const rumajaCount = details.reduce((total, { category }) => {
     return category.code === 'JR' || category.code === 'MR'
@@ -73,6 +74,7 @@ export default async function VotingPage() {
       slug: category.slug,
       name: category.code,
       open: Boolean(category.campaign),
+      ended: campaignEnded,
       pricePerVote: price,
       resultsVisible: results.visible,
       candidateNumberOffset,
@@ -94,6 +96,7 @@ export default async function VotingPage() {
           totalVotes={totalVotes}
           results={ranked.map(({ name, percentage }) => ({ name, percentage }))}
           updatedAt={results.resultUpdatedAt}
+          ended={campaignEnded}
         />
       ),
     };

@@ -44,6 +44,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -327,6 +328,7 @@ function VotingConsoleInner({
   const [confirmMode, setConfirmMode] = useState<"start" | "close" | "delete" | null>(null);
   const [confirmation, setConfirmation] = useState("");
   const [reason, setReason] = useState("");
+  const [closeShowResults, setCloseShowResults] = useState(true);
   const [visibilityReason, setVisibilityReason] = useState("");
   const [showResultUpdatedAtReason, setShowResultUpdatedAtReason] = useState("");
 
@@ -696,7 +698,23 @@ function VotingConsoleInner({
           status: "closed",
           closedAt: new Date().toISOString(),
         });
-        toast.success("Voting dinonaktifkan", { id: toastId });
+        let publishLabel: string;
+        if (closeShowResults) {
+          const visibilityResult = await setResultVisibilityAction({
+            campaignId: selectedCampaign.id,
+            expectedVersion: result.version,
+            visibility: "visible",
+            reason,
+          });
+          replaceCampaign({
+            version: visibilityResult.version,
+            resultVisibility: "visible",
+          });
+          publishLabel = ", hasil ditampilkan";
+        } else {
+          publishLabel = ", hasil tidak ditampilkan";
+        }
+        toast.success(`Voting dinonaktifkan${publishLabel}`, { id: toastId });
       } else if (confirmMode === "delete") {
         await deleteCampaignAction({
           campaignId: selectedCampaign.id,
@@ -1862,6 +1880,7 @@ function VotingConsoleInner({
                               onClick={() => {
                                 setConfirmation("");
                                 setReason("");
+                                setCloseShowResults(true);
                                 setConfirmMode("close");
                               }}
                               disabled={pending}
@@ -1875,7 +1894,9 @@ function VotingConsoleInner({
                       <div className="space-y-3 rounded-lg border border-brand-100 bg-brand-50/30 p-3.5">
                         <div className="flex items-center justify-between gap-2">
                           <p className="text-xs font-semibold text-brand-900">
-                            Visibilitas hasil publik
+                            {selectedCampaign.status === "closed"
+                              ? "Hasil akhir di halaman publik"
+                              : "Visibilitas hasil publik"}
                           </p>
                         </div>
                         <AdminField label="Alasan perubahan visibilitas">
@@ -1898,9 +1919,13 @@ function VotingConsoleInner({
                             <Eye className="size-4" />
                           )}
                           {selectedResultIsVisible
-                            ? "Sembunyikan hasil"
+                            ? selectedCampaign.status === "closed"
+                              ? "Sembunyikan hasil akhir"
+                              : "Sembunyikan hasil"
                             : selectedCampaign.resultVisibility === "hidden"
-                              ? "Tampilkan hasil"
+                              ? selectedCampaign.status === "closed"
+                                ? "Tampilkan hasil akhir"
+                                : "Tampilkan hasil"
                               : "Tetapkan hasil ke tersembunyi"}
                         </AdminButton>
                       </div>
@@ -2162,6 +2187,17 @@ function VotingConsoleInner({
               onChange={(event) => setConfirmation(event.target.value)}
             />
           </AdminField>
+          {confirmMode === "close" ? (
+            <label className="flex items-center gap-2.5 text-sm font-normal text-foreground">
+              <Checkbox
+                checked={closeShowResults}
+                onCheckedChange={(checked) => setCloseShowResults(checked === true)}
+                disabled={pending}
+                aria-label="Tampilkan hasil akhir di halaman publik"
+              />
+              Tampilkan hasil akhir di halaman publik
+            </label>
+          ) : null}
           <AdminField label="Alasan">
             <AdminTextarea value={reason} onChange={(event) => setReason(event.target.value)} />
           </AdminField>

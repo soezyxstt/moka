@@ -8,6 +8,7 @@ export type CategoryTab = {
   slug: string;
   name: string;
   open: boolean;
+  ended: boolean;
   pricePerVote: number;
   candidates: VotingPanelCandidate[];
   resultsVisible: boolean;
@@ -57,7 +58,7 @@ function VotingCategoriesView({
           </Button>
         ))}
       </div>
-      {activeCategory ? (
+      {activeCategory && !activeCategory.ended ? (
         <VoteDialog
           open={activeCategory.open}
           pricePerVote={activeCategory.pricePerVote}

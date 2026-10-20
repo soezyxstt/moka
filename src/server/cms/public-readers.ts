@@ -166,6 +166,7 @@ export type PublicVotingResults = {
   editionYear: number;
   campaign: PublicVotingCampaign | null;
   visible: boolean;
+  ended: boolean;
   totalAmount: number;
   candidates: { id: string; name: string; amount: number; percentage: number }[];
   resultUpdatedAt: Date | null;
@@ -552,8 +553,9 @@ export async function getPublicVotingResults(categorySlug: string): Promise<Publ
     .orderBy(desc(votingCampaigns.startsAt))
     .limit(1);
   const visible = campaign?.resultVisibility === 'visible';
+  const ended = Boolean(campaign && (campaign.status === 'closed' || campaign.endsAt.getTime() <= Date.now()));
   if (!campaign || !visible) {
-    return { categoryName: category.label, categorySlug: category.slug, editionYear: edition.year, campaign: campaign ?? null, visible: false, totalAmount: 0, candidates: [], resultUpdatedAt: null };
+    return { categoryName: category.label, categorySlug: category.slug, editionYear: edition.year, campaign: campaign ?? null, visible: false, ended, totalAmount: 0, candidates: [], resultUpdatedAt: null };
   }
 
   const candidates = await database
@@ -592,6 +594,7 @@ export async function getPublicVotingResults(categorySlug: string): Promise<Publ
     editionYear: edition.year,
     campaign,
     visible: true,
+    ended,
     totalAmount,
     candidates: candidates.map((candidate) => {
       const amount = amountByParticipant.get(candidate.id) ?? 0;

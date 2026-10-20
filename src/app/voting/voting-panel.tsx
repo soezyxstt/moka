@@ -27,6 +27,7 @@ export type VotingPanelProps = {
   totalVotes: number;
   results: { name: string; percentage: number }[];
   updatedAt?: Date | null;
+  ended?: boolean;
 };
 
 const chartConfig = { percentage: { label: 'Persentase', color: 'var(--chart-1)' } } satisfies ChartConfig;
@@ -46,10 +47,12 @@ export function VotingPanel({
   totalVotes,
   results,
   updatedAt,
+  ended = false,
 }: VotingPanelProps) {
+  const resultsTitle = ended ? 'Hasil akhir' : 'Hasil sementara';
   return <div className="mt-6">
     <div>
-      <h2 className="font-manrope text-xl font-semibold text-brand-900">Hasil sementara</h2>
+      <h2 className="font-manrope text-xl font-semibold text-brand-900">{resultsTitle}</h2>
       {resultsVisible && updatedAt ? (
         <p className="mt-1 text-xs text-neutral-600">
           Terakhir diperbarui: {formatUpdateTimestamp(updatedAt)}
@@ -65,7 +68,7 @@ export function VotingPanel({
           <LabelList dataKey="percentage" position="right" offset={8} className="fill-foreground" fontSize={12} formatter={(value: ReactNode) => `${percentFormat.format(Number(value))}%`} />
         </Bar>
       </BarChart>
-    </ChartContainer> : <p className="mt-4 text-left text-neutral-600">{resultsVisible ? 'Belum ada vote tercatat untuk kategori ini.' : 'Hasil sementara belum ditampilkan panitia.'}</p>}
+    </ChartContainer> : <p className="mt-4 text-left text-neutral-600">{resultsVisible ? 'Belum ada vote tercatat untuk kategori ini.' : `Hasil ${ended ? 'akhir' : 'sementara'} belum ditampilkan panitia.`}</p>}
   </div>;
 }
 
