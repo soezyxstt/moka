@@ -362,6 +362,7 @@ export function SponsorsClient({
                             {sponsor.logoAsset?.url ? (
                               <Image
                                 src={sponsor.logoAsset.url}
+                                unoptimized
                                 alt={sponsor.logoAsset.alt || sponsor.name}
                                 width={44}
                                 height={44}
@@ -595,6 +596,7 @@ export function SponsorsClient({
                         {formLogoAsset?.url ? (
                           <Image
                             src={formLogoAsset.url}
+                            unoptimized
                             alt={formLogoAsset.alt || formName || "Logo sponsor"}
                             width={64}
                             height={64}

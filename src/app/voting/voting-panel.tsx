@@ -197,7 +197,7 @@ function CandidateDetail({
         </p>
       </div>
       {candidate.qrImageUrl ? <div className="flex flex-col items-center gap-4">
-        <Image src={candidate.qrImageUrl} alt={`QR voting ${candidate.name}`} width={224} height={224} className="aspect-square rounded-lg border border-neutral-200 bg-canvas object-contain p-2" />
+        <Image src={candidate.qrImageUrl} unoptimized alt={`QR voting ${candidate.name}`} width={224} height={224} className="aspect-square rounded-lg border border-neutral-200 bg-canvas object-contain p-2" />
         <Button size="lg" onClick={downloadQr} disabled={downloading} className="w-full justify-center gap-2"><Download className="size-4" aria-hidden />{downloading ? 'Mengunduh' : 'Unduh QR'}</Button>
       </div> : <p className="text-sm text-neutral-600">QR voting belum tersedia.</p>}
     </>;

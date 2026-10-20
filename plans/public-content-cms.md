@@ -1,5 +1,7 @@
 # Plan 014: CMS Dinamis untuk Konten Publik dan Siklus Tahunan
 
+Sponsor produksi edisi 2026 diperbarui pada 2026-10-20 melalui Chrome/CMS berizin: 17 sponsor baru aktif dan satu Moveit diperbarui, seluruh 18 bertingkat Utama sesuai operator. Nama persis basename PNG dari `artifacts/2026 Edition/Sponsors/Logo`, 18 PNG asli berjumlah 903.995 byte melalui UploadThing, alt terisi. Website Moveit dipertahankan. Backup terbatas sponsor/mediaAsset/mediaFolder/edition AES-256-GCM dengan key DPAPI lulus restore 4 tabel/1.011 baris; backup penuh ditolak auto-review karena melampaui cakupan data. Readback/hash 18 logo, 71 audit, 77 sponsor arsip dan seluruh media existing terjaga, integrity ok dan nol FK error. Bukti `.tmp/sponsors-20261020/production-verification.json`. Chrome mengonfirmasi 18 nama pada Audisi, tetapi rendering logo publik terblokir optimizer Vercel HTTP 402 `OPTIMIZED_IMAGE_REQUEST_PAYMENT_REQUIRED`; URL asli valid. Bukti `public-verification.json` dan `public-sponsors.png` pada folder sama. Tanpa migrasi, deployment atau perubahan billing.
+
 Foto roster resmi 70 semifinalis sudah lengkap di produksi pada 2026-10-16. Empat puluh portrait/closeup ditambahkan dari crop asli Patandang melalui UploadThing dan CMS berizin; 30 foto existing dipertahankan. Seluruh 70 URL/hash lulus verifikasi, konten/nomor/QR tetap sama. Cakupan dan bukti ada di `plans/annual-brand-assets.md` dan `.tmp/portraits-70/production-verification.json`. Catatan foto belum tersedia di bawah merupakan riwayat sebelum pelengkapan ini.
 
 ## Roster resmi 70 semifinalis, 2026-10-16

@@ -99,7 +99,7 @@ export function Navbar({
       >
         <Link href="/" className="h-full shrink-0" aria-label={`Beranda MOKA Garut ${edition.year}`} title={edition.slogan ?? undefined}>
           {desktopLogo?.url || edition.logoUrl
-            ? <Image src={desktopLogo?.url || edition.logoUrl!} alt={desktopLogo?.alt || edition.logoAlt || "MOKA Garut"} unoptimized={desktopLogo?.mimeType === "image/svg+xml"} width={100} height={60} className="h-full w-auto object-contain" priority />
+            ? <Image src={desktopLogo?.url || edition.logoUrl!} alt={desktopLogo?.alt || edition.logoAlt || "MOKA Garut"} unoptimized width={100} height={60} className="h-full w-auto object-contain" priority />
             : <span className="font-manrope text-sm font-bold tracking-wide text-highlight">MOKA Garut</span>}
         </Link>
         <div className="flex h-full items-center gap-3 font-inter lg:gap-5 xl:gap-7">
@@ -132,7 +132,7 @@ export function Navbar({
         <div className="flex h-16 w-full items-center justify-between px-6">
           <Link href="/" className="h-9" aria-label={`Beranda MOKA Garut ${edition.year}`} title={edition.slogan ?? undefined}>
             {mobileLogo?.url || edition.logoUrl
-              ? <Image src={mobileLogo?.url || edition.logoUrl!} alt={mobileLogo?.alt || edition.logoAlt || "MOKA Garut"} unoptimized={mobileLogo?.mimeType === "image/svg+xml"} width={100} height={44} className="h-full w-auto object-contain" priority />
+              ? <Image src={mobileLogo?.url || edition.logoUrl!} alt={mobileLogo?.alt || edition.logoAlt || "MOKA Garut"} unoptimized width={100} height={44} className="h-full w-auto object-contain" priority />
               : <span className="font-manrope text-sm font-bold tracking-wide text-(--nav-mobile-control)">MOKA Garut</span>}
           </Link>
           <Button type="button" variant="ghost" size="icon" className="relative z-[60] flex size-9 items-center justify-center hover:bg-canvas/10" onClick={() => setIsMobileMenuOpen((open) => !open)} aria-label={isMobileMenuOpen ? "Tutup menu" : "Buka menu"} aria-expanded={isMobileMenuOpen} aria-controls="mobile-navbar-content">

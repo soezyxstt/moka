@@ -55,7 +55,7 @@ export default function Footer({ categories, events, edition, logo, aboutDescrip
       <div className="relative mx-auto grid w-full max-w-7xl gap-8 px-6 py-10 md:px-12 md:py-12 lg:grid-cols-[1fr_2fr] lg:gap-12">
         <div>
           {logo?.url || edition.logoUrl
-            ? <Image src={logo?.url || edition.logoUrl!} alt={logo?.alt || edition.logoAlt || "MOKA Garut"} unoptimized={logo?.mimeType === "image/svg+xml"} width={320} height={120} className="h-auto w-full max-w-56 object-contain object-left" />
+            ? <Image src={logo?.url || edition.logoUrl!} alt={logo?.alt || edition.logoAlt || "MOKA Garut"} unoptimized width={320} height={120} className="h-auto w-full max-w-56 object-contain object-left" />
             : <p className="font-manrope text-2xl font-bold tracking-wide">MOKA Garut</p>}
           {edition.slogan ? <p className="mt-4 max-w-xs text-sm leading-6 text-canvas/82">{edition.slogan}</p> : null}
           {aboutDescription ? <p className="mt-3 max-w-md text-sm leading-6 text-canvas/85">{aboutDescription}</p> : null}

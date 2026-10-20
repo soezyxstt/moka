@@ -221,7 +221,7 @@ export function AdminShell({
         <aside className="relative hidden w-64 shrink-0 overflow-hidden border-r border-brand-100 bg-card lg:flex lg:h-full lg:flex-col" data-lenis-prevent>
           <div className="flex h-20 shrink-0 items-center border-b border-brand-100 px-5">
             <Link href="/admin" className="flex items-center gap-3" aria-label="Dashboard PAMOKA CMS">
-              {branding.logo ? <Image src={branding.logo.url} unoptimized={branding.logo.mimeType === "image/svg+xml"} alt={branding.logo.alt || branding.title} width={150} height={57} className="h-auto w-36 object-contain" /> : <span className="font-manrope font-semibold text-brand-900">{branding.title}</span>}
+              {branding.logo ? <Image src={branding.logo.url} unoptimized alt={branding.logo.alt || branding.title} width={150} height={57} className="h-auto w-36 object-contain" /> : <span className="font-manrope font-semibold text-brand-900">{branding.title}</span>}
             </Link>
           </div>
           <AdminScrollArea className="min-h-0 flex-1">
@@ -247,7 +247,7 @@ export function AdminShell({
           <SheetDescription className="sr-only">Menu ruang kerja admin PAMOKA.</SheetDescription>
           <div className="flex h-20 shrink-0 items-center border-b border-brand-100 px-5 pr-14">
             <Link href="/admin" onClick={() => setIsMobileOpen(false)} className="flex items-center gap-3" aria-label="Dashboard PAMOKA CMS">
-              {branding.logo ? <Image src={branding.logo.url} unoptimized={branding.logo.mimeType === "image/svg+xml"} alt={branding.logo.alt || branding.title} width={150} height={57} className="h-auto w-36 object-contain" /> : <span className="font-manrope font-semibold text-brand-900">{branding.title}</span>}
+              {branding.logo ? <Image src={branding.logo.url} unoptimized alt={branding.logo.alt || branding.title} width={150} height={57} className="h-auto w-36 object-contain" /> : <span className="font-manrope font-semibold text-brand-900">{branding.title}</span>}
             </Link>
           </div>
           <AdminScrollArea className="min-h-0 flex-1">
@@ -317,7 +317,7 @@ export function AdminAuthShell({
     <main className="grid min-h-svh bg-background text-foreground lg:grid-cols-2" data-lenis-prevent>
       <section className="flex min-w-0 flex-col px-6 py-6 sm:px-12 sm:py-10 lg:px-16">
         <Link href="/" className="w-fit" aria-label="Beranda PAMOKA Garut">
-          {branding.logo ? <Image src={branding.logo.url} unoptimized={branding.logo.mimeType === "image/svg+xml"} alt={branding.logo.alt || branding.title} width={190} height={72} className="h-auto w-36 object-contain sm:w-44" /> : <span className="font-manrope text-xl font-semibold text-brand-900">{branding.title}</span>}
+          {branding.logo ? <Image src={branding.logo.url} unoptimized alt={branding.logo.alt || branding.title} width={190} height={72} className="h-auto w-36 object-contain sm:w-44" /> : <span className="font-manrope text-xl font-semibold text-brand-900">{branding.title}</span>}
         </Link>
         <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-16 lg:py-12">
           <h1 className="font-manrope !text-3xl font-semibold leading-tight tracking-tight text-brand-900 sm:!text-4xl">{title}</h1>

@@ -15,6 +15,7 @@ export default function SponsorItem({
   return (
     <div className="p-4 backdrop-blur-lg bg-canvas/20 rounded-lg grid place-items-center">
       <Image
+        unoptimized
         className={cn(
           'object-contain',
           size === "sm" && "w-32 h-20",
