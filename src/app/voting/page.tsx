@@ -18,6 +18,7 @@ export async function generateMetadata() {
   const campaign = await getPublicVotingCampaign();
   return {
     title: campaign?.name ?? 'Voting',
+    alternates: { canonical: '/voting' },
   };
 }
 

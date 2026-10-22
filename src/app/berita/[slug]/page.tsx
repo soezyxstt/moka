@@ -19,6 +19,7 @@ export async function generateMetadata({ params }: NewsPageProps): Promise<Metad
   return {
     title: article.title,
     description: article.excerpt ?? undefined,
+    alternates: { canonical: `/berita/${encodeURIComponent(article.slug)}` },
     openGraph: article.coverUrl ? { images: [article.coverUrl] } : undefined,
   };
 }

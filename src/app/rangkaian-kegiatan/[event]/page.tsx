@@ -1,8 +1,23 @@
+import type { Metadata } from 'next';
+import { cache } from 'react';
 import EventCarousel from './event-carousel';
 import { getPublicEventBySlug, getPublicSponsors } from '@/server/cms/public-readers';
 import SponsorItem from './sponsor';
 import BG from '@/components/next-image-bg';
 import { notFound } from 'next/navigation';
+
+const getEvent = cache((slug: string) => getPublicEventBySlug(slug));
+
+export async function generateMetadata({ params }: Readonly<{ params: Promise<{ event: string }> }>): Promise<Metadata> {
+  const { event } = await params;
+  const cmsEvent = await getEvent(event);
+  if (!cmsEvent) return { title: 'Kegiatan tidak ditemukan' };
+  return {
+    title: cmsEvent.label,
+    description: cmsEvent.desc || undefined,
+    alternates: { canonical: `/rangkaian-kegiatan/${encodeURIComponent(cmsEvent.slug)}` },
+  };
+}
 
 export default async function Page({
   params,
@@ -10,7 +25,7 @@ export default async function Page({
   params: Promise<{ event: string }>;
 }>) {
   const { event } = await params;
-  const cmsEvent = await getPublicEventBySlug(event);
+  const cmsEvent = await getEvent(event);
   if (!cmsEvent) notFound();
 
   const sponsors = await getPublicSponsors();

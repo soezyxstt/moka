@@ -5,7 +5,11 @@ import { RegistrationPage } from "./registration-page";
 
 export async function generateMetadata(): Promise<Metadata> {
   const content = await getPublicRegistration();
-  return { title: content?.sections.hero?.title || "Pendaftaran", description: content?.sections.hero?.body || undefined };
+  return {
+    title: content?.sections.hero?.title || "Pendaftaran",
+    description: content?.sections.hero?.body || undefined,
+    alternates: { canonical: '/pendaftaran' },
+  };
 }
 
 export default async function Page() {
