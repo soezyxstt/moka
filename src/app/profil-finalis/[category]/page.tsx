@@ -30,6 +30,7 @@ export async function generateMetadata({ params }: Readonly<{ params: Promise<{ 
   return {
     title: `Profil Finalis - ${cmsCategory.name} ${cmsCategory.editionYear}`,
     description: `Profil Finalis Pasanggiri Mojang Jajaka Kabupaten Garut ${cmsCategory.editionYear} pada kategori ${cmsCategory.name}.`,
+    alternates: { canonical: `/profil-finalis/${encodeURIComponent(cmsCategory.slug)}` },
   };
 }
 

@@ -15,6 +15,7 @@ import {
 export const metadata: Metadata = {
   title: 'Berita',
   description: 'Siaran pers, pengumuman resmi, dan kabar terbaru kegiatan Paguyuban Mojang Jajaka Kabupaten Garut.',
+  alternates: { canonical: '/berita' },
 };
 
 function formatNewsDate(date: Date) {

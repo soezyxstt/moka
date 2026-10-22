@@ -24,12 +24,12 @@ const nextConfig: NextConfig = {
       {
         source: '/voting/hasil/:path*',
         destination: '/voting',
-        permanent: false,
+        permanent: true,
       },
       {
         source: '/voting/hasil',
         destination: '/voting',
-        permanent: false,
+        permanent: true,
       },
     ];
   },

@@ -8,7 +8,7 @@ import { Button } from "@/components/custom/button";
 import { typography } from "@/components/custom/typography";
 import { getPublicAboutContent, getPublicHomeContent, getPublicSiteIdentity } from "@/server/cms/public-readers";
 
-export const metadata = { title: "Tentang Kami" };
+export const metadata = { title: "Tentang Kami", alternates: { canonical: '/tentang' } };
 
 export default async function AboutUs() {
   const [about, site, home] = await Promise.all([getPublicAboutContent(), getPublicSiteIdentity(), getPublicHomeContent()]);

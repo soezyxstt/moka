@@ -1,9 +1,12 @@
+import type { Metadata } from 'next';
 import { headers } from "next/headers";
 import { auth } from "@/server/auth/config";
 import { getEffectivePermissions } from "@/server/auth/authorization";
 import { AdminShell, type AdminNavItem } from "@/components/admin/admin-shell";
 import { getAdminEditionContext, getAdminEditions } from "@/server/cms/context";
 import { getAdminBranding } from "@/server/cms/admin-branding";
+
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth.api.getSession({ headers: await headers() });

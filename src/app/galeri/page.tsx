@@ -2,7 +2,7 @@ import { getPublicGalleryAlbums, getPublicPageIntro } from "@/server/cms/public-
 import { getGalleryMedia } from "./gallery-media";
 import GalleryWall from "./gallery-wall";
 
-export const metadata = { title: "Galeri" };
+export const metadata = { title: "Galeri", alternates: { canonical: '/galeri' } };
 
 export default async function GalleryPage() {
   const [albums, intro] = await Promise.all([getPublicGalleryAlbums(), getPublicPageIntro("galeri")]);

@@ -16,12 +16,14 @@ import { Button } from '@/components/custom/button';
 import { getPublicNavigation, getPublicSiteIdentity } from '@/server/cms/public-readers';
 import { brandMetadata, resolveBrandLogos } from '@/server/cms/brand-assets';
 import { AdminBrandProvider } from '@/components/admin/branding';
+import { env } from '@/env';
 
 export async function generateMetadata(): Promise<Metadata> {
   const identity = await getPublicSiteIdentity();
   const branding = brandMetadata(identity.assets);
   return {
   ...branding,
+  metadataBase: new URL(new URL(env.BASE_URL).origin),
   ...(await getPreviewEditionId() ? { robots: { index: false, follow: false } } : {}),
   title: {
     default: identity.title,

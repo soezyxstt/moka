@@ -16,6 +16,7 @@ export async function generateMetadata({
 
   return {
     title: `Profil ${participant.name} - ${participant.categoryName} ${participant.editionYear}`,
+    alternates: { canonical: `/profil-semifinalis/${encodeURIComponent(participant.categorySlug)}/${encodeURIComponent(participant.slug)}` },
     ...(participant.imageUrl ? { openGraph: { images: [participant.imageUrl] } } : {}),
     description: `Profil semifinalis ${participant.name} pada kategori ${participant.categoryName} di Pasanggiri Mojang Jajaka Kabupaten Garut ${participant.editionYear}.`,
   };

@@ -9,6 +9,8 @@ import { formatCategoryName } from '@/components/footer';
 import { resolveBrandLogos } from '@/server/cms/brand-assets';
 import { getPublicAboutContent, getPublicHomeContent, getPublicNavigation, getPublicNews, getPublicSiteIdentity, type PublicGalleryAlbum } from '@/server/cms/public-readers';
 
+export const metadata = { alternates: { canonical: '/' } };
+
 function cssBackground(url?: string) {
   return url ? `url(${JSON.stringify(url)})` : undefined;
 }
