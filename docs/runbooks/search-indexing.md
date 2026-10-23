@@ -59,3 +59,7 @@ Ekspor atau catat contoh URL, alasan, waktu crawl terakhir, waktu validasi, cano
 Reader peserta tetap membatasi edisi aktif. Reader berita tetap memakai daftar edisi pertama yang tidak kosong. Bila URL lama perlu bertahan sebagai arsip, rancang path dan lookup edisi publik secara terpisah, lalu buat pemetaan redirect tepat. Jangan mencampur peserta tahun lama ke edisi aktif untuk menutup laporan indeks.
 
 Permintaan indeks ulang, validasi GSC, deploy, dan perubahan CMS berada di luar patch ini. Lakukan hanya pada target dan URL yang sudah ditinjau setelah rilis yang diotorisasi.
+
+## Logo situs dan ikon pencarian
+
+Resolver mempertahankan slot logo navbar/footer, favicon, Apple, manifest dan gambar berbagi secara terpisah. Tujuh URL kit asli 2026 yang diverifikasi dipetakan ke salinan byte-identik di `public/brand/2026`; URL media CMS baru tidak dialihkan. File statis mengikuti deployment aplikasi dan tidak membutuhkan write CMS. Jangan mengganti logo navbar dengan favicon untuk keperluan pencarian. Setelah deployment, periksa URL ikon dalam HTML publik dan respons file pada origin canonical. Perubahan ini tidak membuktikan Google sudah memilih atau memperbarui ikon hasil pencarian.
