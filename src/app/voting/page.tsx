@@ -48,6 +48,8 @@ export default function VotingPage() {
   const categories = getPublicVotingCategories();
   const base = loadVotingBase(categories);
   const details = categories.then(loadVotingDetails);
+  // Observe early failures while consumers await base; they still receive the original rejection.
+  void details.catch(() => {});
   return <main className="relative min-h-screen">
     <Suspense fallback={<VotingHeaderSkeleton />}>
       <VotingHeader base={base} details={details} />

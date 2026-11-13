@@ -16,6 +16,7 @@ Reservasi berita/album/profil mengikuti sampel konten produksi dan masih dapat b
 
 ## Bukti dan batas pemeriksaan 2026-11-13
 
+- Review PR menambahkan observer rejection pada promise detail Voting agar kegagalan awal tetap tertangani ketika consumer menunggu base. Promise asli tetap diteruskan ke consumer untuk error handling. `node --test scripts/public-loading.test.mjs` memeriksa rejection awal dan hasil sukses tanpa dependensi aplikasi.
 - `.tmp/loading-geometry/parent-rendered.json`: perbandingan produksi dengan markup skeleton representatif yang dirender sementara, dengan CSS utility tambahan bila diperlukan.
 - `.tmp/loading-geometry/profiles-voting.json`: ukuran produksi kategori, profil dan voting; perbandingan lane ini hanya terhadap source. Revisi reservasi profil/grafik berikutnya dicatat pada bukti parent dan source.
 - `.tmp/loading-geometry/news-gallery-events.json`: ukuran produksi berita, artikel, galeri dan kegiatan; bukan render skeleton atau uji streaming.
