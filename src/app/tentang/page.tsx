@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { ArrowRight, ArrowUpRight, FileText, UserRound } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -11,14 +12,8 @@ import { getPublicAboutContent, getPublicHomeContent, getPublicSiteIdentity } fr
 export const metadata = { title: "Tentang Kami", alternates: { canonical: '/tentang' } };
 
 export default async function AboutUs() {
-  const [about, site, home] = await Promise.all([getPublicAboutContent(), getPublicSiteIdentity(), getPublicHomeContent()]);
-  const theme = home.sections.ajakan;
-  const themeTitle = theme?.title?.trim();
-  const themeCards = themeTitle ? resolvePhilosophyCards(themeTitle, theme.body) : [];
-  const themeAction = theme?.actionLabel && theme.actionHref ? { label: theme.actionLabel, href: theme.actionHref } : null;
+  const about = await getPublicAboutContent();
   const roles = registrationRows(about.sections.peran?.body);
-  const values = registrationRows(about.sections.nilai?.body);
-  const contact = site.contacts.find((item) => item.kind === "email") ?? site.contacts.find((item) => item.kind === "instagram");
   const { hero, visi, misi, legalitas, organisasi } = about.sections;
   const heroImage = about.assets["about.hero.bg"];
   const introImage = about.assets["about.vision.image"] ?? about.assets["about.intro.image"] ?? heroImage;
@@ -51,7 +46,7 @@ export default async function AboutUs() {
             <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
               <span id="program" className="sr-only" /><span id="gallery" className="sr-only" />
               <Button asChild size="lg"><Link href="/#program">Lihat program kami<ArrowRight className="ml-2 size-4" aria-hidden /></Link></Button>
-              {contact ? <a href="#kontak" className="inline-flex min-h-11 items-center text-base text-brand underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">Hubungi pengurus</a> : null}
+              <Suspense fallback={<span role="status" aria-label="Memuat kontak"><span aria-hidden="true" className="block h-11 w-32 rounded-md bg-muted motion-safe:animate-pulse" /></span>}><ContactLink /></Suspense>
             </div>
           </div>
           {introImage ? <div className="relative aspect-[3/2] overflow-hidden rounded-lg">
@@ -80,23 +75,9 @@ export default async function AboutUs() {
         </div> : null}
       </Section> : null}
 
-      {values.length || themeTitle ? <Section id="filosofi-tema" className="border-b border-neutral-200/70 bg-background" contentClassName="mx-auto max-w-7xl">
-        <typography.h1 className="text-brand-900">{about.sections.nilai?.title || "Nu Nyunda Tur Nyakola"}</typography.h1>
-        <div className={`mt-8 grid gap-10 lg:gap-16 ${themeTitle && values.length ? "lg:grid-cols-[0.9fr_1.1fr]" : ""}`}>
-          {themeTitle ? <div>
-            <h3 className="font-manrope text-2xl font-semibold text-brand-900 md:text-3xl">{themeTitle}</h3>
-            {theme.body?.trim() ? <typography.p className="mt-4 max-w-prose">{theme.body.trim()}</typography.p> : null}
-            <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-1">
-              {themeCards.map((card) => <div key={card.title} className="border-t border-neutral-200 pt-4">
-                <h4 className="font-manrope text-lg font-semibold text-brand-900">{card.title}</h4>
-                <typography.p className="mt-2 text-sm">{card.description}</typography.p>
-              </div>)}
-            </div>
-            {themeAction ? <Button asChild className="mt-6"><Link href={themeAction.href} target={/^https?:\/\//i.test(themeAction.href) ? "_blank" : undefined} rel={/^https?:\/\//i.test(themeAction.href) ? "noopener noreferrer" : undefined}>{themeAction.label}<ArrowRight className="ml-2 size-4" aria-hidden /></Link></Button> : null}
-          </div> : null}
-          {values.length ? <div className="divide-y divide-neutral-200 border-y border-neutral-200">{values.map((item) => <div key={item.label} className="grid gap-2 py-5 sm:grid-cols-[8rem_1fr]"><h3 className="font-manrope text-lg font-semibold text-brand-900">{item.label}</h3><typography.p>{item.title}</typography.p></div>)}</div> : null}
-        </div>
-      </Section> : null}
+      <Suspense fallback={<ThemeSkeleton valueCount={registrationRows(about.sections.nilai?.body).length} />}>
+        <AboutTheme about={about} />
+      </Suspense>
       {hasLegalitas ? <Section id="legalitas" className="bg-highlight-50 py-8 md:py-10" contentClassName="mx-auto grid max-w-7xl gap-5 lg:grid-cols-[1fr_2fr] lg:gap-12">
         <div>
           {legalitas?.title?.trim() ? <typography.h1 className="text-3xl text-brand-900 md:text-4xl">{legalitas.title.trim()}</typography.h1> : null}
@@ -154,16 +135,66 @@ export default async function AboutUs() {
         </div>
       </Section> : null}
 
-      {contact ? <Section id="kontak" className="bg-brand-50 py-10 md:py-12" contentClassName="mx-auto flex max-w-7xl flex-col items-start gap-6 md:flex-row md:items-center md:justify-between">
+      <Suspense fallback={<ContactSkeleton />}>
+        <AboutContact />
+      </Suspense>
+    </main>
+  );
+}
+
+async function ContactLink() {
+  const site = await getPublicSiteIdentity();
+  const contact = site.contacts.find((item) => item.kind === "email") ?? site.contacts.find((item) => item.kind === "instagram");
+  return contact ? <a href="#kontak" className="inline-flex min-h-11 items-center text-base text-brand underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">Hubungi pengurus</a> : null;
+}
+
+async function AboutTheme({ about }: { about: Awaited<ReturnType<typeof getPublicAboutContent>> }) {
+  const home = await getPublicHomeContent();
+  const theme = home.sections.ajakan;
+  const themeTitle = theme?.title?.trim();
+  const themeCards = themeTitle ? resolvePhilosophyCards(themeTitle, theme.body) : [];
+  const themeAction = theme?.actionLabel && theme.actionHref ? { label: theme.actionLabel, href: theme.actionHref } : null;
+  const values = registrationRows(about.sections.nilai?.body);
+  return values.length || themeTitle ? <Section id="filosofi-tema" className="border-b border-neutral-200/70 bg-background" contentClassName="mx-auto max-w-7xl">
+        <typography.h1 className="text-brand-900">{about.sections.nilai?.title || "Nu Nyunda Tur Nyakola"}</typography.h1>
+        <div className={`mt-8 grid gap-10 lg:gap-16 ${themeTitle && values.length ? "lg:grid-cols-[0.9fr_1.1fr]" : ""}`}>
+          {themeTitle ? <div>
+            <h3 className="font-manrope text-2xl font-semibold text-brand-900 md:text-3xl">{themeTitle}</h3>
+            {theme.body?.trim() ? <typography.p className="mt-4 max-w-prose">{theme.body.trim()}</typography.p> : null}
+            <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-1">
+              {themeCards.map((card) => <div key={card.title} className="border-t border-neutral-200 pt-4">
+                <h4 className="font-manrope text-lg font-semibold text-brand-900">{card.title}</h4>
+                <typography.p className="mt-2 text-sm">{card.description}</typography.p>
+              </div>)}
+            </div>
+            {themeAction ? <Button asChild className="mt-6"><Link href={themeAction.href} target={/^https?:\/\//i.test(themeAction.href) ? "_blank" : undefined} rel={/^https?:\/\//i.test(themeAction.href) ? "noopener noreferrer" : undefined}>{themeAction.label}<ArrowRight className="ml-2 size-4" aria-hidden /></Link></Button> : null}
+          </div> : null}
+          {values.length ? <div className="divide-y divide-neutral-200 border-y border-neutral-200">{values.map((item) => <div key={item.label} className="grid gap-2 py-5 sm:grid-cols-[8rem_1fr]"><h3 className="font-manrope text-lg font-semibold text-brand-900">{item.label}</h3><typography.p>{item.title}</typography.p></div>)}</div> : null}
+        </div>
+      </Section> : null;
+}
+
+async function AboutContact() {
+  const site = await getPublicSiteIdentity();
+  const contact = site.contacts.find((item) => item.kind === "email") ?? site.contacts.find((item) => item.kind === "instagram");
+  return contact ? <Section id="kontak" className="bg-brand-50 py-10 md:py-12" contentClassName="mx-auto flex max-w-7xl flex-col items-start gap-6 md:flex-row md:items-center md:justify-between">
         <div className="min-w-0">
           <typography.h1 className="max-w-2xl text-2xl text-brand-900 md:text-3xl">Informasi kegiatan dan kerja sama</typography.h1>
           <typography.p className="mt-3 leading-7">Hubungi pengurus PAMOKA Garut melalui {contact.kind === "email" ? "email" : "Instagram"}.</typography.p>
           <a href={contact.href} className="mt-2 inline-flex min-h-11 max-w-full items-center break-all text-base text-brand underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-highlight-400">{contact.kind === "email" ? contact.href.slice(7) : contact.label}</a>
         </div>
         <Button asChild size="lg"><a href={contact.href}>Hubungi pengurus<ArrowUpRight className="ml-2 size-4" aria-hidden /></a></Button>
-      </Section> : null}
-    </main>
-  );
+      </Section> : null;
+}
+
+function ThemeSkeleton({ valueCount }: { valueCount: number }) {
+  return <section role="status" aria-label="Memuat filosofi" className="border-b border-border bg-background px-8 py-12 md:px-20 md:py-20">
+    <div aria-hidden="true" className="mx-auto max-w-7xl motion-safe:animate-pulse"><div className="h-20 w-80 max-w-full rounded-md bg-muted md:h-12" /><div className="mt-8 grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16"><div className="h-88 rounded-md bg-muted" /><div>{Array.from({ length: valueCount }, (_, item) => <div key={item} className="h-30 border-t border-border bg-muted lg:h-17" />)}</div></div></div>
+  </section>;
+}
+
+function ContactSkeleton() {
+  return <section role="status" aria-label="Memuat kontak" className="bg-brand-50 px-8 py-10 md:px-20 md:py-12"><div aria-hidden="true" className="mx-auto flex max-w-7xl flex-col items-start gap-6 motion-safe:animate-pulse md:flex-row md:items-center md:justify-between"><div className="w-full max-w-2xl"><div className="h-20 rounded-md bg-muted md:h-9" /><div className="mt-3 h-14 rounded-md bg-muted md:h-7" /><div className="mt-2 h-6 w-56 rounded-md bg-muted" /></div><div className="h-10 w-40 shrink-0 rounded-md bg-muted" /></div></section>;
 }
 
 function isKetuaUmum(position: string) {

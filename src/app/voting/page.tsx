@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import Image from 'next/image';
 import { CalendarDays } from 'lucide-react';
 import { Section } from '@/components/custom/section';
@@ -5,6 +6,7 @@ import { typography } from '@/components/custom/typography';
 import { calculateVotesFromAmount } from '@/lib/voting';
 import { VotingCategories, type CategoryTab } from './voting-categories';
 import { VotingPanel } from './voting-panel';
+import { VotingHeaderSkeleton, VotingResultsSkeleton } from './voting-skeleton';
 import {
   getPublicVotingCategories,
   getPublicVotingCategoryBySlug,
@@ -22,17 +24,54 @@ export async function generateMetadata() {
   };
 }
 
-export default async function VotingPage() {
-  const [{ editionYear, categories }, intro, { assets }, activeCampaign] = await Promise.all([
-    getPublicVotingCategories(),
+type VotingBase = Awaited<ReturnType<typeof loadVotingBase>>;
+type VotingDetails = Awaited<ReturnType<typeof loadVotingDetails>>;
+
+async function loadVotingBase(categories: ReturnType<typeof getPublicVotingCategories>) {
+  const [categoryData, intro, identity, activeCampaign] = await Promise.all([
+    categories,
     getPublicPageIntro('voting'),
     getPublicSiteIdentity(),
     getPublicVotingCampaign(),
   ]);
-  const details = (await Promise.all(categories.map(async ({ slug }) => {
+  return { categoryData, intro, identity, activeCampaign };
+}
+
+async function loadVotingDetails(categoryData: VotingBase['categoryData']) {
+  return (await Promise.all(categoryData.categories.map(async ({ slug }) => {
     const [category, results] = await Promise.all([getPublicVotingCategoryBySlug(slug), getPublicVotingResults(slug)]);
     return category && results ? { category, results } : null;
   }))).filter((item) => item !== null);
+}
+
+export default function VotingPage() {
+  const categories = getPublicVotingCategories();
+  const base = loadVotingBase(categories);
+  const details = categories.then(loadVotingDetails);
+  return <main className="relative min-h-screen">
+    <Suspense fallback={<VotingHeaderSkeleton />}>
+      <VotingHeader base={base} details={details} />
+    </Suspense>
+    <Section className="bg-brand-50" contentClassName="mx-auto max-w-7xl">
+      <Suspense fallback={<VotingResultsSkeleton />}>
+        <VotingResultsBoundary base={base} details={details} />
+      </Suspense>
+    </Section>
+  </main>;
+}
+
+type VotingDataProps = { base: Promise<VotingBase>; details: Promise<VotingDetails> };
+
+async function VotingResultsBoundary({ base, details }: VotingDataProps) {
+  const { activeCampaign } = await base;
+  return <Suspense fallback={<VotingResultsSkeleton showChart={activeCampaign?.resultVisibility === 'visible'} />}>
+    <VotingContent base={base} details={details} />
+  </Suspense>;
+}
+
+async function VotingHeader({ base, details: detailsPromise }: VotingDataProps) {
+  const { categoryData: { editionYear }, intro, identity: { assets }, activeCampaign } = await base;
+  const details = !assets['site.voting.bg'] || !activeCampaign ? await detailsPromise : [];
   const poster = assets['site.voting.bg'] ?? details.find(({ category }) => category.poster)?.category.poster;
 
   const campaign = activeCampaign
@@ -47,6 +86,28 @@ export default async function VotingPage() {
   const periodText = campaign
     ? formatCampaignPeriod(campaign.startsAt, campaign.endsAt, campaign.timezone)
     : null;
+  return <section className="relative overflow-hidden bg-brand-900 px-8 pb-12 pt-32 md:px-20 md:pb-16 md:pt-44">
+      {poster ? <Image src={poster.url} alt={poster.alt ?? ""} fill preload sizes="100vw" className="object-cover object-center" /> : null}
+      <div aria-hidden className="absolute inset-0 bg-linear-to-r from-brand-900/95 via-brand-900/80 to-brand-900/40" />
+      <div className="relative mx-auto max-w-7xl">
+        <h1 className="max-w-3xl font-manrope text-4xl font-semibold leading-tight text-canvas md:text-6xl">{campaignTitle}</h1>
+        {periodText ? (
+          <p className="mt-3 flex items-center gap-2 text-sm font-medium text-canvas/80 md:text-base">
+            <CalendarDays className="size-4 shrink-0 text-highlight-400" aria-hidden />
+            <span>{periodText}</span>
+          </p>
+        ) : null}
+        <typography.p className="mt-4 max-w-2xl leading-7 text-canvas/85">{campaignDescription}</typography.p>
+      </div>
+  </section>;
+}
+
+async function VotingContent({ base, details: detailsPromise }: VotingDataProps) {
+  const [{ activeCampaign }, details] = await Promise.all([base, detailsPromise]);
+  const campaign = activeCampaign
+    ?? details.find(({ category }) => category.campaign)?.category.campaign
+    ?? details.find(({ results }) => results.campaign)?.results.campaign
+    ?? null;
   const campaignEnded = details.some(({ results }) => results.ended);
 
   const rumajaCount = details.reduce((total, { category }) => {
@@ -103,29 +164,9 @@ export default async function VotingPage() {
     };
   });
 
-  return <main className="relative min-h-screen">
-    <section className="relative overflow-hidden bg-brand-900 px-8 pb-12 pt-32 md:px-20 md:pb-16 md:pt-44">
-      {poster ? <Image src={poster.url} alt={poster.alt ?? ""} fill preload sizes="100vw" className="object-cover object-center" /> : null}
-      <div aria-hidden className="absolute inset-0 bg-linear-to-r from-brand-900/95 via-brand-900/80 to-brand-900/40" />
-      <div className="relative mx-auto max-w-7xl">
-        <h1 className="max-w-3xl font-manrope text-4xl font-semibold leading-tight text-canvas md:text-6xl">{campaignTitle}</h1>
-        {periodText ? (
-          <p className="mt-3 flex items-center gap-2 text-sm font-medium text-canvas/80 md:text-base">
-            <CalendarDays className="size-4 shrink-0 text-highlight-400" aria-hidden />
-            <span>{periodText}</span>
-          </p>
-        ) : null}
-        <typography.p className="mt-4 max-w-2xl leading-7 text-canvas/85">{campaignDescription}</typography.p>
-      </div>
-    </section>
-    <Section className="bg-brand-50" contentClassName="mx-auto max-w-7xl">
-      {categoryTabs.length ? (
-        <VotingCategories categories={categoryTabs} />
-      ) : (
-        <typography.p>Belum ada kategori voting untuk edisi ini.</typography.p>
-      )}
-    </Section>
-  </main>;
+  return categoryTabs.length
+    ? <VotingCategories categories={categoryTabs} />
+    : <typography.p>Belum ada kategori voting untuk edisi ini.</typography.p>;
 }
 
 function formatCampaignPeriod(startsAt: Date, endsAt: Date, timeZone: string) {

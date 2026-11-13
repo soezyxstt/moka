@@ -24,14 +24,13 @@ function CopyList({ body }: { body: string | null | undefined }) {
   </li>)}</ul>;
 }
 
-export function RegistrationPage({ sections, contact }: { sections: Record<string, PublicPageSection>; contact?: { href: string; label: string } }) {
+export function RegistrationPage({ sections, help }: { sections: Record<string, PublicPageSection>; help: ReactNode }) {
   const reduced = useReducedMotion();
   const ages = registrationRows(sections.usia?.body);
   const agenda = registrationRows(sections.timeline?.body);
   const hero = sections.hero;
   const routes = registrationRows(sections.jalur?.body);
   const steps = registrationRows(sections.langkah?.body);
-  const questions = registrationRows(sections.faq?.body);
   return <main className="overflow-hidden bg-background text-foreground">
     <Section className="overflow-hidden bg-highlight-50 pt-32 md:pt-40" contentClassName="mx-auto max-w-6xl">
       <div className="max-w-3xl">
@@ -107,9 +106,14 @@ export function RegistrationPage({ sections, contact }: { sections: Record<strin
       </ol>
       </div>
     </Section> : null}
-    {questions.length || contact ? <Section className="bg-background" contentClassName="mx-auto max-w-6xl">
+    {help}
+  </main>;
+}
+
+export function RegistrationHelp({ sections, contact }: { sections: Record<string, PublicPageSection>; contact?: { href: string; label: string } }) {
+  const questions = registrationRows(sections.faq?.body);
+  return questions.length || contact ? <Section className="bg-background" contentClassName="mx-auto max-w-6xl">
       {questions.length ? <><typography.h1 className="text-3xl text-brand-900">{sections.faq.title}</typography.h1><Accordion type="single" collapsible className="mt-6">{questions.map((item, index) => <AccordionItem key={item.label} value={String(index)}><AccordionTrigger className="text-left font-manrope text-lg text-brand-900">{item.label}</AccordionTrigger><AccordionContent><typography.p>{item.title}</typography.p></AccordionContent></AccordionItem>)}</Accordion></> : null}
       {contact ? <div className="mt-10 border-t border-neutral-200 pt-8"><h2 className="font-manrope text-2xl font-semibold text-brand-900">Bantuan pendaftaran</h2><typography.p className="mt-3 max-w-prose">Ada pertanyaan tentang kategori atau berkas? Hubungi panitia melalui {contact.label}.</typography.p><Button asChild className="mt-5"><a href={contact.href}>Hubungi panitia<ArrowUpRight className="ml-2 size-4" aria-hidden /></a></Button></div> : null}
-    </Section> : null}
-  </main>;
+    </Section> : null;
 }

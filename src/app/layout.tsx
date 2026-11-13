@@ -39,8 +39,11 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const navigation = await getPublicNavigation();
-  const identity = await getPublicSiteIdentity();
+  const [navigation, identity, previewEditionId] = await Promise.all([
+    getPublicNavigation(),
+    getPublicSiteIdentity(),
+    getPreviewEditionId(),
+  ]);
   const logos = resolveBrandLogos(identity.assets, identity.edition);
 
   return (
@@ -66,7 +69,7 @@ export default async function RootLayout({
       <body
         className={`${manrope.variable} ${inter.variable} antialiased font-inter`}
       >
-        {await getPreviewEditionId() ? <div className="fixed inset-x-0 bottom-0 z-50 flex flex-wrap items-center justify-center gap-4 bg-brand-900 p-3 text-sm text-canvas"><span>Pratinjau edisi {navigation.edition.year}, hanya untuk admin</span><form action={stopPreviewAction}><Button type="submit" size="sm">Tutup pratinjau</Button></form></div> : null}
+        {previewEditionId ? <div className="fixed inset-x-0 bottom-0 z-50 flex flex-wrap items-center justify-center gap-4 bg-brand-900 p-3 text-sm text-canvas"><span>Pratinjau edisi {navigation.edition.year}, hanya untuk admin</span><form action={stopPreviewAction}><Button type="submit" size="sm">Tutup pratinjau</Button></form></div> : null}
         <AdminBrandProvider value={{ title: identity.title, slogan: navigation.edition.slogan, logo: logos.mobile, background: identity.assets['site.profile.bg']?.url ?? null }}>
         <SiteChrome
           top={
