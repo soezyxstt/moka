@@ -44,6 +44,7 @@ Audit font lanjutan 2026-10-15 selesai lokal: 100 sampel route/viewport, dialog 
 
 | Plan | Judul Rencana | Dokumen / Referensi | Status | Keterangan |
 |---|---|---|---|---|
+| **020** | Foto dan QRIS peserta per tahap | `plans/stage-media.md` | **IN PROGRESS** | Source dan migrasi sudah dirilis ke produksi; QA admin dan pengisian aset finalis belum dilakukan. |
 | **001** | Replace PostgreSQL and Prisma with Turso and Drizzle | Git commit `3874ede` | **DONE** | Migrasi total ke LibSQL (Turso) dan Drizzle ORM dengan mode `timestamp_ms`. |
 | **002** | Restore the verification baseline and upgrade to Next.js 16 | Package & Config | **DONE** | Penyesuaian verifikasi (`typecheck`, `lint`, `test:db`, `verify`) dan upgrade Next.js 16. |
 | **003** | Add Google OAuth, access requests, and granular RBAC | `src/server/auth/*` | **DONE** | Better Auth Google login, approval alur permohonan akses, role dan izin granular. |

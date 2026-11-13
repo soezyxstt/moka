@@ -1,6 +1,6 @@
 "use server";
 
-import { and, asc, eq, ne } from "drizzle-orm";
+import { and, asc, eq, ne, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 import { appendAuditLog } from "@/server/auth/audit";
@@ -8,6 +8,7 @@ import { requirePermission } from "@/server/auth/authorization";
 import { getAdminEditionContext } from "@/server/cms/context";
 import { database } from "@/server/db/client";
 import { isAllowedMediaMimeType } from "@/server/media/policy";
+import { initializeParticipantStageMedia } from "@/server/selection/stage-media";
 import {
   categories,
   mediaAssets,
@@ -762,6 +763,8 @@ export async function saveParticipantMediaAction(
     }
     if (!Number.isInteger(expectedVersion) || participant.version !== expectedVersion) throw new Error("Data peserta telah diubah. Muat ulang halaman.");
 
+    await initializeParticipantStageMedia(tx, participant, now);
+
     // Verify that each role points to a ready asset of the expected media type.
     for (const item of mediaItems) {
       const [asset] = await tx
@@ -816,6 +819,15 @@ export async function saveParticipantMediaAction(
     const closeupItem = validItems.find((item) => item.role === "closeup" && item.active);
     synchronizedCloseupMediaId = closeupItem ? closeupItem.mediaId : null;
 
+    if (participant.currentStageId) {
+      const updatedStage = await tx.update(participantStageEntries).set({
+        portraitMediaId: synchronizedCloseupMediaId,
+        version: sql`${participantStageEntries.version} + 1`,
+        updatedAt: now,
+      }).where(and(eq(participantStageEntries.participantId, participantId), eq(participantStageEntries.stageId, participant.currentStageId))).returning({ id: participantStageEntries.id });
+      if (updatedStage.length !== 1) throw new Error("Tahap aktif peserta tidak ditemukan");
+    }
+
     nextVersion = participant.version + 1;
     const updated = await tx
       .update(participants)
@@ -860,6 +872,107 @@ export async function saveParticipantMediaAction(
 // 6. UPDATE QRIS & PAYMENT URL
 // ---------------------------------------------------------------------------
 
+export async function updateParticipantStageMediaAction(input: {
+  participantId: string;
+  entryId: string;
+  expectedParticipantVersion: number;
+  expectedEntryVersion: number;
+  portraitMediaId: string | null;
+  qrisMediaId: string | null;
+  reason: string;
+}) {
+  const actor = await requirePermission("participants.manage");
+  const editionContext = await getAdminEditionContext();
+  if (!editionContext) throw new Error("Pilih edisi aktif terlebih dahulu");
+  if (!input.participantId || !input.entryId || !input.reason?.trim()
+    || !Number.isInteger(input.expectedParticipantVersion) || input.expectedParticipantVersion < 1
+    || !Number.isInteger(input.expectedEntryVersion) || input.expectedEntryVersion < 1
+    || (input.portraitMediaId !== null && (typeof input.portraitMediaId !== "string" || !input.portraitMediaId.trim()))
+    || (input.qrisMediaId !== null && (typeof input.qrisMediaId !== "string" || !input.qrisMediaId.trim()))) {
+    throw new Error("Data media tahap tidak valid");
+  }
+
+  const now = new Date();
+  await database.transaction(async (tx) => {
+    const [row] = await tx.select({ participant: participants, entry: participantStageEntries, stage: selectionStages })
+      .from(participantStageEntries)
+      .innerJoin(participants, eq(participantStageEntries.participantId, participants.id))
+      .innerJoin(selectionStages, eq(participantStageEntries.stageId, selectionStages.id))
+      .where(and(eq(participantStageEntries.id, input.entryId), eq(participants.id, input.participantId),
+        eq(participants.editionId, editionContext.id), eq(selectionStages.editionId, editionContext.id)))
+      .limit(1);
+    if (!row) throw new Error("Tahap peserta tidak ditemukan");
+    if (row.participant.version !== input.expectedParticipantVersion || row.entry.version !== input.expectedEntryVersion) {
+      throw new Error("Data peserta atau tahap telah diubah. Muat ulang halaman.");
+    }
+    for (const id of [input.portraitMediaId, input.qrisMediaId]) {
+      if (!id) continue;
+      const [asset] = await tx.select().from(mediaAssets)
+        .where(and(eq(mediaAssets.id, id), eq(mediaAssets.lifecycle, "ready"))).limit(1);
+      if (!asset || !isAllowedMediaMimeType("image", asset.mimeType)) {
+        throw new Error("Foto dan QRIS harus berupa gambar valid berstatus ready dari pustaka media");
+      }
+    }
+    await initializeParticipantStageMedia(tx, row.participant, now);
+    const updatedEntry = await tx.update(participantStageEntries).set({
+      portraitMediaId: input.portraitMediaId,
+      qrisMediaId: input.qrisMediaId,
+      mediaInitialized: true,
+      version: sql`${participantStageEntries.version} + 1`,
+      updatedAt: now,
+    }).where(and(eq(participantStageEntries.id, row.entry.id),
+      eq(participantStageEntries.version, row.entry.version + (row.entry.mediaInitialized ? 0 : 1))))
+      .returning({ id: participantStageEntries.id });
+    if (updatedEntry.length !== 1) throw new Error("Data tahap telah diubah. Muat ulang halaman.");
+
+    const current = row.participant.currentStageId === row.stage.id;
+    const updatedParticipant = await tx.update(participants).set({
+      ...(current ? { portraitMediaId: input.portraitMediaId, qrisMediaId: input.qrisMediaId } : {}),
+      version: row.participant.version + 1,
+      updatedAt: now,
+    }).where(and(eq(participants.id, row.participant.id), eq(participants.version, input.expectedParticipantVersion)))
+      .returning({ id: participants.id });
+    if (updatedParticipant.length !== 1) throw new Error("Data peserta telah diubah. Muat ulang halaman.");
+
+    if (current) {
+      await tx.update(participantMedia).set({ active: false, updatedAt: now })
+        .where(and(eq(participantMedia.participantId, row.participant.id), eq(participantMedia.role, "closeup")));
+      if (input.portraitMediaId) {
+        const [existing] = await tx.select({ id: participantMedia.id }).from(participantMedia)
+          .where(and(eq(participantMedia.participantId, row.participant.id), eq(participantMedia.role, "closeup"),
+            eq(participantMedia.mediaId, input.portraitMediaId))).limit(1);
+        if (existing) {
+          await tx.update(participantMedia).set({ active: true, updatedAt: now }).where(eq(participantMedia.id, existing.id));
+        } else {
+          await tx.insert(participantMedia).values({ id: crypto.randomUUID(), participantId: row.participant.id,
+            role: "closeup", mediaId: input.portraitMediaId, displayOrder: 0, active: true, createdAt: now, updatedAt: now });
+        }
+      }
+    }
+    await appendAuditLog(tx, {
+      actorUserId: actor.session.user.id,
+      actorLabel: actor.session.user.email,
+      action: "participant.stage.media.update",
+      resourceType: "participantStageEntry",
+      resourceId: row.entry.id,
+      resourceLabel: `${row.participant.name} - ${row.stage.name}`,
+      before: { portraitMediaId: row.entry.mediaInitialized ? row.entry.portraitMediaId : row.participant.portraitMediaId,
+        qrisMediaId: row.entry.mediaInitialized ? row.entry.qrisMediaId : row.participant.qrisMediaId, version: row.entry.version },
+      after: { portraitMediaId: input.portraitMediaId, qrisMediaId: input.qrisMediaId },
+      changedFields: ["portraitMediaId", "qrisMediaId", "mediaInitialized", "version"],
+      source: "admin-content",
+      reason: input.reason.trim(),
+    });
+  });
+  revalidatePath("/admin/content/participants");
+  revalidatePath(`/admin/content/participants/${input.participantId}`);
+  revalidatePath("/admin/voting");
+  revalidatePath("/voting");
+  revalidatePath("/profil-semifinalis", "layout");
+  revalidatePath("/profil-finalis", "layout");
+  return { success: true };
+}
+
 export async function updateParticipantQrisAction(formData: FormData) {
   const actor = await requirePermission("participants.manage");
   const editionContext = await getAdminEditionContext();
@@ -888,6 +1001,8 @@ export async function updateParticipantQrisAction(formData: FormData) {
     if (!before) throw new Error("Peserta tidak ditemukan");
     if (before.version !== expectedVersion) throw new Error("Data peserta telah diubah. Muat ulang halaman.");
 
+    await initializeParticipantStageMedia(tx, before, now);
+
     if (qrisMediaId) {
       const [qrisMedia] = await tx
         .select()
@@ -902,6 +1017,15 @@ export async function updateParticipantQrisAction(formData: FormData) {
 
     nextVersion = before.version + 1;
     const after = { qrisMediaId, version: nextVersion, updatedAt: now };
+
+    if (before.currentStageId) {
+      const updatedStage = await tx.update(participantStageEntries).set({
+        qrisMediaId,
+        version: sql`${participantStageEntries.version} + 1`,
+        updatedAt: now,
+      }).where(and(eq(participantStageEntries.participantId, participantId), eq(participantStageEntries.stageId, before.currentStageId))).returning({ id: participantStageEntries.id });
+      if (updatedStage.length !== 1) throw new Error("Tahap aktif peserta tidak ditemukan");
+    }
 
     const updated = await tx
       .update(participants)

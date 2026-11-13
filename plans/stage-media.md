@@ -1,0 +1,13 @@
+# Foto dan QRIS peserta per tahap
+
+Status: IN PROGRESS. Dependensi: Plan 004, 008, 009, 012 dan 014. Drift diperiksa terhadap baseline `3874ede`; worktree bersih sebelum perubahan. Tahap dan peserta produksi tidak berubah dalam pekerjaan source ini.
+
+Cakupan: schema dan migrasi additive, pewarisan dan perlindungan saat perpindahan tahap, editor peserta dengan komponen media existing, pembaca publik dan voting sesuai tahap, tes serta dokumentasi admin dan operator. Referensi aset legacy harus dibekukan sebelum penggantian; data historis yang belum pernah dicatat tidak boleh diklaim berhasil direkonstruksi.
+
+STOP: jangan migrasi produksi, mengunggah aset, mengubah data produksi, atau deploy tanpa otorisasi eksplisit untuk tindakan dan target. Jangan menghapus binding tahap atau mengubah nominal pembayaran tanpa verifikasi. Jangan menganggap hasil source sebagai penerimaan produksi.
+
+Media tahap lama yang belum diinisialisasi memakai referensi peserta existing. Sebelum ada perubahan media peserta, seluruh entry lama untuk peserta tersebut dibekukan secara transaksional. Ini mempertahankan referensi saat ini, bukan rekonstruksi foto historis yang sebelumnya tidak dicatat per tahap. Tahap baru menyalin referensi tahap sebelumnya, termasuk nilai kosong. Tahap berikutnya yang telah diubah tidak dapat dihapus lewat buka kembali tahap sebelumnya. Snapshot kampanye menyimpan tahap sumber, bukan salinan tetap media, sehingga perubahan media pada tahap sumber juga memengaruhi kampanye terkait.
+
+Verifikasi lokal: migrasi `0019_red_mister_sinister.sql` dihasilkan dan `db:check` lulus. `npm run verify` lulus dengan database in-memory: 116 tes database, 5 tes SEO, typecheck, lint dengan satu warning TanStack existing, dan build 44 halaman. Tes upgrade dari skema sebelumnya dan action media tahap juga lulus secara terpisah. Tes logo admin yang sudah tidak sesuai perilaku diperbaiki agar memeriksa pengiriman langsung existing. Verifikasi ini tidak mencakup browser.
+
+Penerapan 2026-11-13: migrasi 0019 diterapkan pada `pamoka-soezyxstt.aws-ap-south-1.turso.io` setelah backup terbatas terenkripsi untuk empat tabel lulus pemulihan. Sebanyak 278 entry tahap, 234 peserta dan 947 media cocok dengan backup setelah migrasi; integrity `ok` dan foreign key tanpa error. Deployment `dpl_BTA2ta7CE7LmPd3Bxd29BY9r6cB9` pada proyek `pamoka-garut` READY dan promosi `www.pamokagarut.com` selesai. Empat route publik/login memberi HTTP 200 dan log error/fatal deployment baru kosong pada jendela pemeriksaan. Browser admin dan perubahan media nyata belum diuji. Tidak ada upload atau perubahan roster, QRIS maupun kampanye.

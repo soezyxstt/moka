@@ -26,6 +26,7 @@ import {
   categories,
   editions,
   mediaAssets,
+  participantStageEntries,
   participants,
   selectionStages,
   voteDailyTallies,
@@ -803,3 +804,43 @@ test("setiap proses pencatatan voting direkam pada audit log beserta jumlah vote
   }
 });
 
+
+
+test("tally memakai QRIS tahap sumber snapshot dan mempertahankan fallback data lama", async () => {
+  const { client, db } = await createTestDatabase();
+  try {
+    const campaign = await createVotingCampaign(db, "edition-a", {
+      name: "Voting Tahap", slug: "voting-tahap", eligibilityStageId: "stage-a-final",
+      startsAt: new Date("2026-09-01T00:00:00+07:00"),
+      endsAt: new Date("2026-09-30T23:59:00+07:00"), pricePerPoint: 2_000,
+    }, actor, now);
+    await db.insert(participantStageEntries).values([
+      { id: "entry-early", participantId: "participant-a", stageId: "stage-a-early", mediaInitialized: true, qrisMediaId: "qris-a", createdAt: now, updatedAt: now },
+      { id: "entry-final", participantId: "participant-a", stageId: "stage-a-final", mediaInitialized: true, qrisMediaId: null, createdAt: now, updatedAt: now },
+    ]);
+    await startVotingCampaign(db, "edition-a", {
+      campaignId: campaign.id, expectedVersion: 1, confirmation: "Voting Tahap", reason: "Mulai",
+    }, actor, now);
+    const single = () => saveVotingTally(db, "edition-a", {
+      campaignId: campaign.id, participantId: "participant-a", localDate: "2026-09-06", amount: 2_000, expectedVersion: 0, reason: "Rekap",
+    }, actor, now);
+    const batch = () => saveVotingTalliesBatch(db, "edition-a", {
+      campaignId: campaign.id, entries: [{ participantId: "participant-a", votes: 1, mode: "add" }], canManageTally: true,
+    }, actor, now);
+    await assert.rejects(single(), /gambar QRIS/);
+    await assert.rejects(batch(), /gambar QRIS/);
+
+    await db.update(votingCampaignParticipants).set({ sourceStageId: "stage-a-early" }).where(eq(votingCampaignParticipants.participantId, "participant-a"));
+    await db.update(participants).set({ qrisMediaId: null }).where(eq(participants.id, "participant-a"));
+    assert.equal((await single()).version, 1);
+    assert.equal((await batch()).updatedCount, 1);
+
+    await db.update(votingCampaignParticipants).set({ sourceStageId: null }).where(eq(votingCampaignParticipants.participantId, "participant-a"));
+    await assert.rejects(batch(), /gambar QRIS/);
+    await db.update(participantStageEntries).set({ mediaInitialized: false }).where(eq(participantStageEntries.id, "entry-final"));
+    await db.update(participants).set({ qrisMediaId: "qris-a" }).where(eq(participants.id, "participant-a"));
+    assert.equal((await batch()).updatedCount, 1);
+  } finally {
+    client.close();
+  }
+});
