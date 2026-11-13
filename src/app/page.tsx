@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Image from "next/image";
 import Link from 'next/link';
 import { registrationRows } from "@/server/cms/registration";
@@ -26,13 +27,7 @@ function formatNewsDate(date: Date) {
 }
 
 export default async function Home() {
-  const [home, newsItems, navigation, identity, about] = await Promise.all([
-    getPublicHomeContent(),
-    getPublicNews(),
-    getPublicNavigation(),
-    getPublicSiteIdentity(),
-    getPublicAboutContent(),
-  ]);
+  const [home, navigation] = await Promise.all([getPublicHomeContent(), getPublicNavigation()]);
   const programs = (home.programs.length ? home.programs : (home.sections.program?.body ?? "")
     .split(/\r?\n/).map((title) => title.trim()).filter(Boolean).map((title) => ({ title, description: null })))
     .map((item) => {
@@ -42,8 +37,6 @@ export default async function Home() {
         description: item.description?.trim() || (colon > 0 ? item.title.slice(colon + 1).trim() : null),
       };
     });
-  const logos = resolveBrandLogos(identity.assets, identity.edition);
-  const bannerLogo = logos.footer ?? logos.desktop;
   const hero = home.sections.hero;
   const agenda = registrationRows(home.sections.agenda?.body);
   const program = home.sections.program;
@@ -62,10 +55,11 @@ export default async function Home() {
 
   const hasHero = Boolean(hero?.title?.trim() || hero?.body?.trim() || home.assets['home.hero.bg'] || heroImage);
   const hasProgram = Boolean(program?.title?.trim() || home.programs.length || home.assets['home.programs.bg'] || collage.length);
-  const hasNews = Boolean(news?.title?.trim() || news?.body?.trim() || newsItems.length || home.assets['home.news.bg']);
+  const hasNewsContent = Boolean(news?.title?.trim() || news?.body?.trim() || home.assets['home.news.bg']);
+  const initialNews = !hasHero && !hasProgram && !hasNewsContent ? await getPublicNews() : undefined;
   const hasEvents = navigation.events.length > 0;
 
-  if (!hasHero && !hasProgram && !hasNews) {
+  if (!hasHero && !hasProgram && !hasNewsContent && !initialNews?.length) {
     return (
       <main className="grid min-h-screen place-items-center px-8">
         <p className="font-inter text-sm text-muted-foreground">Konten beranda belum diterbitkan untuk edisi ini.</p>
@@ -242,7 +236,21 @@ export default async function Home() {
         </section>
       ) : null}
 
-      <Section id="gallery" className="border-b border-neutral-200/70 bg-background py-16 md:py-24" contentClassName="mx-auto max-w-7xl">
+      <Suspense fallback={<GallerySkeleton />}>
+        <HomeGallery />
+      </Suspense>
+
+      <Suspense fallback={<NewsSkeleton />}>
+        <HomeNews home={home} initialNews={initialNews} participantProfileHref={participantProfileHref} participantRoleLabel={participantRoleLabel} />
+      </Suspense>
+    </main>
+  );
+}
+
+async function HomeGallery() {
+  const about = await getPublicAboutContent();
+  return (
+    <Section id="gallery" className="border-b border-neutral-200/70 bg-background py-16 md:py-24" contentClassName="mx-auto max-w-7xl">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <typography.h1 className="text-3xl text-brand-900 md:text-4xl">Kegiatan kami</typography.h1>
           <Link href="/galeri" className="inline-flex min-h-11 w-fit items-center gap-2 border-b border-brand/40 text-sm font-medium text-brand transition-colors hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">Lihat semua galeri<ArrowRight className="size-4" aria-hidden /></Link>
@@ -251,9 +259,21 @@ export default async function Home() {
           {about.galleries.slice(0, 3).map((album, index) => <AlbumPreview key={album.id} album={album} featured={index === 0} />)}
         </div> : <typography.p className="mt-8">Belum ada album terbit untuk edisi ini.</typography.p>}
       </Section>
+  );
+}
 
-      {/* 5. BERITA DAN UPDATE SECTION */}
-      {hasNews ? (
+async function HomeNews({ home, initialNews, participantProfileHref, participantRoleLabel }: {
+  home: Awaited<ReturnType<typeof getPublicHomeContent>>;
+  initialNews?: Awaited<ReturnType<typeof getPublicNews>>;
+  participantProfileHref: string;
+  participantRoleLabel: string;
+}) {
+  const [newsItems, identity] = await Promise.all([initialNews ?? getPublicNews(), getPublicSiteIdentity()]);
+  const news = home.sections.berita;
+  const hasNews = Boolean(news?.title?.trim() || news?.body?.trim() || newsItems.length || home.assets['home.news.bg']);
+  const logos = resolveBrandLogos(identity.assets, identity.edition);
+  const bannerLogo = logos.footer ?? logos.desktop;
+  return hasNews ? (
         <section
           id="section-2"
           className="relative border-b border-neutral-200/70 bg-background px-8 py-16 md:px-20 md:py-24"
@@ -391,13 +411,29 @@ export default async function Home() {
             )}
           </div>
         </section>
-      ) : null}
+    ) : null;
+}
 
+function GallerySkeleton() {
+  return <section role="status" aria-label="Memuat galeri" className="border-b border-border bg-background px-8 py-16 md:px-20 md:py-24">
+    <div aria-hidden="true" className="mx-auto max-w-7xl motion-safe:animate-pulse">
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between"><div className="h-11 w-64 max-w-full rounded-md bg-muted" /><div className="h-11 w-36 rounded-md bg-muted" /></div>
+      <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr]">
+        {[0, 1, 2].map((item) => <div key={item} className={`flex min-w-0 flex-col gap-3 ${item === 0 ? "sm:col-span-2 lg:col-span-1 lg:row-span-2" : ""}`}><div className={`rounded-lg bg-muted ${item === 0 ? "aspect-[4/3] lg:aspect-auto lg:min-h-[26rem] lg:flex-1" : "aspect-[16/9]"}`} /><div><div className="h-7 w-2/3 rounded-md bg-muted" /><div className="mt-1 h-44 rounded-md bg-muted md:h-32" /><div className="mt-2 h-5 w-36 rounded-md bg-muted" /></div></div>)}
+      </div>
+    </div>
+  </section>;
+}
 
-
-
-    </main>
-  );
+function NewsSkeleton() {
+  return <section role="status" aria-label="Memuat berita" className="border-b border-border bg-background px-8 py-16 md:px-20 md:py-24">
+    <div aria-hidden="true" className="mx-auto max-w-7xl motion-safe:animate-pulse">
+      <div className="mb-10 h-10 w-56 max-w-full rounded-md bg-muted md:mb-12" />
+      <div className="space-y-6">
+        {[0, 1].map((item) => <div key={item} className="grid overflow-hidden rounded-2xl border border-border md:grid-cols-12"><div className="min-h-64 bg-muted md:col-span-5" /><div className="p-6 md:col-span-7 md:p-8"><div className="h-4 w-24 rounded-md bg-muted" /><div className="mt-2 h-14 rounded-md bg-muted" /><div className="mt-3 h-40 rounded-md bg-muted md:h-20" /><div className="mt-8 flex flex-wrap gap-4"><div className="h-9 w-36 rounded-md bg-muted" /><div className="h-9 w-48 rounded-md bg-muted" /></div></div></div>)}
+      </div>
+    </div>
+  </section>;
 }
 
 function AlbumPreview({ album, featured }: { album: PublicGalleryAlbum; featured: boolean }) {
