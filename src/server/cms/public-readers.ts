@@ -1,7 +1,8 @@
-import { and, asc, desc, eq, gte, inArray, lte } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm';
 import { connection } from 'next/server';
 import { cache } from 'react';
 import { readEditionPalette } from '@/server/cms/edition-palette';
+import { stagePortraitMediaId, stageQrisMediaId } from '@/server/selection/stage-media';
 import type { SiteAssetGroup } from '@/server/cms/site-asset-manifest';
 import { readEditionSiteAssets } from '@/server/cms/site-assets';
 import { contactHref, organizationCopy, type SiteContact } from '@/server/cms/site-copy';
@@ -12,7 +13,7 @@ import { contentDrafts } from '@/server/db/schema';
 import { contentRevisions } from '@/server/db/schema';
 import { archivedIdentity } from '@/server/organization/profile-history';
 import { parsePublicDocument, publicPdfUrl } from '@/server/cms/public-document';
-import { parseCategory, categories as dbCategories, editions, editionPrograms, events, galleries, galleryItems, mediaAssets, newsArticles, organizationMemberships, organizationPeriods, organizationUnits, pageSections, participantAchievements, participantMedia, participants, people, sponsors as dbSponsors, voteDailyTallies, votingCampaignParticipants, votingCampaigns } from '@/server/db/schema';
+import { parseCategory, categories as dbCategories, editions, editionPrograms, events, galleries, galleryItems, mediaAssets, newsArticles, organizationMemberships, organizationPeriods, organizationUnits, pageSections, participantAchievements, participantMedia, participantStageEntries, participants, people, sponsors as dbSponsors, voteDailyTallies, votingCampaignParticipants, votingCampaigns } from '@/server/db/schema';
 import { database } from '@/server/db/client';
 import { REGISTRATION_SECTIONS, registrationEditionEligible, registrationVisible } from '@/server/cms/registration';
 
@@ -470,21 +471,26 @@ async function getPublicVotingCandidates(campaignId: string, categoryId: string,
   const rows = await database
     .select({
       id: participants.id,
-      number: participants.number,
+      number: sql<number>`coalesce(${participantStageEntries.number}, ${participants.number})`,
       name: participants.name,
       slug: participants.slug,
       bio: participants.bio,
-      portraitMediaId: participants.portraitMediaId,
-      qrisMediaId: participants.qrisMediaId,
+      portraitMediaId: stagePortraitMediaId,
+      qrisMediaId: stageQrisMediaId,
     })
     .from(votingCampaignParticipants)
     .innerJoin(participants, eq(votingCampaignParticipants.participantId, participants.id))
+    .innerJoin(votingCampaigns, eq(votingCampaigns.id, votingCampaignParticipants.campaignId))
+    .leftJoin(participantStageEntries, and(
+      eq(participantStageEntries.participantId, participants.id),
+      eq(participantStageEntries.stageId, sql`coalesce(${votingCampaignParticipants.sourceStageId}, ${votingCampaigns.eligibilityStageId})`),
+    ))
     .where(and(
       eq(votingCampaignParticipants.campaignId, campaignId),
       eq(participants.categoryId, categoryId),
       eq(participants.editionId, editionId),
     ))
-    .orderBy(asc(participants.displayOrder), asc(participants.number), asc(participants.name));
+    .orderBy(asc(sql`coalesce(${participantStageEntries.displayOrder}, ${participants.displayOrder})`), asc(sql`coalesce(${participantStageEntries.number}, ${participants.number})`), asc(participants.name));
   if (!rows.length) return [];
 
   const participantIds = rows.map((row) => row.id);

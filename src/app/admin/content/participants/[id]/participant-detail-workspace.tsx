@@ -43,6 +43,7 @@ import {
   saveParticipantSocialLinksAction,
   updateParticipantAction,
   updateParticipantQrisAction,
+  updateParticipantStageMediaAction,
   type ParticipantAchievementItem,
   type ParticipantMediaItem,
   type ParticipantSocialLinkItem,
@@ -85,6 +86,7 @@ export type ParticipantDetail = {
   achievements: { id: string; text: string; displayOrder: number }[];
   socialLinks: { id: string; platform: SocialPlatform; label: string | null; url: string; displayOrder: number }[];
   titles: { id: string; name: string }[];
+  stages: { id: string; stageId: string; name: string; version: number; portraitAsset: MediaAssetDetail | null; qrisAsset: MediaAssetDetail | null }[];
   media: {
     id: string;
     role: ParticipantMediaRole;
@@ -468,6 +470,7 @@ export function ParticipantDetailWorkspace({
         }));
 
         setMediaReason("");
+        if (participant.stages.length) window.location.reload();
         toast.success("Media peserta berhasil diperbarui", { id: toastId });
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Gagal menyimpan foto peserta", { id: toastId });
@@ -612,7 +615,7 @@ export function ParticipantDetailWorkspace({
                   : "text-muted-foreground hover:bg-canvas/50 hover:text-foreground"
               }`}
             >
-              <QrCode size={14} /> QRIS
+              <QrCode size={14} /> {participant.stages.length ? "Foto dan QRIS tahap" : "QRIS"}
             </Button>
           </div>
 
@@ -1138,7 +1141,9 @@ export function ParticipantDetailWorkspace({
           ) : null}
 
           {/* TAB 5: QRIS */}
-          {activeTab === "qris" ? (
+          {activeTab === "qris" && participant.stages.length ? (
+            <StageMediaEditor participant={participant} editionId={edition.id} canEdit={canEdit} canManageMedia={canManageMedia} />
+          ) : activeTab === "qris" ? (
             <AdminCard className="p-4 sm:p-5">
               <AdminCardHeader
                 title="Gambar QRIS"
@@ -1393,5 +1398,66 @@ export function ParticipantDetailWorkspace({
         activeEditionId={edition.id}
       />
     </div>
+  );
+}
+
+function StageMediaEditor({ participant, editionId, canEdit, canManageMedia }: {
+  participant: ParticipantDetail;
+  editionId: string;
+  canEdit: boolean;
+  canManageMedia: boolean;
+}) {
+  const [stageId, setStageId] = useState(participant.stages.find((stage) => stage.stageId === participant.currentStageId)?.id ?? participant.stages[0].id);
+  const stage = participant.stages.find((item) => item.id === stageId)!;
+  return (
+    <AdminCard className="p-4 sm:p-5">
+      <AdminCardHeader title="Foto dan QRIS per tahap" />
+      <AdminField label="Tahap">
+        <AdminSelect value={stageId} onValueChange={setStageId} options={participant.stages.map((item) => ({ value: item.id, label: item.name }))} />
+      </AdminField>
+      <StageMediaForm key={stage.id} participant={participant} stage={stage} editionId={editionId} canEdit={canEdit} canManageMedia={canManageMedia} />
+    </AdminCard>
+  );
+}
+
+function StageMediaForm({ participant, stage, editionId, canEdit, canManageMedia }: {
+  participant: ParticipantDetail;
+  stage: ParticipantDetail["stages"][number];
+  editionId: string;
+  canEdit: boolean;
+  canManageMedia: boolean;
+}) {
+  const [portrait, setPortrait] = useState<MediaAssetDetail | null>(stage.portraitAsset);
+  const [qris, setQris] = useState<MediaAssetDetail | null>(stage.qrisAsset);
+  const [reason, setReason] = useState("");
+  const [pending, startTransition] = useTransition();
+  const summary = (asset: MediaAssetDetail | null): MediaAssetSummary | null => asset ? { ...asset, lifecycle: "ready", folderId: null } : null;
+
+  return (
+    <form className="space-y-4 pt-4" onSubmit={(event) => {
+      event.preventDefault();
+      if (!reason.trim()) return;
+      startTransition(async () => {
+        try {
+          await updateParticipantStageMediaAction({ participantId: participant.id, entryId: stage.id,
+            expectedParticipantVersion: participant.version, expectedEntryVersion: stage.version,
+            portraitMediaId: portrait?.id ?? null, qrisMediaId: qris?.id ?? null, reason });
+          window.location.reload();
+        } catch (error) {
+          toast.error(error instanceof Error ? error.message : "Gagal menyimpan media tahap");
+        }
+      });
+    }}>
+      <AdminMediaField name="stagePortrait" label="Foto utama" initialAsset={summary(stage.portraitAsset)} onChange={setPortrait}
+        acceptType="image" canManageMedia={canManageMedia} activeEditionId={editionId} />
+      <AdminMediaField name="stageQris" label="Gambar QRIS" initialAsset={summary(stage.qrisAsset)} onChange={setQris}
+        acceptType="image" canManageMedia={canManageMedia} activeEditionId={editionId} />
+      <AdminField label="Alasan perubahan">
+        <AdminInput value={reason} onChange={(event) => setReason(event.target.value)} required />
+      </AdminField>
+      <div className="flex justify-end">
+        <Button type="submit" disabled={!canEdit || pending}>{pending ? "Menyimpan..." : "Simpan media tahap"}</Button>
+      </div>
+    </form>
   );
 }

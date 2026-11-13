@@ -196,6 +196,8 @@ All uploads go through **UploadThing** only. There is no R2, S3, or local-blob w
 
 ## Project State
 
+Plan 020 IN PROGRESS: foto dan QRIS per tahap sudah dirilis ke produksi pada 2026-11-13 dengan migrasi 0019, backup dan pemeriksaan integritas. QA browser admin dan pengisian aset finalis belum dilakukan; lihat `plans/stage-media.md`.
+
 ### Plans (authoritative status lives in `plans/README.md`)
 
 | Plan | Title | Status |

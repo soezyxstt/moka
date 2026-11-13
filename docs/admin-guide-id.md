@@ -180,7 +180,7 @@ Menu **Mojang Jajaka** (`/admin/content/participants`) mengelola peserta Pasangg
 1. **Atur Tahap**: Buka `/admin/content/participants/stages`, buat alur dari tahap pertama sampai tahap final, lalu buka tahap pertama.
 2. **Input Manual**: Buka `/admin/content/participants/new` untuk memasukkan pendaftar dari Google Form. Pendaftar otomatis masuk ke tahap pertama.
 3. **Workspace Seleksi**: Buka satu tahap untuk menetapkan `Lolos` atau `Tidak lolos`. Semua peserta harus memiliki keputusan sebelum tahap ditutup.
-4. **Pemulihan**: Keputusan dapat di-rollback dengan alasan. Tahap tertutup dapat dibuka kembali hanya jika tahap berikutnya belum diproses.
+4. **Pemulihan**: Keputusan dapat di-rollback dengan alasan. Tahap tertutup dapat dibuka kembali hanya jika tahap berikutnya belum diproses atau diubah, karena entri tahap berikutnya akan dihapus saat pemulihan.
 5. **Kategori Standar**: Peserta memakai kategori baku `JD`, `MD`, `JR`, atau `MR`.
 6. **Kuota Tahap**: Atur target untuk tiap kategori `JD`, `MD`, `JR`, dan `MR`; jumlah total dihitung otomatis. Tahap lama tanpa kuota per kategori tetap memakai target total. Jika jumlah peserta yang lolos di bawah kuota, konfirmasi dan alasan diperlukan.
 7. **Tahap Final dan Gelar**: Buka `/admin/content/participants/titles` untuk membuat gelar, mengatur jumlah slot, dan menyematkannya kepada peserta tahap final. Satu peserta dapat menerima beberapa gelar.
@@ -190,7 +190,8 @@ Menu **Mojang Jajaka** (`/admin/content/participants`) mengelola peserta Pasangg
    - **Prestasi**: Daftar capaian dan prestasi dengan tombol pengurut naik/turun.
    - **Sosial Media**: Tautan akun Instagram, TikTok, YouTube, LinkedIn, dll.
    - **Media Profil**: Foto dikelompokkan berdasarkan peran (`Closeup`, `Full Body`, `Detail Busana`, `Karantina`, `Lainnya`). Foto Closeup otomatis tersinkronisasi ke foto utama. Profil dapat memiliki satu video aktif berformat MP4 atau WebM.
-   - **QRIS dan Voting**: QRIS dibuat di luar sistem, lalu gambarnya diunggah atau dipilih dari Pustaka Media.
+   - **Foto dan QRIS per tahap**: Pada detail peserta, buka tab QRIS, pilih tahap, lalu pilih foto utama dan gambar QRIS dari Pustaka Media. Isi alasan dan simpan. Tahap baru membawa foto dan QRIS tahap sebelumnya; perubahan pada satu tahap tidak mengubah tahap lain. Jika foto atau QRIS dikosongkan, tahap tersebut tetap kosong.
+   - **QRIS dan Voting**: QRIS dibuat di luar sistem. Kampanye memakai nomor, foto, dan QRIS dari tahap sumber pesertanya. Periksa hasil pemindaian dan penerima QRIS sebelum voting dibuka.
    - **Halaman profil publik**: Foto, bio, prestasi, QR, dan video yang siap tampil dibaca dari peserta yang mencapai tahap semifinal atau final pada edisi aktif. Slogan pada daftar peserta mengikuti nilai di Identitas Edisi.
 10. **Live Preview**: Pratinjau kartu peserta secara langsung saat mengedit.
 
