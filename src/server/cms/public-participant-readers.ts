@@ -115,6 +115,9 @@ export const getPublicParticipantCategory = cache(async (
     .select({
       participant: participants,
       stageNumber: participantStageEntries.number,
+      stageMediaInitialized: participantStageEntries.mediaInitialized,
+      stagePortraitMediaId: participantStageEntries.portraitMediaId,
+      stageQrisMediaId: participantStageEntries.qrisMediaId,
       categoryCode: categories.code,
       categoryName: categories.label,
       categorySlug: categories.slug,
@@ -137,7 +140,7 @@ export const getPublicParticipantCategory = cache(async (
   if (!rows.length) return publicCategory;
 
   const participantIds = rows.map(({ participant }) => participant.id);
-  const mediaIds = [...new Set(rows.flatMap(({ participant }) => [participant.portraitMediaId, participant.qrisMediaId]).filter((id): id is string => Boolean(id)))];
+  const mediaIds = [...new Set(rows.flatMap(({ participant, stageMediaInitialized, stagePortraitMediaId, stageQrisMediaId }) => stageMediaInitialized ? [stagePortraitMediaId, stageQrisMediaId] : [participant.portraitMediaId, participant.qrisMediaId]).filter((id): id is string => Boolean(id)))];
   const [mediaRows, achievementRows, videoRows] = await Promise.all([
     mediaIds.length
       ? database.select({ id: mediaAssets.id, url: mediaAssets.url, mimeType: mediaAssets.mimeType }).from(mediaAssets).where(and(inArray(mediaAssets.id, mediaIds), eq(mediaAssets.lifecycle, 'ready')))
@@ -179,7 +182,7 @@ export const getPublicParticipantCategory = cache(async (
 
   return {
     ...publicCategory,
-    participants: rows.map(({ participant, stageNumber, categoryCode, categoryName, categorySlug: rowCategorySlug }) => ({
+    participants: rows.map(({ participant, stageNumber, stageMediaInitialized, stagePortraitMediaId, stageQrisMediaId, categoryCode, categoryName, categorySlug: rowCategorySlug }) => ({
       id: participant.id,
       number: stageNumber ?? participant.number,
       name: participant.name,
@@ -189,8 +192,8 @@ export const getPublicParticipantCategory = cache(async (
       categorySlug: rowCategorySlug,
       editionYear: resolvedEdition.year,
       bio: participant.bio ?? '',
-      imageUrl: toRemoteUrl(mediaById.get(participant.portraitMediaId ?? '')),
-      qrImageUrl: toRemoteUrl(mediaById.get(participant.qrisMediaId ?? '')),
+      imageUrl: toRemoteUrl(mediaById.get((stageMediaInitialized ? stagePortraitMediaId : participant.portraitMediaId) ?? '')),
+      qrImageUrl: toRemoteUrl(mediaById.get((stageMediaInitialized ? stageQrisMediaId : participant.qrisMediaId) ?? '')),
       profileVideoUrl: videosByParticipant.get(participant.id)?.url ?? null,
       profileVideoMimeType: videosByParticipant.get(participant.id)?.mimeType ?? null,
       paymentUrl: participant.paymentUrl,

@@ -134,6 +134,13 @@
       "when": 1792259840883,
       "tag": "0018_damp_masque",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1794552846920,
+      "tag": "0019_red_mister_sinister",
+      "breakpoints": true
     }
   ]
 }

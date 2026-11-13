@@ -129,6 +129,43 @@ test('public readers overlay CMS sections and event media while keeping operatio
     assert.deepEqual((await readers.getPublicHomeContent()).programs.map((item) => item.title), ['Current program']);
     assert.deepEqual((await readers.getPublicSponsors()).map((item) => item.name), ['Current sponsor']);
 
+    await db.insert(schema.participants).values({ id: 'voter', editionId: 'new', categoryId: 'new-jd', stage: 'finalis', currentStageId: 'new-final', number: 99, name: 'Peserta', slug: 'peserta', portraitMediaId: 'new-image', qrisMediaId: 'new-image' });
+    await db.insert(schema.participantStageEntries).values([
+      { id: 'voter-semi', participantId: 'voter', stageId: 'new-semi', number: 9, portraitMediaId: 'old-image', qrisMediaId: 'old-image', mediaInitialized: true },
+      { id: 'voter-final', participantId: 'voter', stageId: 'new-final', number: 13, portraitMediaId: 'new-image', qrisMediaId: null, mediaInitialized: true },
+    ]);
+    await db.insert(schema.votingCampaigns).values({ id: 'campaign', editionId: 'new', eligibilityStageId: 'new-final', name: 'Voting', slug: 'voting-test', status: 'active', pricePerPoint: 2000, startsAt: new Date('2020-01-01T00:00:00Z'), endsAt: new Date('2100-01-01T00:00:00Z') });
+    await db.insert(schema.votingCampaignParticipants).values({ campaignId: 'campaign', participantId: 'voter', sourceStageId: 'new-semi' });
+    let candidate = (await readers.getPublicVotingCategoryBySlug('jajaka-dewasa'))!.candidates[0];
+    assert.equal(candidate.number, 9);
+    assert.equal(candidate.imageUrl, 'https://example.com/old-image.webp');
+    assert.equal(candidate.qrImageUrl, 'https://example.com/old-image.webp');
+    await db.update(schema.votingCampaignParticipants).set({ sourceStageId: 'new-final' }).where(eq(schema.votingCampaignParticipants.participantId, 'voter'));
+    candidate = (await readers.getPublicVotingCategoryBySlug('jajaka-dewasa'))!.candidates[0];
+    assert.equal(candidate.number, 13);
+    assert.equal(candidate.imageUrl, 'https://example.com/new-image.webp');
+    assert.equal(candidate.qrImageUrl, null);
+
+    const participantCompiled = ts.transpileModule(readFileSync(resolve('src/server/cms/public-participant-readers.ts'), 'utf8'), {
+      compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+    }).outputText;
+    const participantReaders = {} as typeof import('../src/server/cms/public-participant-readers');
+    new Function('require', 'exports', participantCompiled)((specifier: string) => {
+      if (specifier === 'next/server') return { connection: async () => {} };
+      if (specifier === 'react') return { cache: (fn: unknown) => fn };
+      if (specifier === '@/server/db/client') return { database: db };
+      if (specifier === '@/server/cms/preview') return { getPreviewEditionId: async () => preview };
+      if (specifier === '@/server/cms/public-readers') return readers;
+      return require(specifier.startsWith('@/') ? resolve('src', specifier.slice(2)) : specifier);
+    }, participantReaders);
+    const semifinal = (await participantReaders.getPublicParticipantCategory('jajaka-dewasa', 'semifinalis'))!.participants[0];
+    const final = (await participantReaders.getPublicParticipantCategory('jajaka-dewasa', 'finalis'))!.participants[0];
+    assert.equal(semifinal.number, 9);
+    assert.equal(semifinal.imageUrl, 'https://example.com/old-image.webp');
+    assert.equal(final.number, 13);
+    assert.equal(final.imageUrl, 'https://example.com/new-image.webp');
+    assert.equal(final.qrImageUrl, null);
+
     preview = null;
     assert.equal((await readers.getPublicHomeContent()).sections.hero.title, 'Old hero');
     assert.equal((await readers.getCurrentEdition()).year, 2025);
