@@ -1448,9 +1448,9 @@ function StageMediaForm({ participant, stage, editionId, canEdit, canManageMedia
         }
       });
     }}>
-      <AdminMediaField name="stagePortrait" label="Foto utama" initialAsset={summary(stage.portraitAsset)} onChange={setPortrait}
+      <AdminMediaField name="stagePortrait" label="Foto utama" value={portrait?.id ?? ""} initialAsset={summary(portrait)} onChange={setPortrait}
         acceptType="image" canManageMedia={canManageMedia} activeEditionId={editionId} />
-      <AdminMediaField name="stageQris" label="Gambar QRIS" initialAsset={summary(stage.qrisAsset)} onChange={setQris}
+      <AdminMediaField name="stageQris" label="Gambar QRIS" value={qris?.id ?? ""} initialAsset={summary(qris)} onChange={setQris}
         acceptType="image" canManageMedia={canManageMedia} activeEditionId={editionId} />
       <AdminField label="Alasan perubahan">
         <AdminInput value={reason} onChange={(event) => setReason(event.target.value)} required />
