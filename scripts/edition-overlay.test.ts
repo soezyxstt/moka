@@ -25,9 +25,11 @@ test('public readers overlay CMS sections and event media while keeping operatio
   // Keep the real CMS queries and replace only request context and the database target.
   new Function('require', 'exports', compiled)((specifier: string) => {
     if (specifier === 'next/server') return { connection: async () => {} };
+    if (specifier === 'next/cache') return { unstable_cache: (fn: unknown) => fn };
     if (specifier === 'react') return { cache: (fn: unknown) => fn };
     if (specifier === '@/server/db/client') return { database: db };
     if (specifier === '@/server/cms/preview') return { getPreviewEditionId: async () => preview };
+    if (specifier === '@/server/cms/public-cache') return { PUBLIC_CONTENT_SCOPE: 'fixture', PUBLIC_CONTENT_TAG: 'fixture', PUBLIC_CONTENT_REVALIDATE: 86_400 };
     return require(specifier.startsWith('@/') ? resolve('src', specifier.slice(2)) : specifier);
   }, readers);
   try {
@@ -152,10 +154,12 @@ test('public readers overlay CMS sections and event media while keeping operatio
     const participantReaders = {} as typeof import('../src/server/cms/public-participant-readers');
     new Function('require', 'exports', participantCompiled)((specifier: string) => {
       if (specifier === 'next/server') return { connection: async () => {} };
+      if (specifier === 'next/cache') return { unstable_cache: (fn: unknown) => fn };
       if (specifier === 'react') return { cache: (fn: unknown) => fn };
       if (specifier === '@/server/db/client') return { database: db };
       if (specifier === '@/server/cms/preview') return { getPreviewEditionId: async () => preview };
       if (specifier === '@/server/cms/public-readers') return readers;
+      if (specifier === '@/server/cms/public-cache') return { PUBLIC_CONTENT_SCOPE: 'fixture', PUBLIC_CONTENT_TAG: 'fixture', PUBLIC_CONTENT_REVALIDATE: 86_400 };
       return require(specifier.startsWith('@/') ? resolve('src', specifier.slice(2)) : specifier);
     }, participantReaders);
     const semifinal = (await participantReaders.getPublicParticipantCategory('jajaka-dewasa', 'semifinalis'))!.participants[0];

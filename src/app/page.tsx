@@ -8,7 +8,7 @@ import { Button } from '@/components/custom/button';
 import { typography } from '@/components/custom/typography';
 import { formatCategoryName } from '@/components/footer';
 import { resolveBrandLogos } from '@/server/cms/brand-assets';
-import { getPublicAboutContent, getPublicHomeContent, getPublicNavigation, getPublicNews, getPublicSiteIdentity, type PublicGalleryAlbum } from '@/server/cms/public-readers';
+import { getPublicGalleryAlbums, getPublicHomeContent, getPublicNavigation, getPublicNews, getPublicSiteIdentity, type PublicGalleryAlbum } from '@/server/cms/public-readers';
 
 export const metadata = { alternates: { canonical: '/' } };
 
@@ -248,15 +248,15 @@ export default async function Home() {
 }
 
 async function HomeGallery() {
-  const about = await getPublicAboutContent();
+  const galleries = await getPublicGalleryAlbums();
   return (
     <Section id="gallery" className="border-b border-neutral-200/70 bg-background py-16 md:py-24" contentClassName="mx-auto max-w-7xl">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <typography.h1 className="text-3xl text-brand-900 md:text-4xl">Kegiatan kami</typography.h1>
           <Link href="/galeri" className="inline-flex min-h-11 w-fit items-center gap-2 border-b border-brand/40 text-sm font-medium text-brand transition-colors hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">Lihat semua galeri<ArrowRight className="size-4" aria-hidden /></Link>
         </div>
-        {about.galleries.length ? <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr]">
-          {about.galleries.slice(0, 3).map((album, index) => <AlbumPreview key={album.id} album={album} featured={index === 0} />)}
+        {galleries.length ? <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr]">
+          {galleries.slice(0, 3).map((album, index) => <AlbumPreview key={album.id} album={album} featured={index === 0} />)}
         </div> : <typography.p className="mt-8">Belum ada album terbit untuk edisi ini.</typography.p>}
       </Section>
   );

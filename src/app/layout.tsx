@@ -74,14 +74,14 @@ export default async function RootLayout({
         <SiteChrome
           top={
             <>
-              <Navbar participantKind={navigation.participantKind} registrationVisible={navigation.registrationVisible} categories={navigation.categories} events={navigation.events} resultsVisible={navigation.resultsVisible} edition={navigation.edition} desktopLogo={logos.desktop} mobileLogo={logos.mobile} />
+              <Navbar participantKind={navigation.participantKind} registrationVisible={navigation.registrationVisible} categories={navigation.categories} events={navigation.events} resultsVisible={navigation.resultsVisible} edition={navigation.edition} desktopLogo={logos.desktop} mobileLogo={logos.mobile} prefetchPublic={!previewEditionId} />
               <Lenis />
             </>
           }
           bottom={
             <>
               <ScrollToTopButton />
-              <Footer participantKind={navigation.participantKind} registrationVisible={navigation.registrationVisible} categories={navigation.categories} events={navigation.events} edition={navigation.edition} logo={logos.footer} aboutDescription={navigation.aboutDescription} resultsVisible={navigation.resultsVisible} contacts={identity.contacts} signature={identity.signature} />
+              <Footer participantKind={navigation.participantKind} registrationVisible={navigation.registrationVisible} categories={navigation.categories} events={navigation.events} edition={navigation.edition} logo={logos.footer} aboutDescription={navigation.aboutDescription} resultsVisible={navigation.resultsVisible} contacts={identity.contacts} signature={identity.signature} prefetchPublic={!previewEditionId} />
             </>
           }
         >

@@ -5,6 +5,7 @@ import { Separator } from './ui/separator';
 import type { ReactNode } from 'react';
 import type { SiteContact } from '@/server/cms/site-copy';
 import type { BrandLogo } from '@/server/cms/brand-assets';
+import { publicPrefetch } from '@/lib/public-prefetch';
 
 export type FooterCategory = { slug: string; name: string };
 export type FooterEvent = { slug: string; label: string };
@@ -33,9 +34,10 @@ export function formatCategoryName(category: FooterCategory): string {
   return category.name;
 }
 
-export default function Footer({ categories, events, edition, logo, aboutDescription, contacts, signature, participantKind, registrationVisible = false }: {
+export default function Footer({ categories, events, edition, logo, aboutDescription, contacts, signature, participantKind, registrationVisible = false, prefetchPublic = false }: {
   participantKind: 'semifinalis' | 'finalis';
   registrationVisible?: boolean;
+  prefetchPublic?: boolean;
   logo?: BrandLogo;
   contacts: SiteContact[];
   signature: string;
@@ -82,19 +84,19 @@ export default function Footer({ categories, events, edition, logo, aboutDescrip
           <div className="col-span-2 sm:col-span-1">
             <h2 className="mb-3 font-manrope text-sm font-semibold text-canvas">Jelajahi</h2>
             <div className="flex flex-wrap gap-x-6 sm:block">
-              <FooterLink href="/tentang">Tentang</FooterLink>
-              {registrationVisible ? <FooterLink href="/pendaftaran">Pendaftaran</FooterLink> : null}
-              <FooterLink href="/voting">Voting</FooterLink>
-              <FooterLink href="/galeri">Galeri</FooterLink>
+              <FooterLink href="/tentang" prefetchPublic={prefetchPublic}>Tentang</FooterLink>
+              {registrationVisible ? <FooterLink href="/pendaftaran" prefetchPublic={prefetchPublic}>Pendaftaran</FooterLink> : null}
+              <FooterLink href="/voting" prefetchPublic={prefetchPublic}>Voting</FooterLink>
+              <FooterLink href="/galeri" prefetchPublic={prefetchPublic}>Galeri</FooterLink>
             </div>
           </div>
           {events.length ? <div>
             <h2 className="mb-3 font-manrope text-sm font-semibold text-canvas">Rangkaian kegiatan</h2>
-            {events.map((event) => <FooterLink key={`event-${event.slug}`} href={`/rangkaian-kegiatan/${event.slug}`}>{event.label}</FooterLink>)}
+            {events.map((event) => <FooterLink key={`event-${event.slug}`} href={`/rangkaian-kegiatan/${event.slug}`} prefetchPublic={prefetchPublic}>{event.label}</FooterLink>)}
           </div> : null}
           {categories.length ? <div>
             <h2 className="mb-3 font-manrope text-sm font-semibold text-canvas">{participantKind === 'semifinalis' ? 'Profil semifinalis' : 'Profil finalis'}</h2>
-            {categories.map((category) => <FooterLink key={`participant-${category.slug}`} href={`/profil-${participantKind}/${category.slug}`}>{formatCategoryName(category)}</FooterLink>)}
+            {categories.map((category) => <FooterLink key={`participant-${category.slug}`} href={`/profil-${participantKind}/${category.slug}`} prefetchPublic={prefetchPublic}>{formatCategoryName(category)}</FooterLink>)}
           </div> : null}
         </nav>
       </div>
@@ -113,6 +115,6 @@ function SocialLink({ href, label, children }: { href: string; label: string; ch
   return <Link href={href} target="_blank" rel="noreferrer" aria-label={label} className="grid size-10 place-items-center rounded-md border border-canvas/18 bg-canvas/7 text-canvas/80 transition-colors hover:border-highlight-300/60 hover:bg-canvas/12 hover:text-canvas">{children}</Link>;
 }
 
-function FooterLink({ href, children }: { href: string; children: ReactNode }) {
-  return <Link href={href} className="group flex min-h-11 items-center justify-between gap-2 py-2 text-sm text-canvas/85 transition-colors hover:text-canvas focus-visible:text-canvas">{children}<MoveUpRight className="size-3.5 shrink-0 text-highlight-300 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" /></Link>;
+function FooterLink({ href, children, prefetchPublic }: { href: string; children: ReactNode; prefetchPublic: boolean }) {
+  return <Link href={href} prefetch={publicPrefetch(href, prefetchPublic)} className="group flex min-h-11 items-center justify-between gap-2 py-2 text-sm text-canvas/85 transition-colors hover:text-canvas focus-visible:text-canvas">{children}<MoveUpRight className="size-3.5 shrink-0 text-highlight-300 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" /></Link>;
 }

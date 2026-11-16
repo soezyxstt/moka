@@ -1,5 +1,17 @@
 # Loading publik bertahap
 
+## Cache publik dan navigasi, 2026-11-17
+
+Reader publik memakai Next Data Cache untuk edisi aktif dan fallback, teks dan aset terbit, program, kegiatan, album, sponsor, data Tentang, berita, dan kategori profil peserta. Kunci dan tag mencakup hash URL database agar target berbeda tidak berbagi data. Interval revalidasi adalah 24 jam; saat data kedaluwarsa Next dapat menyajikan versi lama sambil memperbaruinya. Kegagalan pembaruan dapat memperpanjang masa data lama. Mekanisme cache dan pembagian antar-instance bergantung pada adapter dan penyedia deployment.
+
+Server action CMS yang mengubah data publik membatalkan tag setelah transaksi, selain mempertahankan `revalidatePath` yang sudah ada. Penyimpanan draf teks halaman dan pengelolaan folder media tidak membatalkan cache publik. Penyimpanan berita tetap membatalkan cache karena implementasi editor dapat memperbarui artikel yang sudah terbit. Perubahan database di luar action aplikasi tidak membatalkan tag; verifikasi atau invalidasi terpisah diperlukan setelah operasi tersebut. Pratinjau berizin melewati cache bersama. Kampanye, status, kandidat, harga, QR, tally, visibilitas hasil, dan perhitungan voting tetap dibaca langsung. Identitas edisi serta teks dan aset CMS yang dipakai bersama halaman voting tetap memakai cache konten publik.
+
+Tautan publik pada navbar dan footer melakukan prefetch halaman lengkap kecuali Voting, admin dan pratinjau. Next menggunakan batas satu jam untuk hasil prefetch lengkap, halaman statis, dan loading boundary; halaman dinamis yang tidak diprefetch lengkap memakai batas dinamis bawaan Next. Back dan forward memiliki perilaku cache tersendiri. Tab lain yang telah melakukan prefetch dapat sementara menampilkan versi lama setelah publikasi. Prefetch belum selesai, navigasi melalui tautan lain, cache browser yang kedaluwarsa, dan navigasi Voting tetap dapat menampilkan fallback. Cache server tidak berarti gambar sudah terunduh di browser.
+
+Beranda membaca album langsung tanpa menunggu data organisasi. Hero Tentang mengambil teks dan referensi aset secara terpisah dari data organisasi, sehingga dapat di-stream lebih awal. Root tetap menunggu identitas, palet dan konteks preview. Perubahan tidak membuktikan bahwa gambar pernah menjadi penyebab hambatan sebelumnya.
+
+Untuk penerimaan runtime setelah deployment terpisah, ukur kunjungan pertama dan Beranda ke Pendaftaran ke Beranda pada desktop dan mobile. Periksa request RSC, skeleton yang terlihat, konten setelah publikasi dari sesi lain, refresh, masuk dan keluar preview, serta perubahan visibilitas dan tally Voting. Uji cache antar-instance pada penyedia yang dipilih; jangan memakai data produksi untuk fixture. `scripts/public-cache.test.ts` menguji query SQLite dengan implementasi cache Next dan penyimpanan uji, bukan jaringan browser atau backend cache penyedia.
+
 Source 2026-11-13 mengganti fallback tiga titik dengan skeleton sesuai route. Navbar/footer tetap dimiliki shared layout. Root harus memperoleh identitas, palet dan konteks preview sebelum merender; reader tersebut dimulai paralel. Ini masih menjadi gerbang awal.
 
 Suspense memisahkan berita dan album Beranda, filosofi dan kontak Tentang, bantuan Pendaftaran, daftar Berita, sponsor kegiatan, serta header dan konten Voting. Data yang diperlukan untuk validitas route, notFound, isolasi edisi, kandidat dan perhitungan pembayaran tetap dibaca melalui reader existing.
