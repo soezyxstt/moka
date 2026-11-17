@@ -1,4 +1,4 @@
-"use server";import { eq } from "drizzle-orm";import { revalidatePath } from "next/cache";import { requirePermission } from "@/server/auth/authorization";import { appendAuditLog } from "@/server/auth/audit";import { database } from "@/server/db/client";import { categories, editions } from "@/server/db/schema";
+"use server";import { eq } from "drizzle-orm";import { revalidatePath } from "@/server/cms/public-cache";import { requirePermission } from "@/server/auth/authorization";import { appendAuditLog } from "@/server/auth/audit";import { database } from "@/server/db/client";import { categories, editions } from "@/server/db/schema";
 import { DEFAULT_CATEGORIES, getEditionReadiness } from "@/server/cms/edition-readiness";
 export async function createEditionAction(formData: FormData) {
   const actor = await requirePermission("settings.manage");

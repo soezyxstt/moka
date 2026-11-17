@@ -55,6 +55,7 @@ test('aksi media tahap membekukan referensi lama, mengisolasi tahap, dan menolak
   const actions = {} as typeof import('../src/app/admin/content/participants/actions');
   new Function('require', 'exports', compiled)((specifier: string) => {
     if (specifier === 'next/cache') return { revalidatePath: () => {} };
+    if (specifier === '@/server/cms/public-cache') return { revalidatePath: () => {} };
     if (specifier === '@/server/db/client') return { database: db };
     if (specifier === '@/server/cms/context') return { getAdminEditionContext: async () => ({ id: 'ed' }) };
     if (specifier === '@/server/auth/authorization') return { requirePermission: async () => {

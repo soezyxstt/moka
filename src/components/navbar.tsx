@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/accordion";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
+import { publicPrefetch } from "@/lib/public-prefetch";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { BrandLogo } from "@/server/cms/brand-assets";
@@ -33,6 +34,7 @@ export function Navbar({
   mobileLogo,
   participantKind,
   registrationVisible = false,
+  prefetchPublic = false,
 }: {
   categories: NavbarCategory[];
   events: NavbarEvent[];
@@ -42,6 +44,7 @@ export function Navbar({
   mobileLogo?: BrandLogo;
   participantKind: 'semifinalis' | 'finalis';
   registrationVisible?: boolean;
+  prefetchPublic?: boolean;
 }) {
   const pathname = usePathname();
   const user = authClient.useSession().data?.user;
@@ -97,7 +100,7 @@ export function Navbar({
         transition={{ duration: 0.4, ease: "easeInOut" }}
         aria-label="Navigasi utama"
       >
-        <Link href="/" className="h-full shrink-0" aria-label={`Beranda MOKA Garut ${edition.year}`} title={edition.slogan ?? undefined}>
+        <Link href="/" prefetch={prefetchPublic} className="h-full shrink-0" aria-label={`Beranda MOKA Garut ${edition.year}`} title={edition.slogan ?? undefined}>
           {desktopLogo?.url || edition.logoUrl
             ? <Image src={desktopLogo?.url || edition.logoUrl!} alt={desktopLogo?.alt || edition.logoAlt || "MOKA Garut"} unoptimized width={100} height={60} className="h-full w-auto object-contain" priority />
             : <span className="font-manrope text-sm font-bold tracking-wide text-highlight">MOKA Garut</span>}
@@ -105,11 +108,11 @@ export function Navbar({
         <div className="flex h-full items-center gap-3 font-inter lg:gap-5 xl:gap-7">
           {desktopLinks.map((link) => {
             if ("menu" in link) {
-              return <DesktopNavMenu key={link.label} label={link.label} items={link.menu} active={pathname.startsWith(link.match)} />;
+              return <DesktopNavMenu key={link.label} label={link.label} items={link.menu} active={pathname.startsWith(link.match)} prefetchPublic={prefetchPublic} />;
             }
             const active = link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
             return (
-              <Link key={link.label} href={link.href} className={desktopLinkClass(active)} aria-current={active ? "page" : undefined}>
+              <Link key={link.label} href={link.href} prefetch={publicPrefetch(link.href, prefetchPublic)} className={desktopLinkClass(active)} aria-current={active ? "page" : undefined}>
                 {link.label}
               </Link>
             );
@@ -130,7 +133,7 @@ export function Navbar({
 
       <nav className={cn("fixed top-0 z-40 w-full bg-(--nav-mobile-surface) shadow-md backdrop-blur-md", registrationVisible ? "xl:hidden" : "md:hidden")} ref={ref} aria-label="Navigasi utama seluler">
         <div className="flex h-16 w-full items-center justify-between px-6">
-          <Link href="/" className="h-9" aria-label={`Beranda MOKA Garut ${edition.year}`} title={edition.slogan ?? undefined}>
+          <Link href="/" prefetch={prefetchPublic} className="h-9" aria-label={`Beranda MOKA Garut ${edition.year}`} title={edition.slogan ?? undefined}>
             {mobileLogo?.url || edition.logoUrl
               ? <Image src={mobileLogo?.url || edition.logoUrl!} alt={mobileLogo?.alt || edition.logoAlt || "MOKA Garut"} unoptimized width={100} height={44} className="h-full w-auto object-contain" priority />
               : <span className="font-manrope text-sm font-bold tracking-wide text-(--nav-mobile-control)">MOKA Garut</span>}
@@ -145,12 +148,12 @@ export function Navbar({
           <AccordionItem value="root-navbar" className="border-0">
             <AccordionContent id="mobile-navbar-content" className="max-h-[calc(100vh-4rem)] overflow-y-auto border-t border-canvas/10 bg-brand-900/78 px-6 pb-6 text-canvas backdrop-blur-md">
               <div className="flex flex-col pt-3 font-inter">
-                <MobileLink href="/" label="Beranda" close={() => setIsMobileMenuOpen(false)} />
-                <MobileLink href="/tentang" label="Tentang" close={() => setIsMobileMenuOpen(false)} />
-                {registrationVisible ? <MobileLink href="/pendaftaran" label="Pendaftaran" close={() => setIsMobileMenuOpen(false)} /> : null}
-                {eventItems.length ? <MobileMenu label="Rangkaian Kegiatan" items={eventItems} close={() => setIsMobileMenuOpen(false)} /> : null}
-                <MobileLink href="/voting" label="Voting" close={() => setIsMobileMenuOpen(false)} />
-                {participantItems.length ? <MobileMenu label={participantLabel} items={participantItems} close={() => setIsMobileMenuOpen(false)} /> : null}
+                <MobileLink href="/" label="Beranda" prefetchPublic={prefetchPublic} close={() => setIsMobileMenuOpen(false)} />
+                <MobileLink href="/tentang" label="Tentang" prefetchPublic={prefetchPublic} close={() => setIsMobileMenuOpen(false)} />
+                {registrationVisible ? <MobileLink href="/pendaftaran" label="Pendaftaran" prefetchPublic={prefetchPublic} close={() => setIsMobileMenuOpen(false)} /> : null}
+                {eventItems.length ? <MobileMenu label="Rangkaian Kegiatan" items={eventItems} prefetchPublic={prefetchPublic} close={() => setIsMobileMenuOpen(false)} /> : null}
+                <MobileLink href="/voting" label="Voting" prefetchPublic={prefetchPublic} close={() => setIsMobileMenuOpen(false)} />
+                {participantItems.length ? <MobileMenu label={participantLabel} items={participantItems} prefetchPublic={prefetchPublic} close={() => setIsMobileMenuOpen(false)} /> : null}
                 {user ? (
                   <Link
                     href="/admin"
@@ -185,7 +188,7 @@ function desktopLinkClass(active: boolean) {
   );
 }
 
-function DesktopNavMenu({ label, items, active }: { label: string; items: DesktopMenuItem[]; active: boolean }) {
+function DesktopNavMenu({ label, items, active, prefetchPublic }: { label: string; items: DesktopMenuItem[]; active: boolean; prefetchPublic: boolean }) {
   const [open, setOpen] = useState(false);
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -197,7 +200,7 @@ function DesktopNavMenu({ label, items, active }: { label: string; items: Deskto
       <PopoverContent sideOffset={12} className="w-72 rounded-xl border-canvas/15 bg-brand-900/48 p-2 font-inter text-canvas shadow-xl shadow-ink/20 backdrop-blur-md backdrop-saturate-150" aria-label={label}>
           <div className="space-y-0.5">
             {items.map((item) => (
-              <Link key={item.href} href={item.href} onClick={() => setOpen(false)} className="group/item flex min-h-10 items-center justify-between rounded-md border border-transparent px-3 py-2 text-sm font-medium text-canvas drop-shadow-(--nav-text-shadow) transition-colors hover:border-highlight hover:bg-canvas/10 focus:border-highlight focus:bg-canvas/10 focus:outline-none">
+              <Link key={item.href} href={item.href} prefetch={prefetchPublic} onClick={() => setOpen(false)} className="group/item flex min-h-10 items-center justify-between rounded-md border border-transparent px-3 py-2 text-sm font-medium text-canvas drop-shadow-(--nav-text-shadow) transition-colors hover:border-highlight hover:bg-canvas/10 focus:border-highlight focus:bg-canvas/10 focus:outline-none">
                 {item.label}<MoveUpRight className="size-3.5 text-highlight opacity-0 transition-opacity group-hover/item:opacity-100 group-focus/item:opacity-100" />
               </Link>
             ))}
@@ -207,18 +210,18 @@ function DesktopNavMenu({ label, items, active }: { label: string; items: Deskto
   );
 }
 
-function MobileLink({ href, label, close }: { href: string; label: string; close: () => void }) {
-  return <Link href={href} onClick={close} className="border-b border-canvas/8 py-3 text-sm font-medium text-canvas/82 hover:text-canvas">{label}</Link>;
+function MobileLink({ href, label, close, prefetchPublic }: { href: string; label: string; close: () => void; prefetchPublic: boolean }) {
+  return <Link href={href} prefetch={publicPrefetch(href, prefetchPublic)} onClick={close} className="border-b border-canvas/8 py-3 text-sm font-medium text-canvas/82 hover:text-canvas">{label}</Link>;
 }
 
-function MobileMenu({ label, items, close }: { label: string; items: DesktopMenuItem[]; close: () => void }) {
+function MobileMenu({ label, items, close, prefetchPublic }: { label: string; items: DesktopMenuItem[]; close: () => void; prefetchPublic: boolean }) {
   return (
     <Accordion type="single" collapsible>
       <AccordionItem value={label} className="border-canvas/8">
         <AccordionTrigger className="py-3 text-sm font-medium text-canvas/82 hover:text-canvas hover:no-underline">{label}</AccordionTrigger>
         <AccordionContent className="pb-2">
           <div className="border-l border-highlight/45 pl-3">
-            {items.map((item) => <Link key={item.href} href={item.href} onClick={close} className="block rounded-md px-3 py-2 text-sm text-canvas/68 hover:bg-canvas/8 hover:text-canvas">{item.label}</Link>)}
+            {items.map((item) => <Link key={item.href} href={item.href} prefetch={prefetchPublic} onClick={close} className="block rounded-md px-3 py-2 text-sm text-canvas/68 hover:bg-canvas/8 hover:text-canvas">{item.label}</Link>)}
           </div>
         </AccordionContent>
       </AccordionItem>

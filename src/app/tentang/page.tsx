@@ -7,23 +7,71 @@ import { registrationRows } from "@/server/cms/registration";
 import { Section } from "@/components/custom/section";
 import { Button } from "@/components/custom/button";
 import { typography } from "@/components/custom/typography";
-import { getPublicAboutContent, getPublicHomeContent, getPublicSiteIdentity } from "@/server/cms/public-readers";
+import { getPublicAboutContent, getPublicAboutIntro, getPublicHomeContent, getPublicSiteIdentity } from "@/server/cms/public-readers";
 
 export const metadata = { title: "Tentang Kami", alternates: { canonical: '/tentang' } };
 
-export default async function AboutUs() {
-  const about = await getPublicAboutContent();
+export default function AboutUs() {
+  const intro = getPublicAboutIntro();
+  const about = getPublicAboutContent();
+  void intro.catch(() => {});
+  void about.catch(() => {});
+  return <main className="relative min-h-screen">
+    <Suspense fallback={<AboutHeroSkeleton />}><AboutHero intro={intro} about={about} /></Suspense>
+    <Suspense fallback={<AboutBodySkeleton />}><AboutBody about={about} /></Suspense>
+    <Suspense fallback={<ContactSkeleton />}><AboutContact /></Suspense>
+  </main>;
+}
+
+async function AboutHero({ intro, about }: {
+  intro: ReturnType<typeof getPublicAboutIntro>;
+  about: ReturnType<typeof getPublicAboutContent>;
+}) {
+  const { sections, assets } = await intro;
+  const hero = sections.hero;
+  const heroImage = assets["about.hero.bg"];
+  const introImage = assets["about.vision.image"] ?? assets["about.intro.image"] ?? heroImage;
+  const hasHero = Boolean(hero?.title?.trim() || hero?.body?.trim() || heroImage || introImage);
+  return hasHero ? <Section className="overflow-hidden bg-brand-50 pb-10 pt-28 md:pb-14 md:pt-40" >
+    <div className={`relative mx-auto grid w-full max-w-7xl items-center gap-8 lg:gap-12 ${introImage ? "lg:grid-cols-[1.1fr_1fr]" : ""}`}>
+      <div>
+        {hero?.title?.trim() ? <h1 className="max-w-3xl font-manrope text-4xl font-semibold leading-[1.1] text-brand-900 sm:text-5xl lg:text-6xl">{hero.title.trim() === "Kenali Kami Lebih Dekat" ? "PAMOKA Garut" : hero.title.trim()}</h1> : null}
+        {hero?.body?.trim() ? <typography.p className="mt-4 max-w-2xl leading-7">{hero.body.trim()}</typography.p> : hero?.title?.trim() === "Kenali Kami Lebih Dekat" ? <Suspense fallback={null}><DefaultHeroText about={about} /></Suspense> : null}
+        <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
+          <span id="program" className="sr-only" /><span id="gallery" className="sr-only" />
+          <Button asChild size="lg"><Link href="/#program">Lihat program kami<ArrowRight className="ml-2 size-4" aria-hidden /></Link></Button>
+          <Suspense fallback={<span role="status" aria-label="Memuat kontak"><span aria-hidden="true" className="block h-11 w-32 rounded-md bg-muted motion-safe:animate-pulse" /></span>}><ContactLink /></Suspense>
+        </div>
+      </div>
+      {introImage ? <div className="relative aspect-[3/2] overflow-hidden rounded-lg">
+        <Image src={introImage.url} alt={introImage.alt ?? ""} fill preload className="object-cover" sizes="(max-width: 1023px) 90vw, 45vw" />
+      </div> : null}
+    </div>
+  </Section> : null;
+}
+
+async function DefaultHeroText({ about }: { about: ReturnType<typeof getPublicAboutContent> }) {
+  return (await about).mission.length ? <typography.p className="mt-4 max-w-2xl leading-7">Wadah pengembangan diri generasi muda Garut melalui budaya, kepemimpinan, dan kegiatan bersama.</typography.p> : null;
+}
+
+function AboutHeroSkeleton() {
+  return <section role="status" aria-label="Memuat pengantar Tentang" className="bg-brand-50 px-8 pb-10 pt-28 md:px-20 md:pb-14 md:pt-40"><div aria-hidden="true" className="mx-auto grid max-w-7xl gap-8 motion-safe:animate-pulse lg:grid-cols-[1.1fr_1fr]"><div><div className="h-10 w-3/4 rounded-md bg-muted lg:h-16" /><div className="mt-4 h-24 max-w-2xl rounded-md bg-muted" /></div><div className="aspect-[3/2] rounded-lg bg-muted" /></div></section>;
+}
+
+function AboutBodySkeleton() {
+  return <section role="status" aria-label="Memuat informasi organisasi" className="px-8 py-12 md:px-20 md:py-20"><div aria-hidden="true" className="mx-auto max-w-7xl motion-safe:animate-pulse"><div className="h-10 w-56 rounded-md bg-muted" /><div className="mt-8 grid gap-8 md:grid-cols-3">{[0, 1, 2].map((item) => <div key={item} className="h-28 border-t border-border bg-muted" />)}</div></div></section>;
+}
+
+async function AboutBody({ about: content }: { about: ReturnType<typeof getPublicAboutContent> }) {
+  const about = await content;
   const roles = registrationRows(about.sections.peran?.body);
-  const { hero, visi, misi, legalitas, organisasi } = about.sections;
-  const heroImage = about.assets["about.hero.bg"];
-  const introImage = about.assets["about.vision.image"] ?? about.assets["about.intro.image"] ?? heroImage;
+  const { visi, misi, legalitas, organisasi } = about.sections;
   const history = about.history
     .map((period) => ({
       ...period,
       members: period.members.filter((person) => isKetuaUmum(person.position)),
     }))
     .filter((period) => period.members.length > 0);
-  const hasHero = Boolean(hero?.title?.trim() || hero?.body?.trim() || heroImage || introImage);
   const hasVision = Boolean(visi?.title?.trim() || about.vision);
   const hasMission = Boolean(misi?.title?.trim() || about.mission.length);
   const hasLegalitas = Boolean(legalitas?.title?.trim() || legalitas?.body?.trim() || about.legalDocument);
@@ -37,24 +85,7 @@ export default async function AboutUs() {
   roster.push({ label: "Pengurus lainnya", members: about.pengurus.filter((person) => !roleGroups.some((group) => group.pattern.test(person.position))) });
 
   return (
-    <main className="relative min-h-screen">
-      {hasHero ? <Section className="overflow-hidden bg-brand-50 pb-10 pt-28 md:pb-14 md:pt-40" >
-        <div className={`relative mx-auto grid w-full max-w-7xl items-center gap-8 lg:gap-12 ${introImage ? "lg:grid-cols-[1.1fr_1fr]" : ""}`}>
-          <div>
-            {hero?.title?.trim() ? <h1 className="max-w-3xl font-manrope text-4xl font-semibold leading-[1.1] text-brand-900 sm:text-5xl lg:text-6xl">{hero.title.trim() === "Kenali Kami Lebih Dekat" ? "PAMOKA Garut" : hero.title.trim()}</h1> : null}
-            {hero?.body?.trim() ? <typography.p className="mt-4 max-w-2xl leading-7">{hero.body.trim()}</typography.p> : hero?.title?.trim() === "Kenali Kami Lebih Dekat" && about.mission.length ? <typography.p className="mt-4 max-w-2xl leading-7">Wadah pengembangan diri generasi muda Garut melalui budaya, kepemimpinan, dan kegiatan bersama.</typography.p> : null}
-            <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
-              <span id="program" className="sr-only" /><span id="gallery" className="sr-only" />
-              <Button asChild size="lg"><Link href="/#program">Lihat program kami<ArrowRight className="ml-2 size-4" aria-hidden /></Link></Button>
-              <Suspense fallback={<span role="status" aria-label="Memuat kontak"><span aria-hidden="true" className="block h-11 w-32 rounded-md bg-muted motion-safe:animate-pulse" /></span>}><ContactLink /></Suspense>
-            </div>
-          </div>
-          {introImage ? <div className="relative aspect-[3/2] overflow-hidden rounded-lg">
-            <Image src={introImage.url} alt={introImage.alt ?? ""} fill preload className="object-cover" sizes="(max-width: 1023px) 90vw, 45vw" />
-          </div> : null}
-        </div>
-      </Section> : null}
-
+    <>
       {roles.length ? <Section className="border-b border-neutral-200/70 bg-background" contentClassName="mx-auto max-w-7xl"><typography.h1 className="text-brand-900">{about.sections.peran.title}</typography.h1><div className="mt-8 grid gap-8 md:grid-cols-3">{roles.map((item) => <div key={item.label} className="border-t border-neutral-200 pt-4"><h3 className="font-manrope text-xl font-semibold text-brand-900">{item.label}</h3><typography.p className="mt-3 max-w-prose">{item.title}</typography.p></div>)}</div></Section> : null}
       {hasVision || hasMission ? <Section id="visi-misi" className="bg-brand-50 py-10 md:py-12" contentClassName="mx-auto max-w-7xl">
         {hasVision ? <div className={`grid items-center gap-6 lg:gap-12 `}>
@@ -135,10 +166,7 @@ export default async function AboutUs() {
         </div>
       </Section> : null}
 
-      <Suspense fallback={<ContactSkeleton />}>
-        <AboutContact />
-      </Suspense>
-    </main>
+    </>
   );
 }
 

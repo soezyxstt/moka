@@ -1,9 +1,11 @@
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { connection } from 'next/server';
+import { unstable_cache } from 'next/cache';
 import { cache } from 'react';
 import { getPreviewEditionId } from '@/server/cms/preview';
 import { getPublicSiteIdentity } from '@/server/cms/public-readers';
 import { getPublicParticipantStage } from '@/server/cms/participant-stage';
+import { PUBLIC_CONTENT_REVALIDATE, PUBLIC_CONTENT_SCOPE, PUBLIC_CONTENT_TAG } from '@/server/cms/public-cache';
 
 import { database } from '@/server/db/client';
 import {
@@ -70,6 +72,22 @@ export const getPublicParticipantCategory = cache(async (
     .limit(1);
   if (!resolvedEdition) return null;
 
+  const signature = (await getPublicSiteIdentity()).signature;
+  return previewEditionId
+    ? readParticipantCategory(resolvedEdition, categorySlug, kind, signature)
+    : cachedParticipantCategory(resolvedEdition, categorySlug, kind, signature);
+});
+
+const cachedParticipantCategory = unstable_cache(readParticipantCategory, [PUBLIC_CONTENT_SCOPE, 'public-participant-category-v1'],
+  { tags: [PUBLIC_CONTENT_TAG], revalidate: PUBLIC_CONTENT_REVALIDATE });
+
+async function readParticipantCategory(
+  resolvedEdition: { id: string; year: number; slogan: string | null },
+  categorySlug: string,
+  kind: PublicParticipantKind,
+  signature: string,
+): Promise<PublicParticipantCategory | null> {
+
   const [category] = await database
     .select({ id: categories.id, code: categories.code, slug: categories.slug, label: categories.label })
     .from(categories)
@@ -96,7 +114,7 @@ export const getPublicParticipantCategory = cache(async (
   const poster = categoryAssets.find((asset) => asset.slotKey === posterSlot && asset.mimeType.startsWith('image/'));
   const video = categoryAssets.find((asset) => asset.slotKey === videoSlot && ['video/mp4', 'video/webm'].includes(asset.mimeType));
   const publicCategory: PublicParticipantCategory = {
-    signature: (await getPublicSiteIdentity()).signature,
+    signature,
     name: category.label,
     slug: category.slug,
     code: categoryCode,
@@ -200,7 +218,7 @@ export const getPublicParticipantCategory = cache(async (
       achievements: achievementsByParticipant.get(participant.id) ?? [],
     })),
   };
-});
+}
 
 export const getPublicParticipantBySlug = cache(async (
   categorySlug: string,

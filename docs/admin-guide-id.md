@@ -1,5 +1,7 @@
 # Panduan Lengkap PAMOKA CMS
 
+Setelah perubahan konten publik disimpan atau diterbitkan melalui CMS, cache server dibatalkan. Pengunjung yang sudah membuka situs dapat melihat hasil prefetch sebelumnya saat berpindah halaman selama sekitar satu jam; muat ulang halaman untuk memeriksa hasil terbaru. Pratinjau tetap membaca draf secara langsung. Perubahan database di luar CMS tidak otomatis membatalkan cache server, yang memiliki interval revalidasi 24 jam.
+
 Koreksi identitas 2026, 2026-10-16: favicon produksi memakai simbol atap/tiga wajah dari logo MOKA asli, bukan monogram M. Media lama tetap tersimpan dalam riwayat. Logo yang terlihat rusak di admin/login berasal dari SVG tanpa ekstensi yang masuk ke optimizer raster; perbaikan komponen tersedia di source dan memerlukan deployment terpisah. Jangan mengunggah ulang logo untuk memperbaiki masalah render tersebut.
 
 ## Arsip 2025 setelah sinkronisasi
