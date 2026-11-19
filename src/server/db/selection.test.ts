@@ -115,6 +115,11 @@ test("keputusan massal, rollback, kuota, dan penutupan tahap berjalan transaksio
     const participantOne = await createApplicant(db, "edition-a", { categoryId: "category-a", name: "Peserta Satu", number: 1 }, actor, now);
     const participantTwo = await createApplicant(db, "edition-a", { categoryId: "category-a", name: "Peserta Dua", number: 2 }, actor, now);
     const participantThree = await createApplicant(db, "edition-a", { categoryId: "category-a", name: "Peserta Tiga", number: 3 }, actor, now);
+    await db.insert(schema.mediaAssets).values([
+      { id: "portrait-old", provider: "uploadthing", url: "https://utfs.io/portrait", filename: "portrait.png", mimeType: "image/png", bytes: 100, createdAt: now, updatedAt: now },
+      { id: "qris-old", provider: "uploadthing", url: "https://utfs.io/qris", filename: "qris.png", mimeType: "image/png", bytes: 100, createdAt: now, updatedAt: now },
+    ]);
+    await db.update(participants).set({ portraitMediaId: "portrait-old", qrisMediaId: "qris-old" }).where(eq(participants.id, participantOne.id));
     await assert.rejects(
       reorderSelectionStages(db, "edition-a", [{ id: first.id, expectedVersion: 1 }, { id: final.id, expectedVersion: 1 }], actor, now),
       /sudah dipakai/,
@@ -145,6 +150,19 @@ test("keputusan massal, rollback, kuota, dan penutupan tahap berjalan transaksio
     assert.equal(promotedParticipants.length, 2);
     assert.ok(promotedEntries.every((entry) => entry.decision === "pending"));
     assert.ok(promotedParticipants.every((participant) => participant.stage === "seleksi-awal"));
+    const promotedOne = promotedEntries.find((entry) => entry.participantId === participantOne.id)!;
+    assert.equal(promotedOne.portraitMediaId, "portrait-old");
+    assert.equal(promotedOne.qrisMediaId, "qris-old");
+    assert.equal(promotedOne.mediaInitialized, true);
+    const [oldEntry] = await db.select().from(participantStageEntries).where(eq(participantStageEntries.id, entryOne.id));
+    assert.equal(oldEntry.portraitMediaId, "portrait-old");
+    assert.equal(oldEntry.qrisMediaId, "qris-old");
+
+    await db.update(participantStageEntries).set({ qrisMediaId: null, version: 2 }).where(eq(participantStageEntries.id, promotedOne.id));
+    await assert.rejects(reopenSelectionStage(db, "edition-a", { stageId: first.id, expectedVersion: 3, reason: "Koreksi hasil seleksi" }, actor, now), /Data peserta pada tahap berikutnya telah diubah/);
+    const [preserved] = await db.select().from(participantStageEntries).where(eq(participantStageEntries.id, promotedOne.id));
+    assert.equal(preserved.qrisMediaId, null);
+    await db.update(participantStageEntries).set({ qrisMediaId: "qris-old", version: 1 }).where(eq(participantStageEntries.id, promotedOne.id));
 
     await reopenSelectionStage(db, "edition-a", { stageId: first.id, expectedVersion: 3, reason: "Koreksi hasil seleksi" }, actor, now);
     assert.equal((await db.select().from(participantStageEntries).where(eq(participantStageEntries.stageId, final.id))).length, 0);
@@ -154,7 +172,7 @@ test("keputusan massal, rollback, kuota, dan penutupan tahap berjalan transaksio
     assert.equal(reopenedFirst.lifecycle, "active");
     assert.equal(resetFinal.lifecycle, "draft");
 
-    await rollbackStageDecision(db, "edition-a", { entryId: entryOne.id, expectedVersion: 4, reason: "Tinjau ulang peserta" }, actor, now);
+    await rollbackStageDecision(db, "edition-a", { entryId: entryOne.id, expectedVersion: oldEntry.version, reason: "Tinjau ulang peserta" }, actor, now);
   } finally {
     client.close();
   }

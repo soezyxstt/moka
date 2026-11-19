@@ -2,6 +2,7 @@ import { and, asc, desc, eq, gt, inArray, lt, ne } from "drizzle-orm";
 
 import { appendAuditLog } from "@/server/auth/audit";
 import type { Database } from "@/server/db/queries";
+import { initializeParticipantStageMedia } from "@/server/selection/stage-media";
 import {
   categories,
   categoryValues,
@@ -635,7 +636,7 @@ export async function closeSelectionStage(
     if (stage.version !== input.expectedVersion) throw new Error("Tahap telah diubah. Muat ulang halaman.");
     if (stage.lifecycle !== "active") throw new Error("Hanya tahap aktif yang dapat ditutup");
     const entries = await tx
-      .select({ entry: participantStageEntries, categoryCode: categories.code })
+      .select({ entry: participantStageEntries, participant: participants, categoryCode: categories.code })
       .from(participantStageEntries)
       .innerJoin(participants, eq(participants.id, participantStageEntries.participantId))
       .innerJoin(categories, eq(categories.id, participants.categoryId))
@@ -684,10 +685,14 @@ export async function closeSelectionStage(
         if (nextStageUpdate.length !== 1) throw new Error("Tahap berikutnya telah diubah. Muat ulang halaman.");
       }
       if (advanced.length) {
-        await tx.insert(participantStageEntries).values(advanced.map(({ entry }) => ({
+        for (const { participant } of advanced) await initializeParticipantStageMedia(tx, participant, now);
+        await tx.insert(participantStageEntries).values(advanced.map(({ entry, participant }) => ({
           id: crypto.randomUUID(),
           participantId: entry.participantId,
           stageId: nextStage.id,
+          portraitMediaId: entry.mediaInitialized ? entry.portraitMediaId : participant.portraitMediaId,
+          qrisMediaId: entry.mediaInitialized ? entry.qrisMediaId : participant.qrisMediaId,
+          mediaInitialized: true,
           decision: "pending" as const,
           version: 1,
           createdAt: now,
@@ -741,6 +746,7 @@ export async function reopenSelectionStage(
 
     const nextEntries = await tx.select().from(participantStageEntries).where(eq(participantStageEntries.stageId, nextStage.id));
     if (nextEntries.some((entry) => entry.decision !== "pending")) throw new Error("Tahap berikutnya sudah memiliki keputusan dan tidak dapat dipulihkan");
+    if (nextEntries.some((entry) => entry.version > 1)) throw new Error("Data peserta pada tahap berikutnya telah diubah dan tidak dapat dihapus saat membuka kembali tahap");
     const nextParticipantIds = nextEntries.map((entry) => entry.participantId);
     if (nextParticipantIds.length) {
       const [snapshot] = await tx.select({ participantId: votingCampaignParticipants.participantId }).from(votingCampaignParticipants).where(inArray(votingCampaignParticipants.participantId, nextParticipantIds)).limit(1);

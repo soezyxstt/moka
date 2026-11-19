@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Suspense } from 'react';
+import NewsListLoading from './news-list-loading';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/custom/button';
 import { typography } from '@/components/custom/typography';
@@ -33,28 +35,12 @@ function isPressReleaseItem(title: string, type: 'file' | 'link') {
 }
 
 export default async function NewsPage() {
-  const [home, newsItems, navigation, identity] = await Promise.all([
-    getPublicHomeContent(),
-    getPublicNews(),
-    getPublicNavigation(),
-    getPublicSiteIdentity(),
-  ]);
-
-  const logos = resolveBrandLogos(identity.assets, identity.edition);
-  const bannerLogo = logos.footer ?? logos.desktop;
+  const home = await getPublicHomeContent();
   const newsSection = home.sections.berita;
   const heading = newsSection?.title?.trim() || 'Berita & Informasi Resmi';
   const subtitle =
     newsSection?.body?.trim() ||
     'Siaran pers, pengumuman resmi, dan kabar terbaru kegiatan Paguyuban Mojang Jajaka Kabupaten Garut.';
-
-  const participantRoleLabel = navigation.participantKind === 'semifinalis' ? 'Semifinalis' : 'Finalis';
-  const primaryCategory = navigation.categories[0];
-  const participantProfileHref = primaryCategory
-    ? `/profil-${navigation.participantKind}/${primaryCategory.slug}`
-    : '/voting';
-
-  const [featuredItem, ...otherItems] = newsItems;
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -76,6 +62,30 @@ export default async function NewsPage() {
         </div>
       </section>
 
+      <Suspense fallback={<NewsListLoading />}>
+        <NewsList />
+      </Suspense>
+    </main>
+  );
+}
+
+async function NewsList() {
+  const [newsItems, navigation, identity] = await Promise.all([
+    getPublicNews(),
+    getPublicNavigation(),
+    getPublicSiteIdentity(),
+  ]);
+  const logos = resolveBrandLogos(identity.assets, identity.edition);
+  const bannerLogo = logos.footer ?? logos.desktop;
+  const participantRoleLabel = navigation.participantKind === 'semifinalis' ? 'Semifinalis' : 'Finalis';
+  const primaryCategory = navigation.categories[0];
+  const participantProfileHref = primaryCategory
+    ? `/profil-${navigation.participantKind}/${primaryCategory.slug}`
+    : '/voting';
+
+  const [featuredItem, ...otherItems] = newsItems;
+
+  return (
       <section className="px-8 py-16 md:px-20 md:py-24">
         <div className="mx-auto w-full max-w-7xl">
           {!featuredItem ? (
@@ -246,6 +256,5 @@ export default async function NewsPage() {
           )}
         </div>
       </section>
-    </main>
   );
 }

@@ -39,8 +39,11 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const navigation = await getPublicNavigation();
-  const identity = await getPublicSiteIdentity();
+  const [navigation, identity, previewEditionId] = await Promise.all([
+    getPublicNavigation(),
+    getPublicSiteIdentity(),
+    getPreviewEditionId(),
+  ]);
   const logos = resolveBrandLogos(identity.assets, identity.edition);
 
   return (
@@ -66,19 +69,19 @@ export default async function RootLayout({
       <body
         className={`${manrope.variable} ${inter.variable} antialiased font-inter`}
       >
-        {await getPreviewEditionId() ? <div className="fixed inset-x-0 bottom-0 z-50 flex flex-wrap items-center justify-center gap-4 bg-brand-900 p-3 text-sm text-canvas"><span>Pratinjau edisi {navigation.edition.year}, hanya untuk admin</span><form action={stopPreviewAction}><Button type="submit" size="sm">Tutup pratinjau</Button></form></div> : null}
+        {previewEditionId ? <div className="fixed inset-x-0 bottom-0 z-50 flex flex-wrap items-center justify-center gap-4 bg-brand-900 p-3 text-sm text-canvas"><span>Pratinjau edisi {navigation.edition.year}, hanya untuk admin</span><form action={stopPreviewAction}><Button type="submit" size="sm">Tutup pratinjau</Button></form></div> : null}
         <AdminBrandProvider value={{ title: identity.title, slogan: navigation.edition.slogan, logo: logos.mobile, background: identity.assets['site.profile.bg']?.url ?? null }}>
         <SiteChrome
           top={
             <>
-              <Navbar participantKind={navigation.participantKind} registrationVisible={navigation.registrationVisible} categories={navigation.categories} events={navigation.events} resultsVisible={navigation.resultsVisible} edition={navigation.edition} desktopLogo={logos.desktop} mobileLogo={logos.mobile} />
+              <Navbar participantKind={navigation.participantKind} registrationVisible={navigation.registrationVisible} categories={navigation.categories} events={navigation.events} resultsVisible={navigation.resultsVisible} edition={navigation.edition} desktopLogo={logos.desktop} mobileLogo={logos.mobile} prefetchPublic={!previewEditionId} />
               <Lenis />
             </>
           }
           bottom={
             <>
               <ScrollToTopButton />
-              <Footer participantKind={navigation.participantKind} registrationVisible={navigation.registrationVisible} categories={navigation.categories} events={navigation.events} edition={navigation.edition} logo={logos.footer} aboutDescription={navigation.aboutDescription} resultsVisible={navigation.resultsVisible} contacts={identity.contacts} signature={identity.signature} />
+              <Footer participantKind={navigation.participantKind} registrationVisible={navigation.registrationVisible} categories={navigation.categories} events={navigation.events} edition={navigation.edition} logo={logos.footer} aboutDescription={navigation.aboutDescription} resultsVisible={navigation.resultsVisible} contacts={identity.contacts} signature={identity.signature} prefetchPublic={!previewEditionId} />
             </>
           }
         >

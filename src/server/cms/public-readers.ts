@@ -1,7 +1,9 @@
-import { and, asc, desc, eq, gte, inArray, lte } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm';
 import { connection } from 'next/server';
+import { unstable_cache } from 'next/cache';
 import { cache } from 'react';
 import { readEditionPalette } from '@/server/cms/edition-palette';
+import { stagePortraitMediaId, stageQrisMediaId } from '@/server/selection/stage-media';
 import type { SiteAssetGroup } from '@/server/cms/site-asset-manifest';
 import { readEditionSiteAssets } from '@/server/cms/site-assets';
 import { contactHref, organizationCopy, type SiteContact } from '@/server/cms/site-copy';
@@ -12,9 +14,10 @@ import { contentDrafts } from '@/server/db/schema';
 import { contentRevisions } from '@/server/db/schema';
 import { archivedIdentity } from '@/server/organization/profile-history';
 import { parsePublicDocument, publicPdfUrl } from '@/server/cms/public-document';
-import { parseCategory, categories as dbCategories, editions, editionPrograms, events, galleries, galleryItems, mediaAssets, newsArticles, organizationMemberships, organizationPeriods, organizationUnits, pageSections, participantAchievements, participantMedia, participants, people, sponsors as dbSponsors, voteDailyTallies, votingCampaignParticipants, votingCampaigns } from '@/server/db/schema';
+import { parseCategory, categories as dbCategories, editions, editionPrograms, events, galleries, galleryItems, mediaAssets, newsArticles, organizationMemberships, organizationPeriods, organizationUnits, pageSections, participantAchievements, participantMedia, participantStageEntries, participants, people, sponsors as dbSponsors, voteDailyTallies, votingCampaignParticipants, votingCampaigns } from '@/server/db/schema';
 import { database } from '@/server/db/client';
 import { REGISTRATION_SECTIONS, registrationEditionEligible, registrationVisible } from '@/server/cms/registration';
+import { PUBLIC_CONTENT_REVALIDATE, PUBLIC_CONTENT_SCOPE, PUBLIC_CONTENT_TAG } from '@/server/cms/public-cache';
 
 
 export type PublicEvent = {
@@ -185,7 +188,14 @@ export type PublicEdition = {
   slogan: string | null;
 };
 
-const getContentEditionIds = cache((editionId: string) => readFallbackEditionIds(database, editionId));
+const cachedContentEditionIds = unstable_cache(
+  (editionId: string) => readFallbackEditionIds(database, editionId),
+  [PUBLIC_CONTENT_SCOPE, 'public-edition-fallback-v1'],
+  { tags: [PUBLIC_CONTENT_TAG], revalidate: PUBLIC_CONTENT_REVALIDATE },
+);
+const getContentEditionIds = cache(async (editionId: string) => (await getPreviewEditionId())
+  ? readFallbackEditionIds(database, editionId)
+  : cachedContentEditionIds(editionId));
 
 async function firstAvailableList<T>(editionIds: string[], read: (editionId: string) => Promise<T[]>) {
   for (const editionId of editionIds) {
@@ -204,7 +214,19 @@ async function getPublishedPageSections(editionId: string, pageKey: string, sect
 
 async function readPageSections(editionId: string, pageKey: string, sectionKeys: string[]) {
   if (!sectionKeys.length) return {};
-  const preview = (await getPreviewEditionId()) === editionId;
+  const previewEditionId = await getPreviewEditionId();
+  return previewEditionId
+    ? readPageSectionsData(editionId, pageKey, sectionKeys, previewEditionId === editionId)
+    : cachedPageSections(editionId, pageKey, sectionKeys);
+}
+
+const cachedPageSections = unstable_cache(
+  (editionId: string, pageKey: string, sectionKeys: string[]) => readPageSectionsData(editionId, pageKey, sectionKeys, false),
+  [PUBLIC_CONTENT_SCOPE, 'public-page-sections-v1'],
+  { tags: [PUBLIC_CONTENT_TAG], revalidate: PUBLIC_CONTENT_REVALIDATE },
+);
+
+async function readPageSectionsData(editionId: string, pageKey: string, sectionKeys: string[], preview: boolean) {
   const rows = await database
     .select({ id: pageSections.id, sectionKey: pageSections.sectionKey, title: pageSections.title, eyebrow: pageSections.eyebrow, body: pageSections.body, presentationJson: pageSections.presentationJson })
     .from(pageSections)
@@ -265,9 +287,17 @@ function parsePublicActionPresentation(value: string) {
   }
 }
 
+const cachedEditionAssets = unstable_cache(
+  (editionId: string, group: SiteAssetGroup) => readEditionSiteAssets(database, editionId, group),
+  [PUBLIC_CONTENT_SCOPE, 'public-edition-assets-v1'],
+  { tags: [PUBLIC_CONTENT_TAG], revalidate: PUBLIC_CONTENT_REVALIDATE },
+);
+
 async function getPublishedSiteAssets(editionId: string, group: SiteAssetGroup) {
-  if (!['home', 'about', 'site', 'brand'].includes(group)) return readEditionSiteAssets(database, editionId, group);
-  const assets = await Promise.all((await getContentEditionIds(editionId)).map((id) => readEditionSiteAssets(database, id, group)));
+  const preview = await getPreviewEditionId();
+  const read = (id: string) => preview ? readEditionSiteAssets(database, id, group) : cachedEditionAssets(id, group);
+  if (!['home', 'about', 'site', 'brand'].includes(group)) return read(editionId);
+  const assets = await Promise.all((await getContentEditionIds(editionId)).map(read));
   return Object.assign({}, ...assets.reverse()) as Record<string, PublicSiteAsset>;
 }
 
@@ -276,14 +306,26 @@ export async function getPublicHomeContent(): Promise<PublicHomeContent> {
   const [sections, assets, programs] = await Promise.all([
     getPublishedPageSections(editionId, 'home', ['hero', 'program', 'berita', 'ajakan', 'pengantar', 'agenda']),
     getPublishedSiteAssets(editionId, 'home'),
-    firstAvailableList(await getContentEditionIds(editionId), (id) => database
-      .select({ title: editionPrograms.title, description: editionPrograms.description })
-      .from(editionPrograms)
-      .where(and(eq(editionPrograms.editionId, id), eq(editionPrograms.active, true)))
-      .orderBy(asc(editionPrograms.displayOrder), asc(editionPrograms.title))),
+    getPublicPrograms(editionId),
   ]);
 
   return { sections, assets, programs };
+}
+
+async function readPrograms(editionId: string) {
+  return database
+    .select({ title: editionPrograms.title, description: editionPrograms.description })
+    .from(editionPrograms)
+    .where(and(eq(editionPrograms.editionId, editionId), eq(editionPrograms.active, true)))
+    .orderBy(asc(editionPrograms.displayOrder), asc(editionPrograms.title));
+}
+
+const cachedPrograms = unstable_cache(readPrograms, [PUBLIC_CONTENT_SCOPE, 'public-programs-v1'],
+  { tags: [PUBLIC_CONTENT_TAG], revalidate: PUBLIC_CONTENT_REVALIDATE });
+
+async function getPublicPrograms(editionId: string) {
+  const [ids, preview] = await Promise.all([getContentEditionIds(editionId), getPreviewEditionId()]);
+  return firstAvailableList(ids, preview ? readPrograms : cachedPrograms);
 }
 
 export async function getPublicPageIntro(page: 'galeri' | 'voting') {
@@ -322,10 +364,7 @@ export async function getPublicEventSharingMetadata() {
   return { openGraph: { images: image ? [image.url] : [] }, twitter: { card: 'summary_large_image' as const, images: image ? [image.url] : [] } };
 }
 
-export const getCurrentEdition = cache(async (): Promise<PublicEdition> => {
-  await connection();
-  const previewEditionId = await getPreviewEditionId();
-
+async function readCurrentEdition(previewEditionId: string | null): Promise<PublicEdition> {
   const editionSelection = {
     id: editions.id,
     year: editions.year,
@@ -362,6 +401,18 @@ export const getCurrentEdition = cache(async (): Promise<PublicEdition> => {
 
   if (!activeEdition) throw new Error('No active Turso edition is configured');
   return toPublicEdition(activeEdition)!;
+}
+
+const cachedCurrentEdition = unstable_cache(
+  () => readCurrentEdition(null),
+  [PUBLIC_CONTENT_SCOPE, 'public-current-edition-v1'],
+  { tags: [PUBLIC_CONTENT_TAG], revalidate: PUBLIC_CONTENT_REVALIDATE },
+);
+
+export const getCurrentEdition = cache(async (): Promise<PublicEdition> => {
+  await connection();
+  const previewEditionId = await getPreviewEditionId();
+  return previewEditionId ? readCurrentEdition(previewEditionId) : cachedCurrentEdition();
 });
 
 async function getCurrentEditionId() {
@@ -373,10 +424,10 @@ function toRemoteUrl(url: string | null | undefined) {
 }
 
 
-export async function getPublicNavigation() {
+export const getPublicNavigation = cache(async () => {
   const edition = await getCurrentEdition();
-  const registration = await getPublicRegistration();
-  const [categories, events, resultCampaign, aboutSections, finalStage, semifinalStage] = await Promise.all([
+  const [registration, categories, events, resultCampaign, aboutSections, finalStage, semifinalStage] = await Promise.all([
+    getPublicRegistration(),
     database
       .select({ slug: dbCategories.slug, name: dbCategories.label })
       .from(dbCategories)
@@ -405,7 +456,7 @@ export async function getPublicNavigation() {
     resultsVisible: resultCampaign[0]?.resultVisibility === 'visible',
     aboutDescription: aboutSections.hero?.body?.trim() || null,
   };
-}
+});
 
 export async function getPublicVotingCampaign(): Promise<PublicVotingCampaign | null> {
   const editionId = await getCurrentEditionId();
@@ -470,21 +521,26 @@ async function getPublicVotingCandidates(campaignId: string, categoryId: string,
   const rows = await database
     .select({
       id: participants.id,
-      number: participants.number,
+      number: sql<number>`coalesce(${participantStageEntries.number}, ${participants.number})`,
       name: participants.name,
       slug: participants.slug,
       bio: participants.bio,
-      portraitMediaId: participants.portraitMediaId,
-      qrisMediaId: participants.qrisMediaId,
+      portraitMediaId: stagePortraitMediaId,
+      qrisMediaId: stageQrisMediaId,
     })
     .from(votingCampaignParticipants)
     .innerJoin(participants, eq(votingCampaignParticipants.participantId, participants.id))
+    .innerJoin(votingCampaigns, eq(votingCampaigns.id, votingCampaignParticipants.campaignId))
+    .leftJoin(participantStageEntries, and(
+      eq(participantStageEntries.participantId, participants.id),
+      eq(participantStageEntries.stageId, sql`coalesce(${votingCampaignParticipants.sourceStageId}, ${votingCampaigns.eligibilityStageId})`),
+    ))
     .where(and(
       eq(votingCampaignParticipants.campaignId, campaignId),
       eq(participants.categoryId, categoryId),
       eq(participants.editionId, editionId),
     ))
-    .orderBy(asc(participants.displayOrder), asc(participants.number), asc(participants.name));
+    .orderBy(asc(sql`coalesce(${participantStageEntries.displayOrder}, ${participants.displayOrder})`), asc(sql`coalesce(${participantStageEntries.number}, ${participants.number})`), asc(participants.name));
   if (!rows.length) return [];
 
   const participantIds = rows.map((row) => row.id);
@@ -605,7 +661,15 @@ export async function getPublicVotingResults(categorySlug: string): Promise<Publ
 }
 
 async function readPublicEvents() {
-  const editionIds = await getContentEditionIds(await getCurrentEditionId());
+  const [editionId, preview] = await Promise.all([getCurrentEditionId(), getPreviewEditionId()]);
+  const editionIds = await getContentEditionIds(editionId);
+  return preview ? readPublicEventRows(editionIds) : cachedPublicEventRows(editionIds);
+}
+
+const cachedPublicEventRows = unstable_cache(readPublicEventRows, [PUBLIC_CONTENT_SCOPE, 'public-events-v1'],
+  { tags: [PUBLIC_CONTENT_TAG], revalidate: PUBLIC_CONTENT_REVALIDATE });
+
+async function readPublicEventRows(editionIds: string[]) {
   const rows = await database
     .select({ id: events.id, editionId: events.editionId, slug: events.slug, label: events.label, description: events.description, heroImageUrl: mediaAssets.url, heroLifecycle: mediaAssets.lifecycle })
     .from(events)
@@ -634,8 +698,15 @@ export async function getPublicEvents(): Promise<PublicEvent[]> {
 export async function getPublicEventBySlug(slug: string): Promise<PublicEvent | null> {
   const eventRows = (await readPublicEvents()).filter((row) => row.slug === slug);
   if (!eventRows.length) return null;
+  const images = await (await getPreviewEditionId() ? readPublicEventImages(eventRows) : cachedPublicEventImages(eventRows));
+  return { ...publicEvent(eventRows), images };
+}
 
-  const images = await firstAvailableList(eventRows.map((row) => row.id), async (eventId) => {
+const cachedPublicEventImages = unstable_cache(readPublicEventImages, [PUBLIC_CONTENT_SCOPE, 'public-event-images-v1'],
+  { tags: [PUBLIC_CONTENT_TAG], revalidate: PUBLIC_CONTENT_REVALIDATE });
+
+async function readPublicEventImages(eventRows: Awaited<ReturnType<typeof readPublicEvents>>) {
+  return firstAvailableList(eventRows.map((row) => row.id), async (eventId) => {
     const eventRow = eventRows.find((row) => row.id === eventId)!;
     const imageRows = await database
     .select({ url: mediaAssets.url, lifecycle: mediaAssets.lifecycle })
@@ -655,16 +726,19 @@ export async function getPublicEventBySlug(slug: string): Promise<PublicEvent | 
 
     return imageRows.map((item) => item.lifecycle === 'ready' ? toRemoteUrl(item.url) : null).filter((item): item is string => Boolean(item));
   });
-  return { ...publicEvent(eventRows), images };
 }
 
 export async function getPublicGalleryAlbums(editionId?: string): Promise<PublicGalleryAlbum[]> {
   const currentEditionId = editionId ?? await getCurrentEditionId();
-  const albums = await Promise.all((await getContentEditionIds(currentEditionId)).map(readGalleryAlbums));
+  const [ids, preview] = await Promise.all([getContentEditionIds(currentEditionId), getPreviewEditionId()]);
+  const albums = await Promise.all(ids.map(preview ? readGalleryAlbums : cachedGalleryAlbums));
   const bySlug = new Map<string, PublicGalleryAlbum>();
   for (const list of albums) for (const album of list) if (!bySlug.has(album.slug)) bySlug.set(album.slug, album);
   return [...bySlug.values()];
 }
+
+const cachedGalleryAlbums = unstable_cache(readGalleryAlbums, [PUBLIC_CONTENT_SCOPE, 'public-gallery-albums-v1'],
+  { tags: [PUBLIC_CONTENT_TAG], revalidate: PUBLIC_CONTENT_REVALIDATE });
 
 async function readGalleryAlbums(currentEditionId: string): Promise<PublicGalleryAlbum[]> {
   const galleryRows = await database
@@ -733,7 +807,14 @@ async function readGalleryAlbums(currentEditionId: string): Promise<PublicGaller
 
 export async function getPublicSponsors(): Promise<PublicSponsor[]> {
   const editionId = await getCurrentEditionId();
-  return firstAvailableList(await getContentEditionIds(editionId), async (id) => {
+  const [ids, preview] = await Promise.all([getContentEditionIds(editionId), getPreviewEditionId()]);
+  return firstAvailableList(ids, preview ? readSponsors : cachedSponsors);
+}
+
+const cachedSponsors = unstable_cache(readSponsors, [PUBLIC_CONTENT_SCOPE, 'public-sponsors-v1'],
+  { tags: [PUBLIC_CONTENT_TAG], revalidate: PUBLIC_CONTENT_REVALIDATE });
+
+async function readSponsors(id: string) {
   const rows = await database
     .select({ name: dbSponsors.name, imageUrl: mediaAssets.url })
     .from(dbSponsors)
@@ -747,7 +828,6 @@ export async function getPublicSponsors(): Promise<PublicSponsor[]> {
       return [];
     }
     return [{ name: sponsor.name, src }];
-  });
   });
 }
 
@@ -767,12 +847,32 @@ function parsePresentationItems(value: string | null | undefined) {
   return [];
 }
 
-export async function getPublicAboutContent(): Promise<PublicAboutContent> {
+export const getPublicAboutIntro = cache(async () => {
   const edition = await getCurrentEdition();
-  const [sections, assets, periodRows, galleries] = await Promise.all([
+  const [sections, assets] = await Promise.all([
     getPublishedPageSections(edition.id, 'tentang', ['hero', 'visi', 'misi', 'legalitas', 'organisasi', 'peran', 'nilai']),
     getPublishedSiteAssets(edition.id, 'about'),
-    database
+  ]);
+  return { sections, assets };
+});
+
+export async function getPublicAboutContent(): Promise<PublicAboutContent> {
+  const [edition, preview] = await Promise.all([getCurrentEdition(), getPreviewEditionId()]);
+  const intro = getPublicAboutIntro();
+  const details = intro.then(({ sections }) => preview
+    ? readAboutDetails(edition.organizationPeriodId, sections)
+    : cachedAboutDetails(edition.organizationPeriodId, sections));
+  const [content, galleries, resolvedDetails] = await Promise.all([
+    intro, getPublicGalleryAlbums(edition.id), details,
+  ]);
+  return { ...resolvedDetails, ...content, galleries };
+}
+
+const cachedAboutDetails = unstable_cache(readAboutDetails, [PUBLIC_CONTENT_SCOPE, 'public-about-details-v1'],
+  { tags: [PUBLIC_CONTENT_TAG], revalidate: PUBLIC_CONTENT_REVALIDATE });
+
+async function readAboutDetails(organizationPeriodId: string | null, sections: Record<string, PublicPageSection>) {
+  const periodRows = await database
       .select({
         id: organizationPeriods.id,
         label: organizationPeriods.label,
@@ -784,12 +884,10 @@ export async function getPublicAboutContent(): Promise<PublicAboutContent> {
       })
       .from(organizationPeriods)
       .where(inArray(organizationPeriods.lifecycle, ['active', 'archived']))
-      .orderBy(desc(organizationPeriods.startYear), asc(organizationPeriods.label)),
-    getPublicGalleryAlbums(edition.id),
-  ]);
+      .orderBy(desc(organizationPeriods.startYear), asc(organizationPeriods.label));
 
-  const activePeriod = edition.organizationPeriodId
-    ? periodRows.find((period) => period.id === edition.organizationPeriodId) ?? null
+  const activePeriod = organizationPeriodId
+    ? periodRows.find((period) => period.id === organizationPeriodId) ?? null
     : null;
   const document = parsePublicDocument(sections.legalitas?.presentationJson);
   const [documentMedia] = document
@@ -857,9 +955,6 @@ export async function getPublicAboutContent(): Promise<PublicAboutContent> {
     vision: organizationCopy(activePeriod, { vision: sectionVision || periodVision || null, mission }).vision,
     legalDocument: document && documentUrl ? { url: documentUrl, title: document.documentTitle } : null,
     mission: organizationCopy(activePeriod, { vision: sectionVision || periodVision || null, mission }).mission,
-    sections,
-    assets,
-    galleries,
     organizationPeriodLabel: activePeriod?.label ?? null,
     pengurus: membershipRows.filter((row) => row.periodId === activePeriod?.id).map((row) => ({
       ...archivedIdentity(snapshots.find((snapshot) => snapshot.resourceId === row.id)?.snapshotJson, { imageUrl: row.imageLifecycle === 'ready' ? toRemoteUrl(row.imageUrl) : null, name: row.name }),
@@ -877,8 +972,16 @@ const getNewsEditionId = cache(async () => {
 });
 
 export async function getPublicNews(): Promise<PublicNewsItem[]> {
-  const editionId = await getNewsEditionId();
+  const [editionId, preview] = await Promise.all([getNewsEditionId(), getPreviewEditionId()]);
   if (!editionId) return [];
+  const articles = await (preview ? readNews(editionId) : cachedNews(editionId));
+  return articles.map((article) => ({ ...article, date: new Date(article.date) }));
+}
+
+const cachedNews = unstable_cache(readNews, [PUBLIC_CONTENT_SCOPE, 'public-news-v1'],
+  { tags: [PUBLIC_CONTENT_TAG], revalidate: PUBLIC_CONTENT_REVALIDATE });
+
+async function readNews(editionId: string) {
   const rows = await database
     .select({
       slug: newsArticles.slug,
@@ -902,15 +1005,23 @@ export async function getPublicNews(): Promise<PublicNewsItem[]> {
     title: article.title,
     description: article.excerpt ?? '',
     imageUrl: article.coverLifecycle === 'ready' ? toRemoteUrl(article.coverUrl) : null,
-    date: article.publishedAt ?? article.createdAt,
+    date: (article.publishedAt ?? article.createdAt).getTime(),
     link: article.kind === 'internal' ? `/berita/${article.slug}` : article.sourceUrl ?? '#',
-    type: article.kind === 'file' ? 'file' : 'link',
+    type: article.kind === 'file' ? 'file' as const : 'link' as const,
   }));
 }
 
 export async function getPublicNewsBySlug(slug: string): Promise<PublicNewsArticle | null> {
-  const editionId = await getNewsEditionId();
+  const [editionId, preview] = await Promise.all([getNewsEditionId(), getPreviewEditionId()]);
   if (!editionId) return null;
+  const article = await (preview ? readNewsBySlug(editionId, slug) : cachedNewsBySlug(editionId, slug));
+  return article ? { ...article, publishedAt: new Date(article.publishedAt) } : null;
+}
+
+const cachedNewsBySlug = unstable_cache(readNewsBySlug, [PUBLIC_CONTENT_SCOPE, 'public-news-article-v1'],
+  { tags: [PUBLIC_CONTENT_TAG], revalidate: PUBLIC_CONTENT_REVALIDATE });
+
+async function readNewsBySlug(editionId: string, slug: string) {
   const [article] = await database
     .select({
       id: newsArticles.id,
@@ -946,7 +1057,7 @@ export async function getPublicNewsBySlug(slug: string): Promise<PublicNewsArtic
     excerpt: article.excerpt,
     body: article.body,
     bodyJson: article.bodyJson,
-    publishedAt: article.publishedAt ?? article.createdAt,
+    publishedAt: (article.publishedAt ?? article.createdAt).getTime(),
     sourceUrl: article.sourceUrl,
     kind: article.kind,
     coverUrl: article.coverLifecycle === 'ready' ? toRemoteUrl(article.coverUrl) : null,

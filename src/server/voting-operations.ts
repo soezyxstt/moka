@@ -1,10 +1,12 @@
-import { and, eq, inArray, ne } from "drizzle-orm";
+import { and, eq, inArray, ne, sql } from "drizzle-orm";
 
 import { calculateVotesFromAmount, formatLocalDate } from "@/lib/voting";
 import { appendAuditLog } from "@/server/auth/audit";
 import type { Database } from "@/server/db/queries";
+import { stageQrisMediaId } from "@/server/selection/stage-media";
 import {
   mediaAssets,
+  participantStageEntries,
   participants,
   selectionStages,
   voteDailyTallies,
@@ -677,13 +679,17 @@ export async function saveVotingTally(
       .select({
         participantId: votingCampaignParticipants.participantId,
         name: participants.name,
-        qrisMediaId: participants.qrisMediaId,
+        qrisMediaId: stageQrisMediaId,
         mimeType: mediaAssets.mimeType,
         lifecycle: mediaAssets.lifecycle,
       })
       .from(votingCampaignParticipants)
       .innerJoin(participants, eq(participants.id, votingCampaignParticipants.participantId))
-      .leftJoin(mediaAssets, eq(mediaAssets.id, participants.qrisMediaId))
+      .leftJoin(participantStageEntries, and(
+        eq(participantStageEntries.participantId, participants.id),
+        eq(participantStageEntries.stageId, sql`coalesce(${votingCampaignParticipants.sourceStageId}, ${campaign.eligibilityStageId})`),
+      ))
+      .leftJoin(mediaAssets, eq(mediaAssets.id, stageQrisMediaId))
       .where(
         and(
           eq(votingCampaignParticipants.campaignId, campaign.id),
@@ -844,13 +850,17 @@ export async function saveVotingTalliesBatch(
       .select({
         participantId: votingCampaignParticipants.participantId,
         name: participants.name,
-        qrisMediaId: participants.qrisMediaId,
+        qrisMediaId: stageQrisMediaId,
         mimeType: mediaAssets.mimeType,
         lifecycle: mediaAssets.lifecycle,
       })
       .from(votingCampaignParticipants)
       .innerJoin(participants, eq(participants.id, votingCampaignParticipants.participantId))
-      .leftJoin(mediaAssets, eq(mediaAssets.id, participants.qrisMediaId))
+      .leftJoin(participantStageEntries, and(
+        eq(participantStageEntries.participantId, participants.id),
+        eq(participantStageEntries.stageId, sql`coalesce(${votingCampaignParticipants.sourceStageId}, ${campaign.eligibilityStageId})`),
+      ))
+      .leftJoin(mediaAssets, eq(mediaAssets.id, stageQrisMediaId))
       .where(
         and(
           eq(votingCampaignParticipants.campaignId, campaign.id),

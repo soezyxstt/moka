@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
-import { cache } from 'react';
+import { cache, Suspense } from 'react';
 import EventCarousel from './event-carousel';
 import { getPublicEventBySlug, getPublicSponsors } from '@/server/cms/public-readers';
 import SponsorItem from './sponsor';
 import BG from '@/components/next-image-bg';
 import { notFound } from 'next/navigation';
+import SponsorLoading from './sponsor-loading';
 
 const getEvent = cache((slug: string) => getPublicEventBySlug(slug));
 
@@ -28,7 +29,6 @@ export default async function Page({
   const cmsEvent = await getEvent(event);
   if (!cmsEvent) notFound();
 
-  const sponsors = await getPublicSponsors();
   const images = cmsEvent.images.length
     ? cmsEvent.images
     : cmsEvent.heroImageUrl
@@ -54,12 +54,21 @@ export default async function Page({
 
       <section className="md:px-20 md:py-20 px-6 py-8 isolate">
         <h2 className="uppercase font-semibold text-3xl md:text-6xl font-manrope mb-8 md:mb-16 md:place-self-center">Sponsor Kami</h2>
-        <div className="w-full flex flex-wrap gap-6 md:gap-12 justify-center">
-          {sponsors.length ? sponsors.map((sponsor) => (
-            <SponsorItem key={sponsor.name} title={sponsor.name} src={sponsor.src} size='lg' />
-          )) : <p>Sponsor belum tersedia.</p>}
-        </div>
+        <Suspense fallback={<SponsorLoading />}>
+          <Sponsors />
+        </Suspense>
       </section>
     </main>
   )
+}
+
+async function Sponsors() {
+  const sponsors = await getPublicSponsors();
+  return (
+    <div className="w-full flex flex-wrap gap-6 md:gap-12 justify-center">
+      {sponsors.length ? sponsors.map((sponsor) => (
+        <SponsorItem key={sponsor.name} title={sponsor.name} src={sponsor.src} size='lg' />
+      )) : <p>Sponsor belum tersedia.</p>}
+    </div>
+  );
 }

@@ -6,7 +6,7 @@ import { getImgProps } from "next/dist/shared/lib/get-img-props";
 import { imageConfigDefault } from "next/dist/shared/lib/image-config";
 import defaultLoader from "next/dist/shared/lib/image-loader";
 
-for (const path of ["src/components/admin/admin-shell.tsx", "src/app/admin/media/uploader.tsx"]) test(`${path} loads extensionless SVG directly and optimizes raster images`, () => {
+for (const path of ["src/components/admin/admin-shell.tsx", "src/app/admin/media/uploader.tsx"]) test(`${path} serves admin images according to its optimization policy`, () => {
   const source = ts.createSourceFile(path, readFileSync(path, "utf8"), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
   const logos: ts.JsxSelfClosingElement[] = [];
   function visit(node: ts.Node) {
@@ -18,14 +18,14 @@ for (const path of ["src/components/admin/admin-shell.tsx", "src/app/admin/media
   const url = "https://yzk8cdswcm.ufs.sh/f/extensionless-brand-key";
   for (const logo of logos) {
     const attribute = logo.attributes.properties.find((item): item is ts.JsxAttribute => ts.isJsxAttribute(item) && item.name.getText(source) === "unoptimized");
-    const expression = attribute?.initializer && ts.isJsxExpression(attribute.initializer) ? attribute.initializer.expression?.getText(source) : "false";
+    const expression = attribute?.initializer && ts.isJsxExpression(attribute.initializer) ? attribute.initializer.expression?.getText(source) : attribute ? "true" : "false";
     for (const mimeType of ["image/svg+xml", "image/png"]) {
       const unoptimized = new Function("branding", "asset", "selectedAsset", `return (${expression ?? "false"})`)({ logo: { mimeType } }, { mimeType }, { mimeType }) as boolean;
       const { props } = getImgProps({ src: url, alt: "MOKA Garut", width: 150, height: 57, unoptimized }, {
         imgConf: { ...imageConfigDefault, remotePatterns: [{ protocol: "https", hostname: "yzk8cdswcm.ufs.sh" }] }, defaultLoader,
       });
-      if (mimeType === "image/svg+xml") {
-        assert.equal(props.src, url, "SVG must load directly from UploadThing");
+      if (mimeType === "image/svg+xml" || path.includes("admin-shell")) {
+        assert.equal(props.src, url, "this image must load directly from UploadThing");
         assert.equal(props.srcSet, undefined);
       } else assert.ok(props.src.startsWith("/_next/image?"), "raster optimization remains enabled");
     }

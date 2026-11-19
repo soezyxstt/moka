@@ -1,4 +1,4 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { notFound } from "next/navigation";
 
 import { AdminPage } from "@/components/admin/primitives";
@@ -14,6 +14,7 @@ import {
   participantAchievements,
   participantMedia,
   participantSocialLinks,
+  participantStageEntries,
   participantTitleAssignments,
   participants,
   selectionStages,
@@ -195,6 +196,24 @@ export default async function ParticipantDetailPage(props: Props) {
     if (asset) qrisAsset = asset;
   }
 
+  const stageRows = await database.select({
+    id: participantStageEntries.id,
+    stageId: selectionStages.id,
+    name: selectionStages.name,
+    version: participantStageEntries.version,
+    portraitMediaId: participantStageEntries.portraitMediaId,
+    qrisMediaId: participantStageEntries.qrisMediaId,
+    mediaInitialized: participantStageEntries.mediaInitialized,
+  }).from(participantStageEntries)
+    .innerJoin(selectionStages, eq(selectionStages.id, participantStageEntries.stageId))
+    .where(and(eq(participantStageEntries.participantId, id), eq(selectionStages.editionId, currentEdition.id)))
+    .orderBy(asc(selectionStages.displayOrder));
+  const stageAssetIds = [...new Set(stageRows.flatMap((stage) => [stage.portraitMediaId, stage.qrisMediaId]).filter((assetId): assetId is string => !!assetId))];
+  const stageAssets = stageAssetIds.length ? await database.select({
+    id: mediaAssets.id, url: mediaAssets.url, filename: mediaAssets.filename, mimeType: mediaAssets.mimeType,
+    bytes: mediaAssets.bytes, alt: mediaAssets.alt, decorative: mediaAssets.decorative,
+  }).from(mediaAssets).where(inArray(mediaAssets.id, stageAssetIds)) : [];
+
   const participantDetail: ParticipantDetail = {
     id: participantRow.id,
     editionId: participantRow.editionId,
@@ -218,6 +237,11 @@ export default async function ParticipantDetailPage(props: Props) {
     achievements: achievementsRows,
     socialLinks: socialLinksRows,
     titles: titleRows,
+    stages: stageRows.map((stage) => ({
+      id: stage.id, stageId: stage.stageId, name: stage.name, version: stage.version,
+      portraitAsset: stage.mediaInitialized ? stageAssets.find((asset) => asset.id === stage.portraitMediaId) ?? null : portraitAsset,
+      qrisAsset: stage.mediaInitialized ? stageAssets.find((asset) => asset.id === stage.qrisMediaId) ?? null : qrisAsset,
+    })),
     media: mediaRows.map((m) => ({
       id: m.id,
       role: m.role,

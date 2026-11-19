@@ -1,6 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath } from "@/server/cms/public-cache";
+import { revalidatePath as revalidateAdminPath } from "next/cache";
 import { z } from "zod";
 
 import { requirePermission } from "@/server/auth/authorization";
@@ -35,7 +36,7 @@ export async function savePageSectionDraftAction(input: unknown) {
     if (error instanceof z.ZodError) return { error: "Periksa isian teks dan tautan.", version: null };
     throw error;
   });
-  revalidatePath("/admin/content/pages");
+  revalidateAdminPath("/admin/content/pages");
   return result;
 }
 

@@ -1,5 +1,6 @@
-import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { headers } from "next/headers";
+import { stageQrisMediaId } from "@/server/selection/stage-media";
 import { redirect } from "next/navigation";
 
 import { AdminEmptyState, AdminPage } from "@/components/admin/primitives";
@@ -12,6 +13,7 @@ import {
   categories,
   editions,
   mediaAssets,
+  participantStageEntries,
   participants,
   selectionStages,
   voteDailyTallies,
@@ -119,24 +121,29 @@ export default async function VotingAdminPage() {
             id: participants.id,
             editionId: participants.editionId,
             name: participants.name,
-            number: participants.number,
+            number: sql<number>`coalesce(${participantStageEntries.number}, ${participants.number})`,
             categoryCode: categories.code,
             categoryLabel: categories.label,
-            qrisMediaId: participants.qrisMediaId,
+            qrisMediaId: stageQrisMediaId,
             qrisMimeType: mediaAssets.mimeType,
             qrisLifecycle: mediaAssets.lifecycle,
           })
           .from(votingCampaignParticipants)
           .innerJoin(participants, eq(participants.id, votingCampaignParticipants.participantId))
           .innerJoin(categories, eq(participants.categoryId, categories.id))
-          .leftJoin(mediaAssets, eq(mediaAssets.id, participants.qrisMediaId))
+          .innerJoin(votingCampaigns, eq(votingCampaigns.id, votingCampaignParticipants.campaignId))
+          .leftJoin(participantStageEntries, and(
+            eq(participantStageEntries.participantId, participants.id),
+            eq(participantStageEntries.stageId, sql`coalesce(${votingCampaignParticipants.sourceStageId}, ${votingCampaigns.eligibilityStageId})`),
+          ))
+          .leftJoin(mediaAssets, eq(mediaAssets.id, stageQrisMediaId))
           .where(
             and(
               inArray(votingCampaignParticipants.campaignId, campaignIds),
               eq(participants.editionId, currentEdition.id),
             ),
           )
-          .orderBy(categories.displayOrder, participants.displayOrder),
+          .orderBy(categories.displayOrder, sql`coalesce(${participantStageEntries.displayOrder}, ${participants.displayOrder})`, sql`coalesce(${participantStageEntries.number}, ${participants.number})`),
         database
           .select({
             id: voteDailyTallies.id,

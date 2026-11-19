@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath } from "@/server/cms/public-cache";
 
 import { requirePermission } from "@/server/auth/authorization";
 import { import2025ContentTransaction } from "@/server/cms/import-2025";

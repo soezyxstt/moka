@@ -1,7 +1,8 @@
 "use server";
 
 import { and, eq, isNull } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { revalidatePath } from "@/server/cms/public-cache";
+import { revalidatePath as revalidateAdminPath } from "next/cache";
 
 import { appendAuditLog } from "@/server/auth/audit";
 import { requirePermission } from "@/server/auth/authorization";
@@ -64,7 +65,7 @@ export async function createMediaFolderAction(formData: FormData): Promise<void>
       source: "admin-media",
     });
   });
-  revalidatePath("/admin/media");
+  revalidateAdminPath("/admin/media");
 }
 
 export async function renameMediaFolderAction(formData: FormData): Promise<void> {
@@ -95,7 +96,7 @@ export async function renameMediaFolderAction(formData: FormData): Promise<void>
       source: "admin-media",
     });
   });
-  revalidatePath("/admin/media");
+  revalidateAdminPath("/admin/media");
 }
 
 export async function updateMediaAssetMetadataAction(formData: FormData): Promise<void> {
@@ -165,7 +166,7 @@ export async function moveMediaAssetAction(formData: FormData): Promise<void> {
       reason: "Dipindahkan melalui media explorer",
     });
   });
-  revalidatePath("/admin/media");
+  revalidateAdminPath("/admin/media");
 }
 
 export async function getMediaAssetsAction(filters?: ListMediaAssetsInput) {
