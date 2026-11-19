@@ -1,8 +1,8 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
   experimental: { staleTimes: { static: 3600 } },
-  /* config options here */
   images: {
     unoptimized: process.env.NODE_ENV === 'development',
     remotePatterns: [
