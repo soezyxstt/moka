@@ -55,7 +55,7 @@ Audit font lanjutan 2026-10-15 selesai lokal: 100 sampel route/viewport, dialog 
 | **006** | Add the media library with authenticated UploadThing uploads | `src/app/admin/media/*` | **DONE** | Pustaka media dengan sistem folder hierarkis dan upload terautentikasi UploadThing. |
 | **007** | Move global, home, news, sponsor, and organization content into the CMS | `src/server/cms/*` | **DONE** | Fondasi model konten CMS disempurnakan dan distandarisasi di Plan 012. |
 | **008** | Move editions, participants, events, carousels, and galleries into the CMS | `src/server/cms/*` | **DONE** | Pengelolaan entitas tahunan disempurnakan berbasis edisi tunggal di Plan 012. |
-| **009** | Make voting campaigns, tallies, visibility, and results manageable | `src/app/admin/voting/*` | **IN PROGRESS** | Pembukaan kembali kampanye dan verifikasi penggantian QRIS finalis 2026. |
+| **009** | Make voting campaigns, tallies, visibility, and results manageable | `src/app/admin/voting/*` | **DONE** | Aksi buka kembali dan penggantian 44 QRIS finalis 2026 terverifikasi di produksi. |
 | **010** | Import 2025 content, run end-to-end QA, and perform a reversible cutover | `docs/runbooks/cms-cutover.md` | **IN PROGRESS (2025 content sync done; full release acceptance separate)** | Sinkronisasi konten CMS lokal 2025 ke produksi selesai 2026-10-16; 1.007 operasi/audit terverifikasi. 2026 aktif dan 2025 arsip dipertahankan. Backup dan simulasi lulus; akun/voting/2026 utuh. Tidak ada deployment atau perubahan login pada sinkronisasi ini. |
 | **011** | Unify public and admin design, media navigation, and annual CMS context | `src/components/admin/*` | **DONE** | Penyelarasan token visual admin dengan public design tokens (Manrope, `brand`, `highlight`). |
 | **012** | Admin CMS PAMOKA Berbasis Edisi | `plans/admin-page-overhaul.md` | **IN PROGRESS (Rework)** | Rework UX admin bertahap dengan checkpoint supervisor; fondasi visual dan navigasi sedang ditata ulang sebelum modul fungsional berikutnya. |
@@ -121,7 +121,7 @@ Status: DONE untuk cakupan UI. Lihat `plans/ui-consistency.md`. Login, CMS, copy
 
 ### Plan 009: Make voting campaigns, tallies, visibility, and results manageable
 - **Tujuan**: Manajemen voting manual transparan berbasis edisi tahunan dan rekap harian QRIS merchant.
-- **Status**: IN PROGRESS untuk aksi buka kembali. Cakupan meliputi operasi lifecycle, aksi server dan konsol Voting, label audit, pengujian regresi, serta panduan admin dan rilis. Hentikan aktivasi apabila jadwal habis, snapshot tidak valid, atau satu QRIS finalis belum siap dan terverifikasi. Aktivasi mempertahankan snapshot, jadwal, harga, tally, dan visibilitas hasil.
+- **Status**: DONE pada 20 November 2026. Revisi Cloud Run `pamoka-garut-web-voting-reopen-20261120` melayani 100% traffic produksi. Semua 44 WebP cocok byte dengan salinan lokal, terpasang pada finalis yang sesuai, dan tercatat pada audit CMS. Aksi buka kembali dijalankan setelah verifikasi itu. Kampanye aktif sampai 5 Desember 2026 pukul 23.59 WIB dengan jadwal, harga, rekap, dan visibilitas hasil sebelumnya. Pemuatan QR publik diperiksa dengan satu sampel per kategori. Pembayaran nyata belum diuji.
 
 ### Plan 010: Import 2025 content, run end-to-end QA, and perform a reversible cutover
 - **Tujuan**: Migrasi data konten 2025 hardcoded ke CMS dan pengalihan sumber data public site secara aman dengan opsi rollback instan.
