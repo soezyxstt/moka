@@ -67,6 +67,7 @@ import {
   closeCampaignAction,
   createCampaignAction,
   deleteCampaignAction,
+  reopenCampaignAction,
   saveBatchTallyAction,
   setResultVisibilityAction,
   setShowResultUpdatedAtAction,
@@ -74,6 +75,37 @@ import {
   updateCampaignAction,
   updateCampaignStageAction,
 } from "./actions";
+
+const lifecycleActions = {
+  start: {
+    title: "Aktifkan voting",
+    description: "Daftar peserta kampanye disimpan saat voting diaktifkan.",
+    submit: "Aktifkan",
+    loading: "Mengaktifkan voting...",
+    icon: Vote,
+  },
+  reopen: {
+    title: "Buka kembali voting",
+    description: "Voting kembali berjalan mengikuti jadwal yang tersimpan. Pastikan QRIS semua peserta siap digunakan.",
+    submit: "Buka kembali",
+    loading: "Membuka kembali voting...",
+    icon: Vote,
+  },
+  close: {
+    title: "Nonaktifkan voting",
+    description: "Data voting tidak dapat diubah setelah voting dinonaktifkan.",
+    submit: "Nonaktifkan",
+    loading: "Menonaktifkan voting...",
+    icon: Flag,
+  },
+  delete: {
+    title: "Hapus kampanye",
+    description: "Kampanye beserta data terkait akan dihapus permanen. Tindakan ini tidak dapat dibatalkan.",
+    submit: "Hapus",
+    loading: "Menghapus kampanye...",
+    icon: Trash2,
+  },
+};
 
 export type VotingCampaignSummary = {
   id: string;
@@ -325,7 +357,9 @@ function VotingConsoleInner({
 
   const [pending, setPending] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [confirmMode, setConfirmMode] = useState<"start" | "close" | "delete" | null>(null);
+  const [confirmMode, setConfirmMode] = useState<keyof typeof lifecycleActions | null>(null);
+  const lifecycleAction = confirmMode ? lifecycleActions[confirmMode] : null;
+  const LifecycleIcon = lifecycleAction?.icon;
   const [confirmation, setConfirmation] = useState("");
   const [reason, setReason] = useState("");
   const [closeShowResults, setCloseShowResults] = useState(true);
@@ -665,13 +699,7 @@ function VotingConsoleInner({
   async function confirmLifecycle() {
     if (!selectedCampaign || !confirmMode) return;
     setPending(true);
-    const loadingLabel =
-      confirmMode === "start"
-        ? "Mengaktifkan voting..."
-        : confirmMode === "close"
-          ? "Menonaktifkan voting..."
-          : "Menghapus kampanye...";
-    const toastId = toast.loading(loadingLabel);
+    const toastId = toast.loading(lifecycleActions[confirmMode].loading);
     try {
       if (confirmMode === "start") {
         const result = await startCampaignAction({
@@ -686,6 +714,15 @@ function VotingConsoleInner({
           startedAt: new Date().toISOString(),
         });
         toast.success(`Voting diaktifkan untuk ${result.snapshotCount} peserta`, { id: toastId });
+      } else if (confirmMode === "reopen") {
+        const result = await reopenCampaignAction({
+          campaignId: selectedCampaign.id,
+          expectedVersion: selectedCampaign.version,
+          confirmation,
+          reason,
+        });
+        replaceCampaign({ version: result.version, status: "active", closedAt: null });
+        toast.success("Voting dibuka kembali", { id: toastId });
       } else if (confirmMode === "close") {
         const result = await closeCampaignAction({
           campaignId: selectedCampaign.id,
@@ -1888,6 +1925,20 @@ function VotingConsoleInner({
                               <LockKeyhole className="size-4" /> Nonaktifkan voting
                             </AdminButton>
                           </div>
+                        ) : selectedCampaign.status === "closed" ? (
+                          <div className="border-t border-brand-100 pt-3">
+                            <AdminButton
+                              type="button"
+                              onClick={() => {
+                                setConfirmation("");
+                                setReason("");
+                                setConfirmMode("reopen");
+                              }}
+                              disabled={pending}
+                            >
+                              <Vote className="size-4" /> Buka kembali
+                            </AdminButton>
+                          </div>
                         ) : null}
                       </div>
 
@@ -2162,23 +2213,14 @@ function VotingConsoleInner({
         </DialogContent>
       </Dialog>
 
-      {/* AlertDialog: Konfirmasi Mulai / Tutup / Hapus */}
       <AlertDialog open={confirmMode !== null} onOpenChange={(open) => !open && setConfirmMode(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {confirmMode === "start"
-                ? "Aktifkan voting"
-                : confirmMode === "close"
-                  ? "Nonaktifkan voting"
-                  : "Hapus kampanye"}
+              {lifecycleAction?.title}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {confirmMode === "start"
-                ? "Snapshot peserta dibuat sekali dan tidak berubah."
-                : confirmMode === "close"
-                  ? "Data voting tidak dapat diubah setelah voting dinonaktifkan."
-                  : "Kampanye beserta data terkait akan dihapus permanen. Tindakan ini tidak dapat dibatalkan."}
+              {lifecycleAction?.description}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AdminField label={`Ketik ${selectedCampaign?.name ?? "nama kampanye"}`}>
@@ -2214,18 +2256,8 @@ function VotingConsoleInner({
                   "bg-destructive text-destructive-foreground hover:bg-destructive/90",
               )}
             >
-              {confirmMode === "start" ? (
-                <Vote className="size-4" />
-              ) : confirmMode === "close" ? (
-                <Flag className="size-4" />
-              ) : (
-                <Trash2 className="size-4" />
-              )}
-              {confirmMode === "start"
-                ? "Aktifkan"
-                : confirmMode === "close"
-                  ? "Nonaktifkan"
-                  : "Hapus"}
+              {LifecycleIcon && <LifecycleIcon className="size-4" />}
+              {lifecycleAction?.submit}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -482,6 +482,67 @@ export async function closeVotingCampaign(
   });
 }
 
+export async function reopenVotingCampaign(
+  db: Database,
+  editionId: string,
+  input: { campaignId: string; expectedVersion: number; confirmation: string; reason: string },
+  actor: AuditActor,
+  now: Date,
+) {
+  const reason = requireReason(input.reason);
+  return db.transaction(async (tx) => {
+    const campaign = await requireCampaign(tx, editionId, input.campaignId);
+    requireExpectedVersion(campaign.version, input.expectedVersion);
+    if (campaign.status !== "closed") throw new Error("Hanya kampanye tertutup yang dapat dibuka kembali");
+    if (input.confirmation.trim() !== campaign.name) {
+      throw new Error("Ketik nama kampanye untuk mengonfirmasi");
+    }
+    if (now < campaign.startsAt || now >= campaign.endsAt) {
+      throw new Error("Pembukaan kembali hanya tersedia dalam jadwal kampanye");
+    }
+
+    const snapshot = await tx
+      .select({ mimeType: mediaAssets.mimeType, lifecycle: mediaAssets.lifecycle })
+      .from(votingCampaignParticipants)
+      .innerJoin(participants, eq(participants.id, votingCampaignParticipants.participantId))
+      .leftJoin(participantStageEntries, and(
+        eq(participantStageEntries.participantId, participants.id),
+        eq(participantStageEntries.stageId, sql`coalesce(${votingCampaignParticipants.sourceStageId}, ${campaign.eligibilityStageId})`),
+      ))
+      .leftJoin(mediaAssets, eq(mediaAssets.id, stageQrisMediaId))
+      .where(eq(votingCampaignParticipants.campaignId, campaign.id));
+    if (snapshot.length === 0) throw new Error("Kampanye belum memiliki daftar peserta");
+    const missing = snapshot.filter((entry) => entry.lifecycle !== "ready" || !entry.mimeType?.startsWith("image/")).length;
+    if (missing > 0) throw new Error(`QRIS siap pakai belum tersedia untuk ${missing} peserta`);
+
+    const version = campaign.version + 1;
+    const [updated] = await tx
+      .update(votingCampaigns)
+      .set({ status: "active", closedAt: null, version, updatedAt: now })
+      .where(and(
+        eq(votingCampaigns.id, campaign.id),
+        eq(votingCampaigns.editionId, editionId),
+        eq(votingCampaigns.version, input.expectedVersion),
+      ))
+      .returning({ id: votingCampaigns.id });
+    if (!updated) throw new Error(staleCampaignMessage);
+    await appendAuditLog(tx, {
+      actorUserId: actor.userId,
+      actorLabel: actor.label,
+      action: "voting.campaign.reopen",
+      resourceType: "votingCampaign",
+      resourceId: campaign.id,
+      resourceLabel: campaign.name,
+      before: { status: campaign.status, closedAt: campaign.closedAt, version: campaign.version },
+      after: { status: "active", closedAt: null, version },
+      changedFields: ["status", "closedAt", "version"],
+      source: "admin-voting",
+      reason,
+    });
+    return { version };
+  });
+}
+
 export async function deleteVotingCampaign(
   db: Database,
   editionId: string,

@@ -107,6 +107,13 @@ gcloud artifacts repositories set-cleanup-policies cloud-run-source-deploy \
 
 Once verified, run the same command without `--dry-run`.
 
+## Pembukaan kembali voting setelah penggantian QRIS
+
+1. Pertahankan status tertutup saat mengganti QRIS melalui Pustaka Media dan profil peserta pada tahap sumber kampanye.
+2. Cocokkan setiap kode peserta pada daftar kampanye dengan file baru. Verifikasi gambar UploadThing yang tersimpan dan pindai isinya sebelum aktivasi.
+3. Di **Voting**, pilih kampanye tertutup dan jalankan **Buka kembali** dengan nama kampanye dan alasan. Konfirmasikan jadwal masih berlaku serta audit `voting.campaign.reopen` tercatat.
+4. Cek halaman publik `/voting`, jadwal, tombol **Vote sekarang**, dan QRIS tiap kategori. Bila QRIS salah atau gagal dimuat, tutup kampanye melalui konsol Voting sebelum melanjutkan pemeriksaan.
+
 ## Voting Peak Tuning (Optional)
 
 Before a high-traffic voting window, optionally warm 1 instance to eliminate cold starts:

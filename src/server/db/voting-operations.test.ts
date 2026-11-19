@@ -12,6 +12,7 @@ import {
   closeVotingCampaign,
   createVotingCampaign,
   deleteVotingCampaign,
+  reopenVotingCampaign,
   saveVotingTalliesBatch,
   saveVotingTally,
   setVotingResultVisibility,
@@ -97,6 +98,50 @@ async function createTestDatabase() {
   ]);
   return { client, db };
 }
+
+test("buka kembali hanya saat jadwal berlaku dan QRIS snapshot siap", async () => {
+  const { client, db } = await createTestDatabase();
+  try {
+    const name = "Voting Kameumeut";
+    const endsAt = new Date("2026-09-10T03:00:00.000Z");
+    const campaign = await createVotingCampaign(db, "edition-a", {
+      name,
+      slug: "kameumeut-reopen",
+      eligibilityStageId: "stage-a-final",
+      startsAt: now,
+      endsAt,
+      pricePerPoint: 2_000,
+    }, actor, now);
+    const request = { campaignId: campaign.id, confirmation: name, reason: "QRIS sudah diperiksa" };
+    const closeAt = new Date("2026-09-07T03:00:00.000Z");
+    const reopenAt = new Date("2026-09-08T03:00:00.000Z");
+    await startVotingCampaign(db, "edition-a", { ...request, expectedVersion: 1 }, actor, now);
+    await db.insert(voteDailyTallies).values({
+      campaignId: campaign.id, participantId: "participant-a", localDate: "2026-09-06", amount: 2,
+    });
+    await closeVotingCampaign(db, "edition-a", { ...request, expectedVersion: 2 }, actor, closeAt);
+    const [before] = await db.select().from(votingCampaigns).where(eq(votingCampaigns.id, campaign.id));
+    const snapshot = await db.select().from(votingCampaignParticipants);
+    const tally = await db.select().from(voteDailyTallies);
+    const input = { ...request, expectedVersion: 3 };
+    await assert.rejects(reopenVotingCampaign(db, "edition-b", input, actor, reopenAt), /edisi aktif/);
+    await assert.rejects(reopenVotingCampaign(db, "edition-a", { ...input, expectedVersion: 2 }, actor, reopenAt), /telah diubah/);
+    await assert.rejects(reopenVotingCampaign(db, "edition-a", input, actor, endsAt), /jadwal kampanye/);
+    await assert.rejects(reopenVotingCampaign(db, "edition-a", input, actor, reopenAt), /2 peserta/);
+    await db.update(participants).set({ qrisMediaId: "qris-a" }).where(eq(participants.editionId, "edition-a"));
+
+    assert.deepEqual(await reopenVotingCampaign(db, "edition-a", input, actor, reopenAt), { version: 4 });
+    const [after] = await db.select().from(votingCampaigns).where(eq(votingCampaigns.id, campaign.id));
+    assert.deepEqual(after, { ...before, status: "active", closedAt: null, version: 4, updatedAt: reopenAt });
+    assert.deepEqual(await db.select().from(votingCampaignParticipants), snapshot);
+    assert.deepEqual(await db.select().from(voteDailyTallies), tally);
+    const audit = await db.select().from(auditLogs).where(eq(auditLogs.action, "voting.campaign.reopen"));
+    assert.equal(audit.length, 1);
+    assert.equal(audit[0]?.actorUserId, actor.userId);
+  } finally {
+    client.close();
+  }
+});
 
 test("kampanye membuat snapshot tahap dan hanya berubah melalui lifecycle manual", async () => {
   const { client, db } = await createTestDatabase();

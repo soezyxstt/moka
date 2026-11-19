@@ -196,6 +196,8 @@ All uploads go through **UploadThing** only. There is no R2, S3, or local-blob w
 
 ## Project State
 
+- Pembukaan kembali kampanye tertutup tersedia melalui aksi admin teraudit selama jadwal masih berlaku dan semua peserta kampanye memiliki QRIS gambar berstatus siap. Snapshot peserta, jadwal dan rekap dipertahankan. Lihat Plan 009 untuk status rilis dan verifikasi QRIS produksi.
+
 Plan 013 IN PROGRESS: source cache CMS publik 24 jam dan prefetch navigasi satu jam diterapkan pada 2026-11-17. Pengujian SQLite/cache Next dan streaming hero lulus dengan backend uji; penerimaan navigasi browser dan cache provider masih OPEN karena peluncuran server lokal ditolak otomatis. Lihat `plans/public-site-refresh.md` dan `docs/runbooks/public-loading.md`.
 
 Plan 020 IN PROGRESS: foto dan QRIS per tahap sudah dirilis ke produksi pada 2026-11-13 dengan migrasi 0019, backup dan pemeriksaan integritas. QA browser admin dan pengisian aset finalis belum dilakukan; lihat `plans/stage-media.md`.

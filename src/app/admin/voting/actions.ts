@@ -8,6 +8,7 @@ import {
   closeVotingCampaign,
   createVotingCampaign,
   deleteVotingCampaign,
+  reopenVotingCampaign,
   saveVotingTally,
   saveVotingTalliesBatch,
   setVotingResultVisibility,
@@ -217,6 +218,21 @@ export async function closeCampaignAction(input: {
   );
   revalidatePath("/admin");
   revalidatePath("/admin/voting");
+  return result;
+}
+
+export async function reopenCampaignAction(input: {
+  campaignId: string;
+  expectedVersion: number;
+  confirmation: string;
+  reason: string;
+}) {
+  const actor = await requirePermission("voting.manage");
+  const editionId = await requireEditionId();
+  const result = await reopenVotingCampaign(database, editionId, input, actorFromSession(actor), new Date());
+  revalidatePath("/admin");
+  revalidatePath("/admin/voting");
+  revalidatePath("/voting");
   return result;
 }
 
